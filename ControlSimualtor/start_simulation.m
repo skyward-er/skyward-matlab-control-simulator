@@ -25,7 +25,7 @@ run('config.m');
 
 tic
 
-[Yc,Tc] = std_run_control(settings);
+[Yf,Tf] = std_run_control(settings);
 
 toc
 

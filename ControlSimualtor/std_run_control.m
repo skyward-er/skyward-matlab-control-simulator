@@ -1,17 +1,14 @@
-function [Yc,Tc] = std_run_control(settings)
-%{ 
+function [Yf,Tf] = std_run_control(settings)
+%{
 
 STD_RUN_BALLISTIC - This function runs a standard ballistic (non-stochastic) simulation
 
-INTPUTS: 
+INTPUTS:
             - settings, rocket data structure;
 
 OUTPUTS:
-            - Tf, Total integration time vector; 
+            - Tf, Total integration time vector;
             - Yf, Total State Matrix;
-            - Ta, Ascent Integration time vector; 
-            - Ya, Ascent State Matrix;
-            - bound_value, Usefull values for the plots.
 
 Author: Ruben Di Battista
 Skyward Experimental Rocketry | CRD Dept | crd@skywarder.eu
@@ -37,7 +34,7 @@ if settings.wind.HourMin ~= settings.wind.HourMax || settings.wind.HourMin ~= se
 end
 
 %% STARTING CONDITIONS
-% Attitude 
+% Attitude
 
 if settings.upwind
     settings.PHI = mod(Azw + pi, 2*pi);
@@ -57,10 +54,10 @@ Y0a = [X0; V0; W0; Q0; settings.m0; settings.Ixxf; settings.Iyyf; settings.Izzf;
 
 if settings.wind.model || settings.wind.input   % will be computed inside the integrations
     uw = 0; vw = 0; ww = 0;
-else 
+else
     [uw,vw,ww,~] = wind_const_generator(settings.wind.AzMin, settings.wind.AzMax,...
-    settings.wind.ElMin, settings.wind.ElMax, settings.wind.MagMin, settings.wind.MagMax);
-
+        settings.wind.ElMin, settings.wind.ElMax, settings.wind.MagMin, settings.wind.MagMax);
+    
     if ww ~= 0
         warning('Pay attention using vertical wind, there might be computational errors')
     end
@@ -73,7 +70,7 @@ if settings.wind.input && all(settings.wind.input_uncertainty ~= 0)
     
     switch signn
         case 1
-%                       unc = unc;
+            %                       unc = unc;
         case 2
             unc(1) = - unc(1);
         case 3
@@ -81,7 +78,7 @@ if settings.wind.input && all(settings.wind.input_uncertainty ~= 0)
         case 4
             unc = - unc;
     end
-
+    
     uncert = rand(1,2).*unc;
 else
     uncert = [0,0];
@@ -89,37 +86,57 @@ end
 
 tf = settings.ode.final_time;
 
-%% BURNING ASCENT  
+%% BURNING ASCENT
 
 [Ta, Ya] = ode113(@ascent, [0, tf], Y0a, settings.ode.optionsasc1, settings, uw, vw, ww, uncert);
 
-%% CONTROL PHASE 
+%% CONTROL PHASE
+
+% setting initial condition before control phase
 dt = settings.freq;
 t0 = Ta(end);
 t1 = t0 + dt;
 vz = 1;
 Y0 = Ya(end,:);
-% pressione
+[~, ~, p0, ~] = atmosisa(Ya(end,3));
+Yc_tot = zeros(10000,20);
+Tc_tot = zeros(10000,1);
+n_old=1;
 
-while vz > -10 
-   
-% controllo
-
-%[A] = controllo(Y0,t0);   % area totale aerofreno esposto
- 
-% dynamics 
-[Tc,Yc] = ode45(@ascent, [t0, t1], Y0, [], settings, uw, vw, ww, uncert);
-
-Q = Yc(end,10:13);
-vels = quatrotate(quatconj(Q),Yc(end,4:6));
-vz = - vels(3);
-% aggiungere pressione 
-
-t0 = t0 + dt;
-t1 = t1 + dt;
-Y0 = Yc(end,:);
-
-
+% control phase dynamics integration
+while vz > -10
+    
+    % controllo
+    
+    %[A] = controllo(Y0,t0);   % area totale aerofreno esposto
+    
+    c = (A/settings.Atot)*100;
+    
+    % dynamics
+    [Tc,Yc] = ode45(@ascent, [t0, t1], Y0, [], settings, uw, vw, ww, uncert);
+    
+    % evaluate the condition for cycle checking 
+    Q = Yc(end,10:13);
+    vels = quatrotate(quatconj(Q),Yc(end,4:6));
+    vz = - vels(3);
+    
+    % update ode every cycle 
+    t0 = t0 + dt;
+    t1 = t1 + dt;
+    Y0 = Yc(end,:);
+    [~, ~, p0, ~] = atmosisa(Yc(end,3)); % pressure at 
+            
+    % assemble total state
+    [n, ~] = size(Yc);
+    Yc_tot(n_old:n_old+n-1,:) = Yc(1:end,:);
+    Tc_tot(n_old:n_old+n-1) = Tc(1:end,1);
+    n_old = n_old + n -1;
+    
 end
 
+Yc_tot = Yc_tot(1:n_old,:);
+Tc_tot = Tc_tot(1:n_old,:);
+
+Yf = [Ya; Yc_tot(2:end,:)];
+Tf = [Ta; Tc_tot(2:end,:)];
 
