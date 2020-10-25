@@ -95,18 +95,19 @@ CoeffsE = load(filename_empty,'Coeffs');
 settings.CoeffsE = CoeffsE.Coeffs;
 clear('CoeffsE');
 
-s = load(filename_full,'State');
+s = load(filename_empty,'State');
 settings.Alphas = s.State.Alphas';
 settings.Betas = s.State.Betas';
 settings.Altitudes = s.State.Altitudes';
 settings.Machs = s.State.Machs';
+settings.Controls = s.State.hprot';
 clear('s');
 
 %% CONTROL SETTINGS 
 
 settings.Mach_control = 0.7;        % Mach of activation of aerobrakes 
 settings.freq = 0.1;                % dt between each controlo signal 
-settings.Atot = 120e-6;             % [m^2] total area of aerobrakes (100% out)
+settings.Atot = 100e-4;             % [m^2] total area of aerobrakes (100% out)
                                
 %% INTEGRATION OPTIONS
 settings.ode.final_time =  2000;                                    % [s] Final integration time

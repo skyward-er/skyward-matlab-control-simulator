@@ -1,4 +1,4 @@
-function [dY, parout] = ascent(t, Y, settings, uw, vw, ww, uncert, Hour, Day)
+function [dY, parout] = ascent(t, Y, settings, c, uw, vw, ww, uncert, Hour, Day)
 %{ 
 
 ASCENT - ode function of the 6DOF Rigid Rocket Model
@@ -180,121 +180,20 @@ A_datcom = settings.Alphas*pi/180;
 B_datcom = settings.Betas*pi/180;
 H_datcom = settings.Altitudes;
 M_datcom = settings.Machs;
-
-%% INTERPOLATION AT THE BOUNDARIES
-
-if M > M_datcom(end)
-    
-    M = M_datcom(end);
-    
-end
-
-if M < M_datcom(1)
-    
-    M = M_datcom(1);
-    
-end
-
-if alpha > A_datcom(end)
-    
-    alpha = A_datcom(end);
-    
-elseif alpha < A_datcom(1)
-    
-    alpha = A_datcom(1);
-    
-end
-
-if beta > B_datcom(end)
-    
-    beta = B_datcom(end);
-    
-elseif beta < B_datcom(1)
-    
-    beta = B_datcom(1);
-end
-
-if -z > H_datcom(end)
-    
-    z = -H_datcom(end);
-    
-elseif -z < H_datcom(1)
-    
-    z = -H_datcom(1);
-    
-end
-
-%% CHOSING THE FULL CONDITION VALUE
-% interpolation of the coefficients with the value in the nearest condition of the Coeffs matrix
-
-CAf = interp4_easy(A_datcom,M_datcom,B_datcom,H_datcom,CoeffsF.CA,alpha,M,beta,-z);
-CYBf = interp4_easy(A_datcom,M_datcom,B_datcom,H_datcom,CoeffsF.CYB,alpha,M,beta,-z);
-CNAf = interp4_easy(A_datcom,M_datcom,B_datcom,H_datcom,CoeffsF.CNA,alpha,M,beta,-z);
-Clf = interp4_easy(A_datcom,M_datcom,B_datcom,H_datcom,CoeffsF.CLL,alpha,M,beta,-z);
-Clpf = interp4_easy(A_datcom,M_datcom,B_datcom,H_datcom,CoeffsF.CLLP,alpha,M,beta,-z);
-Cmaf = interp4_easy(A_datcom,M_datcom,B_datcom,H_datcom,CoeffsF.CMA,alpha,M,beta,-z);
-Cmadf = interp4_easy(A_datcom,M_datcom,B_datcom,H_datcom,CoeffsF.CMAD,alpha,M,beta,-z);
-Cmqf = interp4_easy(A_datcom,M_datcom,B_datcom,H_datcom,CoeffsF.CMQ,alpha,M,beta,-z);
-Cnbf = interp4_easy(A_datcom,M_datcom,B_datcom,H_datcom,CoeffsF.CLNB,alpha,M,beta,-z);
-Cnrf = interp4_easy(A_datcom,M_datcom,B_datcom,H_datcom,CoeffsF.CLNR,alpha,M,beta,-z);
-Cnpf = interp4_easy(A_datcom,M_datcom,B_datcom,H_datcom,CoeffsF.CLNP,alpha,M,beta,-z);
-XCPf = interp4_easy(A_datcom,M_datcom,B_datcom,H_datcom,CoeffsF.X_C_P,alpha,M,beta,-z);
-
-%% CHOSING THE EMPTY CONDITION VALUE
-% interpolation of the coefficients with the value in the nearest condition of the Coeffs matrix
-
-if t >= tb && M <= settings.Mach_control
-
-    c = 1;
-    
-else
-    c = 1;
-end
-    
-CAe = interp4_easy(A_datcom,M_datcom,B_datcom,H_datcom,CoeffsE.CA(:, :, :, :, c) ,alpha,M,beta,-z);
-CYBe = interp4_easy(A_datcom,M_datcom,B_datcom,H_datcom,CoeffsE.CYB(:, :, :, :, c) ,alpha,M,beta,-z);
-CNAe = interp4_easy(A_datcom,M_datcom,B_datcom,H_datcom,CoeffsE.CNA(:, :, :, :, c) ,alpha,M,beta,-z);
-Cle = interp4_easy(A_datcom,M_datcom,B_datcom,H_datcom,CoeffsE.CLL(:, :, :, :, c) ,alpha,M,beta,-z);
-Clpe = interp4_easy(A_datcom,M_datcom,B_datcom,H_datcom,CoeffsE.CLLP(:, :, :, :, c) ,alpha,M,beta,-z);
-Cmae = interp4_easy(A_datcom,M_datcom,B_datcom,H_datcom,CoeffsE.CMA(:, :, :, :, c) ,alpha,M,beta,-z);
-Cmade = interp4_easy(A_datcom,M_datcom,B_datcom,H_datcom,CoeffsE.CMAD(:, :, :, :, c) ,alpha,M,beta,-z);
-Cmqe = interp4_easy(A_datcom,M_datcom,B_datcom,H_datcom,CoeffsE.CMQ(:, :, :, :, c) ,alpha,M,beta,-z);
-Cnbe = interp4_easy(A_datcom,M_datcom,B_datcom,H_datcom,CoeffsE.CLNB(:, :, :, :, c) ,alpha,M,beta,-z);
-Cnre = interp4_easy(A_datcom,M_datcom,B_datcom,H_datcom,CoeffsE.CLNR(:, :, :, :, c) ,alpha,M,beta,-z);
-Cnpe = interp4_easy(A_datcom,M_datcom,B_datcom,H_datcom,CoeffsE.CLNP(:, :, :, :, c) ,alpha,M,beta,-z);
-XCPe = interp4_easy(A_datcom,M_datcom,B_datcom,H_datcom,CoeffsE.X_C_P(:, :, :, :, c) ,alpha,M,beta,-z);
-
-%% LINEAR INTERPOLATION BETWEEN THE TWO CONDITIONS
-% Computing the value of the aerodynamics coefficients at a certain time
-% Needed only for t<tb because for t>=tb the condition is the empty one
-
-if t < tb
-    CA = t/tb*(CAe-CAf)+CAf;
-    CYB = t/tb*(CYBe-CYBf)+CYBf;
-    CNA = t/tb*(CNAe-CNAf)+CNAf;
-    Cl = t/tb*(Cle-Clf)+Clf;
-    Clp = t/tb*(Clpe-Clpf)+Clpf;
-    Cma = t/tb*(Cmae-Cmaf)+Cmaf;
-    Cmad = t/tb*(Cmade-Cmadf)+Cmadf;
-    Cmq = t/tb*(Cmqe-Cmqf)+Cmqf;
-    Cnb = t/tb*(Cnbe-Cnbf)+Cnbf;
-    Cnr = t/tb*(Cnre-Cnrf)+Cnrf;
-    Cnp = t/tb*(Cnpe-Cnpf)+Cnpf;
-    XCP_value = t/tb*(XCPe-XCPf)+XCPf;
-else
-    CA = CAe;
-    CYB = CYBe;
-    CNA = CNAe;
-    Cl = Cle;
-    Clp = Clpe;
-    Cma = Cmae;
-    Cmad =Cmade;
-    Cmq = Cmqe;
-    Cnb = Cnbe;
-    Cnr = Cnre;
-    Cnp = Cnpe;
-    XCP_value = XCPe;
-end
+C_datcom = settings.Controls;
+%
+CA = InterpAero(settings, A_datcom, M_datcom, B_datcom, H_datcom, C_datcom, CoeffsF.CA, CoeffsE.CA, alpha, M, beta, -z, c, t);
+CYB = InterpAero(settings, A_datcom, M_datcom, B_datcom, H_datcom, C_datcom, CoeffsF.CYB, CoeffsE.CYB, alpha, M, beta, -z, c, t);
+CNA = InterpAero(settings, A_datcom, M_datcom, B_datcom, H_datcom, C_datcom, CoeffsF.CNA, CoeffsE.CNA, alpha, M, beta, -z, c, t);
+Cl = InterpAero(settings, A_datcom, M_datcom, B_datcom, H_datcom, C_datcom, CoeffsF.CLL, CoeffsE.CLL, alpha, M, beta, -z, c, t);
+Clp = InterpAero(settings, A_datcom, M_datcom, B_datcom, H_datcom, C_datcom, CoeffsF.CLLP, CoeffsE.CLLP, alpha, M, beta, -z, c, t);
+Cma = InterpAero(settings, A_datcom, M_datcom, B_datcom, H_datcom, C_datcom, CoeffsF.CMA, CoeffsE.CMA, alpha, M, beta, -z, c, t);
+Cmad = InterpAero(settings, A_datcom, M_datcom, B_datcom, H_datcom, C_datcom, CoeffsF.CMAD, CoeffsE.CMAD, alpha, M, beta, -z, c, t);
+Cmq = InterpAero(settings, A_datcom, M_datcom, B_datcom, H_datcom, C_datcom, CoeffsF.CMQ, CoeffsE.CMQ, alpha, M, beta, -z, c, t);
+Cnb = InterpAero(settings, A_datcom, M_datcom, B_datcom, H_datcom, C_datcom, CoeffsF.CLNB, CoeffsE.CLNB, alpha, M, beta, -z, c, t);
+Cnr = InterpAero(settings, A_datcom, M_datcom, B_datcom, H_datcom, C_datcom, CoeffsF.CLNR, CoeffsE.CLNR, alpha, M, beta, -z, c, t);
+Cnp = InterpAero(settings, A_datcom, M_datcom, B_datcom, H_datcom, C_datcom, CoeffsF.CLNP, CoeffsE.CLNP, alpha, M, beta, -z, c, t);
+XCP_value = InterpAero(settings, A_datcom, M_datcom, B_datcom, H_datcom, C_datcom, CoeffsF.X_C_P, CoeffsE.X_C_P, alpha, M, beta, -z, c, t);
 
 if -z < settings.lrampa*sin(OMEGA)      % No torque on the Launch
     
@@ -327,13 +226,8 @@ else
     
     qdyn = 0.5*rho*V_norm^2;        %[Pa] dynamics pressure
     qdynL_V = 0.5*rho*V_norm*S*C; 
-    
-    if c == 1
-        X = 1.4*qdyn*S*CA;              %[N] x-body component of the aerodynamics force
-    else
-        X = 1.2*qdyn*S*CA;              %[N] x-body component of the aerodynamics force
-    end
-        
+
+    X = 1.4*qdyn*S*CA;              %[N] x-body component of the aerodynamics force
     Y = qdyn*S*CYB*beta;            %[N] y-body component of the aerodynamics force
     Z = qdyn*S*CNA*alpha;           %[N] z-body component of the aerodynamics force
     Fg = quatrotate(Q,[0 0 m*g])';  %[N] force due to the gravity in body frame

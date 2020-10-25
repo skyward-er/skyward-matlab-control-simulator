@@ -87,8 +87,8 @@ end
 tf = settings.ode.final_time;
 
 %% BURNING ASCENT
-
-[Ta, Ya] = ode113(@ascent, [0, tf], Y0a, settings.ode.optionsasc1, settings, uw, vw, ww, uncert);
+c = 0;
+[Ta, Ya] = ode113(@ascent, [0, tf], Y0a, settings.ode.optionsasc1, settings, c, uw, vw, ww, uncert);
 
 %% CONTROL PHASE
 
@@ -98,7 +98,7 @@ t0 = Ta(end);
 t1 = t0 + dt;
 vz = 1;
 Y0 = Ya(end,:);
-[~, ~, p0, ~] = atmosisa(Ya(end,3));
+% [~, ~, p0, ~] = atmosisa(Ya(end,3));
 nmax = 10000;
 Yc_tot = zeros(nmax,20);
 Tc_tot = zeros(nmax,1);
@@ -110,11 +110,12 @@ while vz > -10 || n_old < nmax
     % controllo
     
     %[A] = controllo(Y0,t0);   % area totale aerofreno esposto
-    
-    %c = (A/settings.Atot)*100;
+    A = settings.Atot/2;                % waiting for the control 
+    c = (A/settings.Atot)*100;
+    c = 0;
     
     % dynamics
-    [Tc,Yc] = ode45(@ascent, [t0, t1], Y0, [], settings, uw, vw, ww, uncert);
+    [Tc,Yc] = ode45(@ascent, [t0, t1], Y0, [], settings, c, uw, vw, ww, uncert);
     
     % evaluate the condition for cycle condition 
     Q = Yc(end,10:13);
@@ -146,6 +147,6 @@ Yf = [Ya; Yc_tot(2:end,:)];
 Tf = [Ta; Tc_tot(2:end,:)];
 
 %% RETRIVE PARAMETERS FROM THE ODE
-data_flight = RecallOdeFcn(@ascent, Tf, Yf, settings, uw, vw, ww, uncert);
+data_flight = RecallOdeFcn(@ascent, Tf, Yf, settings, c, uw, vw, ww, uncert);
 
 
