@@ -23,6 +23,10 @@ OUTPUTS:
             - direction, to select the sign that the function must have when tends to zero, 1 = positive;
             - value, selected value to check if the integration has to be stopped (vertical velocity).
 
+Author: Ruben Di Battista
+Skyward Experimental Rocketry | CRD Dept | crd@skywarder.eu
+email: ruben.dibattista@skywarder.eu
+
 Author: Matteo Pozzoli
 Skyward Experimental Rocketry | CRD Dept | crd@skywarder.eu
 email: matteo.pozzoli@skywarder.eu

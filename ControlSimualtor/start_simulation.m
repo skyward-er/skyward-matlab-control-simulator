@@ -32,6 +32,7 @@ toc
 %% DATA-PRINTING
 
 Na = length(Yf(:,1));
+A = data_flight.accelerations.body_acc; 
 
 % POSITIONS
 xa = Yf(:,1);
@@ -51,30 +52,24 @@ Va = [ua, va, wa];
 % MAXIMUM POSITIONS, VELOCITIES AND ACCELERATION
 
 % pre-allocation
-abs_X = zeros(Na, 1); abs_V = abs_X;
+abs_X = zeros(Na, 1); abs_V = abs_X; abs_A = abs_X;
 
 % determine the norm of every row element
 for k = 1:Na
     abs_X(k) = norm(Xa(k, :));
     abs_V(k) = norm(Va(k, :));
+    abs_A(k) = norm(A(k, :));
 end
 
 [max_dist, imax_dist] = max(abs_X);
 [max_v, imax_v] = max(abs_V);
+[max_a, imax_a] = max(abs_A);
 
 % TEMPERATURE AND MACH NUMBER
 
-% pre-allocation
-M = zeros(Na, 1); Tamb = M;
-
-for i = 1:Na
-    [Tamb(i), a, ~, ~] = atmosisa(za(i));
-    M(i) = abs_V(i)/a;
-end
-
 % determine the maximum Mach number
+M = data_flight.interp.M;
 [max_M, imax_M] = max(M);
-
 
 % DATA RECORD (display)
 
@@ -94,8 +89,12 @@ fprintf('altitude: %g [m] \n', za(imax_M))
 fprintf('velocity: %g [m/s] \n', abs_V(imax_M))
 fprintf('time: %g [sec] \n\n', Tf(imax_M))
 
+fprintf('max acceleration reached: %g [m/s2] = %g [g] \n', max_a, max_a/9.81)
+fprintf('velocity: %g [m/s] \n', abs_V(imax_a))
+fprintf('time: %g [sec] \n\n', Tf(imax_a))
+
 %% PLOT 
-% 
+
 if settings.plots
     
     % AERO FORCES
@@ -108,15 +107,16 @@ if settings.plots
     plot(Tf, data_flight.coeff.CA), title('Drag Coefficient vs time'), grid on;
     xlabel('Time [s]'); ylabel('Drag Coeff CD [/]')
     
-%     % ACCELERATION
-%     figure('Name','Velocity-Abs, Acceleration-Abs - ascent Phase','NumberTitle','off');
-%     subplot(1,2,1)
-%     plot(Tf, abs_V), grid on;
-%     xlabel('time [s]'), ylabel('|V| [m/s]');
-%     
-%     subplot(1,2,2)
-%     plot(Tf, abs_A/9.80665), grid on;
-%     xlabel('time [s]'), ylabel('|A| [g]');
-%        
+    % ACCELERATION
+    figure('Name','Velocity-Abs, Acceleration-Abs - ascent Phase','NumberTitle','off');
+    subplot(1,2,1)
+    plot(Tf, abs_V), grid on;
+    xlabel('time [s]'), ylabel('|V| [m/s]');
+    
+    subplot(1,2,2)
+    plot(Tf, abs_A/9.80665), grid on;
+    xlabel('time [s]'), ylabel('|A| [g]');
+       
 end
 
+clearvars -except data_flight 
