@@ -168,5 +168,5 @@ settings.wind.AzMax = (360)*pi/180;                   % [rad] Maximum Azimuth, u
 % 180 deg                       -> South
 % 270 deg                       -> West
 
-% %% PLOT DETAILS
-% settings.plots = true;
+%% PLOT DETAILS
+settings.plots = true;

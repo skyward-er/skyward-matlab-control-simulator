@@ -1,4 +1,4 @@
-function [dY] = ascent(t, Y, settings, uw, vw, ww, uncert, Hour, Day, OMEGA)
+function [dY, parout] = ascent(t, Y, settings, uw, vw, ww, uncert, Hour, Day, OMEGA)
 %{ 
 
 ASCENT - ode function of the 6DOF Rigid Rocket Model
@@ -382,3 +382,15 @@ dY(16) = Iyydot;
 dY(17) = Izzdot;
 dY(18:20) = [p q r];
 dY = dY';
+
+%% SAVING QUANTITIES FOR PLOTS 
+
+parout.velocities=Vels;
+
+parout.forces.AeroDyn_Forces = [X, Y, Z];
+
+parout.accelerations.body_acc = [du, dv, dw];
+
+parout.coeff.CA = CA;
+
+

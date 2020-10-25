@@ -25,106 +25,98 @@ run('config.m');
 
 tic
 
-[Yf,Tf] = std_run_control(settings);
+[Yf, Tf, data_flight] = std_run_control(settings);
 
 toc
 
-% %% DATA-PRINTING
+%% DATA-PRINTING
+
+Na = length(Yf(:,1));
+
+% POSITIONS
+xa = Yf(:,1);
+ya = Yf(:,2);
+za = -Yf(:,3);
+Xa = [xa, ya, za];
+
+[max_z, i_apo] = max(za);
+T_apo = Tf(i_apo);
+
+% VELOCITIES
+ua = Yf(:,4);
+va = Yf(:,5);
+wa = -Yf(:,6);
+Va = [ua, va, wa];
+
+% MAXIMUM POSITIONS, VELOCITIES AND ACCELERATION
+
+% pre-allocation
+abs_X = zeros(Na, 1); abs_V = abs_X;
+
+% determine the norm of every row element
+for k = 1:Na
+    abs_X(k) = norm(Xa(k, :));
+    abs_V(k) = norm(Va(k, :));
+end
+
+[max_dist, imax_dist] = max(abs_X);
+[max_v, imax_v] = max(abs_V);
+
+% TEMPERATURE AND MACH NUMBER
+
+% pre-allocation
+M = zeros(Na, 1); Tamb = M;
+
+for i = 1:Na
+    [Tamb(i), a, ~, ~] = atmosisa(za(i));
+    M(i) = abs_V(i)/a;
+end
+
+% determine the maximum Mach number
+[max_M, imax_M] = max(M);
+
+
+% DATA RECORD (display)
+
+disp(' ')
+disp('DATA RECORD:')
+fprintf('apogee reached: %g [m] \n', max_z);
+
+fprintf('time: %g [sec] \n\n', T_apo)
+
+fprintf('max speed reached: %g [m/s] \n', max_v)
+fprintf('altitude: %g [m] \n', za(imax_v))
+fprintf('Mach: %g [-] \n', M(imax_v))
+fprintf('time: %g [sec] \n\n', Tf(imax_v))
+
+fprintf('max Mach reached: %g [-] \n', max_M)
+fprintf('altitude: %g [m] \n', za(imax_M))
+fprintf('velocity: %g [m/s] \n', abs_V(imax_M))
+fprintf('time: %g [sec] \n\n', Tf(imax_M))
+
+%% PLOT 
 % 
-% Na = length(Ya(:,1));
-% 
-% % POSITIONS
-% xa = Ya(:,1);
-% ya = Ya(:,2);
-% za = -Ya(:,3);
-% Xa = [xa, ya, za];
-% 
-% x = Yf(:,1);
-% y = Yf(:,2);
-% z = -Yf(:,3);
-% 
-% % VELOCITIES
-% ua = Ya(:,4);
-% va = Ya(:,5);
-% wa = -Ya(:,6);
-% Va = [ua, va, wa];
-% 
-% % MAXIMUM POSITIONS, VELOCITIES AND ACCELERATION
-% load('ascent_plot.mat');
-% A = data_ascent.accelerations.body_acc;
-% 
-% % pre-allocation
-% abs_X = zeros(Na, 1); abs_V = abs_X; abs_A = abs_X;
-% 
-% % determine the norm of every row element
-% for k = 1:Na
-%     abs_X(k) = norm(Xa(k, :));
-%     abs_V(k) = norm(Va(k, :));
-%     abs_A(k) = norm(A(k, :));
-% end
-% 
-% [max_dist, imax_dist] = max(abs_X);
-% [max_v, imax_v] = max(abs_V);
-% [max_a, imax_a] = max(abs_A);
-% iexit = find(abs_X <= settings.lrampa);  % checking where the missile is undocked from the hook of the launch pad
-% iexit = iexit(end);
-% 
-% % TEMPERATURE AND MACH NUMBER
-% 
-% % pre-allocation
-% M = zeros(Na, 1); Tamb = M;
-% 
-% for i = 1:Na
-%     [Tamb(i), a, ~, ~] = atmosisa(za(i));
-%     M(i) = abs_V(i)/a;
-% end
-% 
-% % determine the maximum Mach number
-% [max_M, imax_M] = max(M);
-% 
-% % determine latitude and longitude of the landing point
-% [lat_LP, lon_LP, ~] = ned2geodetic(xa(end), ya(end), 0, settings.lat0, settings.lon0, 0, wgs84Ellipsoid);
-% 
-% % DATA RECORD (display)
-% 
-% disp(' ')
-% disp('DATA RECORD:')
-% fprintf('apogee reached: %g [m] \n', za(end));
-% 
-% fprintf('time: %g [sec] \n\n', Ta(end))
-% 
-% fprintf('max speed reached: %g [m/s] \n', max_v)
-% fprintf('altitude: %g [m] \n', za(imax_v))
-% fprintf('Mach: %g [-] \n', M(imax_v))
-% fprintf('time: %g [sec] \n\n', Ta(imax_v))
-% 
-% fprintf('max Mach reached: %g [-] \n', max_M)
-% fprintf('altitude: %g [m] \n', za(imax_M))
-% fprintf('velocity: %g [m/s] \n', abs_V(imax_M))
-% fprintf('time: %g [sec] \n\n', Ta(imax_M))
-% 
-% fprintf('max acceleration reached: %g [m/s2] = %g [g] \n', max_a, max_a/9.81)
-% fprintf('velocity: %g [m/s] \n', abs_V(imax_a))
-% fprintf('time: %g [sec] \n\n', Ta(imax_a))
-% 
-% fprintf('run on launch pad: %g [m] \n', abs_X(iexit))
-% fprintf('speed at launch pad exit: %g [m/s] \n', abs_V(iexit))
-% fprintf('time: %g [sec] \n\n', Ta(iexit))
-% 
-% fprintf('latitude of landing point: %10.8f [deg] \n',lat_LP);
-% fprintf('longitude of landing point: %10.8f [deg] \n\n',lon_LP);
-% 
-% 
-% % %% PLOTS
-% % if settings.plots
-% %     run('plots.m')
-% % end
-% % 
-% % if settings.stoch.N == 1
-% %     V_apo = norm(data_ascent.state.Y(end, 4:6) - ...
-% %         data_ascent.wind.body_wind(1:3, end)');
-% %     fprintf('apogee velocity relative to wind: %g [m/s] \n', V_apo);
-% %     delete('ascent_plot.mat')
-% % end
-% % 
-% % clearvars -except T data_ascent data_para data_bal flag LP
+if settings.plots
+    
+    % AERO FORCES
+    figure('Name','Forces - ascent Phase','NumberTitle','off');
+    plot(Tf, data_flight.forces.AeroDyn_Forces(:,1)),grid on;
+    xlabel('Time [s]'); ylabel('X-body force [N]')
+    
+    % CD
+    figure('Name','Drag Coefficient - ascent Phase','NumberTitle','off');
+    plot(Tf, data_flight.coeff.CA), title('Drag Coefficient vs time'), grid on;
+    xlabel('Time [s]'); ylabel('Drag Coeff CD [/]')
+    
+%     % ACCELERATION
+%     figure('Name','Velocity-Abs, Acceleration-Abs - ascent Phase','NumberTitle','off');
+%     subplot(1,2,1)
+%     plot(Tf, abs_V), grid on;
+%     xlabel('time [s]'), ylabel('|V| [m/s]');
+%     
+%     subplot(1,2,2)
+%     plot(Tf, abs_A/9.80665), grid on;
+%     xlabel('time [s]'), ylabel('|A| [g]');
+%        
+end
+
