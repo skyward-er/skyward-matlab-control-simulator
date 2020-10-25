@@ -1,4 +1,4 @@
-function [all_steps] = RecallOdeFcn(fun, T, Y, varargin)
+function [all_steps] = RecallOdeFcn(fun, T, Y, settings, C, varargin)
 %{
 
 RECALLODEFCN - This function allows to compute some parameters used
@@ -24,7 +24,7 @@ NT = length(T);
 
 for i = 1:NT
     
-    [~,single_step] = fun(T(i),Y(i,:),varargin{:});
+    [~,single_step] = fun(T(i),Y(i,:), settings, C(i), varargin{:});
     
     all_steps.integration.t(i) = single_step.integration.t;
     all_steps.interp.alt(i) = single_step.interp.alt;

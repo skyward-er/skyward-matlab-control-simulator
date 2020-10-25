@@ -100,19 +100,20 @@ vz = 1;
 Y0 = Ya(end,:);
 % [~, ~, p0, ~] = atmosisa(Ya(end,3));
 nmax = 10000;
-Yc_tot = zeros(nmax,20);
-Tc_tot = zeros(nmax,1);
-n_old=1;
+Yc_tot = zeros(nmax, 20);
+Tc_tot = zeros(nmax, 1);
+C = zeros(nmax, 1);
+n_old = 1;
 
 % control phase dynamics integration
 while vz > -10 || n_old < nmax
     
     % controllo
     
-    %[A] = controllo(Y0,t0);   % area totale aerofreno esposto
-    A = settings.Atot/2;                % waiting for the control 
-    c = (A/settings.Atot)*100;
-    c = 0;
+    %[At] = controllo(Y0,t0);           % total aerobrakes wet Area
+%     A = At/3;                         % single aerobrake wet Area
+    A = settings.Atot/6;                % waiting for the control 
+    c = A/settings.brakes_width;        % approximated aerobrakes heigth --> control variable of the simulator
     
     % dynamics
     [Tc,Yc] = ode45(@ascent, [t0, t1], Y0, [], settings, c, uw, vw, ww, uncert);
@@ -132,6 +133,7 @@ while vz > -10 || n_old < nmax
     [n, ~] = size(Yc);
     Yc_tot(n_old:n_old+n-1,:) = Yc(1:end,:);
     Tc_tot(n_old:n_old+n-1) = Tc(1:end,1);
+    C(n_old:n_old+n-1) = c;
     
     n_old = n_old + n -1;
    
@@ -146,7 +148,9 @@ Tc_tot = Tc_tot(1:n_old,:);
 Yf = [Ya; Yc_tot(2:end,:)];
 Tf = [Ta; Tc_tot(2:end,:)];
 
+C = [zeros(length(Ta) - 1, 1); C];
+
 %% RETRIVE PARAMETERS FROM THE ODE
-data_flight = RecallOdeFcn(@ascent, Tf, Yf, settings, c, uw, vw, ww, uncert);
+data_flight = RecallOdeFcn(@ascent, Tf, Yf, settings, C, uw, vw, ww, uncert);
 
 

@@ -107,7 +107,8 @@ clear('s');
 
 settings.Mach_control = 0.7;        % Mach of activation of aerobrakes 
 settings.freq = 0.1;                % dt between each controlo signal 
-settings.Atot = 100e-4;             % [m^2] total area of aerobrakes (100% out)
+settings.Atot = 0.08*0.04*3;        % [m^2] total area of aerobrakes (100% out)
+settings.brakes_width = 0.08;       % [m] aerobrakes width (the fixed in-plane length)
                                
 %% INTEGRATION OPTIONS
 settings.ode.final_time =  2000;                                    % [s] Final integration time
