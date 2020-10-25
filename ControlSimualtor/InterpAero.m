@@ -2,7 +2,9 @@ function [V] = InterpAero(settings, AoAvec, Mvec, Bvec, hvec, cvec, CmatF, CmatE
 
 %{
 
-interp4_easy - This function interpolate with nearest-neighbor method a R4->R function
+InterpAero - This function interpolate with nearest-neighbor method a R4->R
+the aerodynamics coefficient and a linear interpolation in time or control
+action
 
 INPUTS:
             - F = F(x1...x4), [NxMxLxI] Matrix that discretize the function;
@@ -12,10 +14,10 @@ INPUTS:
 OUTPUTS:
             - V interpolated coefficients.
 
-Author: Ruben Di Battista
-Skyward Experimental Rocketry | CRD Dept | crd@skywarder.eu
-email: ruben.dibattista@skywarder.eu
-April 2014; Last revision: 25.IV.2014
+Author: Adriano Filippo Inno
+Skyward Experimental Rocketry | AFD Dept
+email: adriano.filippo.inno@skywarder.eu
+Release date: 25/10/2020
 
 %}
 
