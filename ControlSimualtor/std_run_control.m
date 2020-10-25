@@ -89,7 +89,6 @@ tf = settings.ode.final_time;
 %% BURNING ASCENT
 
 [Ta, Ya] = ode113(@ascent, [0, tf], Y0a, settings.ode.optionsasc1, settings, uw, vw, ww, uncert);
-[data_ascent] = RecallOdeFcn(@ascent, Ta, Ya, settings, uw, vw, ww, uncert);
 
 %% CONTROL PHASE
 
@@ -103,14 +102,10 @@ Y0 = Ya(end,:);
 nmax = 10000;
 Yc_tot = zeros(nmax,20);
 Tc_tot = zeros(nmax,1);
-data_control.velocities = zeros(nmax,3);
-data_control.accelerations.body_acc = zeros(nmax,3);
-data_control.forces.AeroDyn_Forces = zeros(nmax,3);
-data_control.coeff.CA = zeros(nmax,1);
 n_old=1;
 
 % control phase dynamics integration
-while vz > -10
+while vz > -10 || n_old < nmax
     
     % controllo
     
@@ -120,7 +115,6 @@ while vz > -10
     
     % dynamics
     [Tc,Yc] = ode45(@ascent, [t0, t1], Y0, [], settings, uw, vw, ww, uncert);
-    [data_control_temp] = RecallOdeFcn(@ascent, Tc, Yc, settings, uw, vw, ww, uncert);
     
     % evaluate the condition for cycle condition 
     Q = Yc(end,10:13);
@@ -131,17 +125,12 @@ while vz > -10
     t0 = t0 + dt;
     t1 = t1 + dt;
     Y0 = Yc(end,:);
-    [T, ~, p0, ~] = atmosisa(Yc(end,3));        % pressure and temperature at each sample time  
+%     [T, ~, p0, ~] = atmosisa(Yc(end, 3));        % pressure and temperature at each sample time  
             
     % assemble total state
     [n, ~] = size(Yc);
     Yc_tot(n_old:n_old+n-1,:) = Yc(1:end,:);
     Tc_tot(n_old:n_old+n-1) = Tc(1:end,1);
-    
-    data_control.velocities(n_old:n_old+n-1,3) = data_control_temp.velocities(:,3);
-    data_control.accelerations.body_acc(n_old:n_old+n-1,3) = data_control_temp.accelerations.body_acc(:,3);
-    data_control.forces.AeroDyn_Forces(n_old:n_old+n-1,3) = data_control_temp.forces.AeroDyn_Forces(:,3);
-    data_control.coeff.CA(n_old:n_old+n-1,1) = data_control_temp.coeff.CA(:,1);
     
     n_old = n_old + n -1;
    
@@ -149,19 +138,14 @@ end
 
 
 %% ASSEMBLE TOTAL FLIGHT STATE
-data_control.velocities = data_control.velocities(1:n_old,:);
-data_control.accelerations.body_acc = data_control.accelerations.body_acc(1:n_old,:);
-data_control.forces.AeroDyn_Forces = data_control.forces.AeroDyn_Forces(1:n_old,:);
-data_control.coeff.CA = data_control.coeff.CA(1:n_old,1);
-
-data_flight.velocities = [data_ascent.velocities ; data_control.velocities(2:end,:)];
-data_flight.accelerations.body_acc = [ data_ascent.accelerations.body_acc ; data_control.accelerations.body_acc(2:end,:)];
-data_flight.forces.AeroDyn_Forces = [ data_ascent.forces.AeroDyn_Forces ; data_control.forces.AeroDyn_Forces(2:end,:)];
-data_flight.coeff.CA = [ data_ascent.coeff.CA ; data_control.coeff.CA(2:end,:)];
 
 Yc_tot = Yc_tot(1:n_old,:);
 Tc_tot = Tc_tot(1:n_old,:);
 
 Yf = [Ya; Yc_tot(2:end,:)];
 Tf = [Ta; Tc_tot(2:end,:)];
+
+%% RETRIVE PARAMETERS FROM THE ODE
+data_flight = RecallOdeFcn(@ascent, Tf, Yf, settings, uw, vw, ww, uncert);
+
 

@@ -1,4 +1,4 @@
-function [dY, parout] = ascent(t, Y, settings, uw, vw, ww, uncert, Hour, Day, OMEGA)
+function [dY, parout] = ascent(t, Y, settings, uw, vw, ww, uncert, Hour, Day)
 %{ 
 
 ASCENT - ode function of the 6DOF Rigid Rocket Model
@@ -53,8 +53,8 @@ Release date: 13/01/2018
 %}
 
 % recalling the state
-x = Y(1);
-y = Y(2);
+% x = Y(1);
+% y = Y(2);
 z = Y(3);
 u = Y(4);
 v = Y(5);
@@ -70,9 +70,6 @@ m = Y(14);
 Ixx = Y(15);
 Iyy = Y(16);
 Izz = Y(17);
-
-
-[lat, lon, ~] = ned2geodetic(x, y, 0, settings.lat0, settings.lon0, 0, wgs84Ellipsoid);     % geographic coordinates
 
 %% QUATERION ATTITUDE
 
@@ -385,12 +382,39 @@ dY = dY';
 
 %% SAVING QUANTITIES FOR PLOTS 
 
+parout.integration.t = t;
+
+parout.interp.M = M_value;
+parout.interp.alpha = alpha_value;
+parout.interp.beta = beta_value;
+parout.interp.alt = -z;
+
+parout.wind.NED_wind = [uw, vw, ww];
+parout.wind.body_wind = wind;
+
 parout.velocities=Vels;
 
 parout.forces.AeroDyn_Forces = [X, Y, Z];
+parout.forces.T = T;
+
+parout.air.rho = rho;
+parout.air.P = P;
 
 parout.accelerations.body_acc = [du, dv, dw];
+parout.accelerations.ang_acc = [dp, dq, dr];
 
 parout.coeff.CA = CA;
+parout.coeff.CYB = CYB;
+parout.coeff.CNA = CNA;
+parout.coeff.Cl = Cl;
+parout.coeff.Clp = Clp;
+parout.coeff.Cma = Cma;
+parout.coeff.Cmad = Cmad;
+parout.coeff.Cmq = Cmq;
+parout.coeff.Cnb = Cnb;
+parout.coeff.Cnr = Cnr;
+parout.coeff.Cnp = Cnp;
+parout.coeff.XCP = XCP_value;
+
 
 
