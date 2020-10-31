@@ -99,8 +99,13 @@ if settings.plots
     
     % AERO FORCES
     figure('Name','Forces - ascent Phase','NumberTitle','off');
+    subplot(1,2,1)
     plot(Tf, data_flight.forces.AeroDyn_Forces(:,1)),grid on;
     xlabel('Time [s]'); ylabel('X-body force [N]')
+    
+    subplot(1,2,2)
+    plot(abs_V(imax_v:end), data_flight.forces.AeroDyn_Forces(imax_v:end,1)),grid on;
+    xlabel('Velocity [m/s]'); ylabel('X-body force [N]')
     
     % CD
     figure('Name','Drag Coefficient - ascent Phase','NumberTitle','off');
