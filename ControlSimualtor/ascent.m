@@ -198,7 +198,7 @@ XCP_value = InterpAero(settings, A_datcom, M_datcom, B_datcom, H_datcom, C_datco
 if -z < settings.lrampa*sin(OMEGA)      % No torque on the Launch
     
     Fg = m*g*sin(OMEGA);                % [N] force due to the gravity
-    X = 1.4*0.5*rho*V_norm^2*S*CA;
+    X = 0.5*rho*V_norm^2*S*CA;
     F = -Fg +T -X;
     du = F/m;
     
@@ -227,7 +227,7 @@ else
     qdyn = 0.5*rho*V_norm^2;        %[Pa] dynamics pressure
     qdynL_V = 0.5*rho*V_norm*S*C; 
 
-    X = 1.4*qdyn*S*CA;              %[N] x-body component of the aerodynamics force
+    X = qdyn*S*CA;              %[N] x-body component of the aerodynamics force
     Y = qdyn*S*CYB*beta;            %[N] y-body component of the aerodynamics force
     Z = qdyn*S*CNA*alpha;           %[N] z-body component of the aerodynamics force
     Fg = quatrotate(Q,[0 0 m*g])';  %[N] force due to the gravity in body frame
