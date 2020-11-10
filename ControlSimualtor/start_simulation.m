@@ -107,10 +107,10 @@ if settings.plots
     plot(abs_V(imax_v:end), data_flight.forces.AeroDyn_Forces(imax_v:end,1)),grid on;
     xlabel('Velocity [m/s]'); ylabel('X-body force [N]')
     
-    % CD
-    figure('Name','Drag Coefficient - ascent Phase','NumberTitle','off');
-    plot(Tf, data_flight.coeff.CA), title('Drag Coefficient vs time'), grid on;
-    xlabel('Time [s]'); ylabel('Drag Coeff CD [/]')
+    % CA
+    figure('Name','Axial Drag Coefficient - ascent Phase','NumberTitle','off');
+    plot(Tf, data_flight.coeff.CA), title('Axial Drag Coefficient vs time'), grid on;
+    xlabel('Time [s]'); ylabel('CA [/]')
     
     % ACCELERATION
     figure('Name','Velocity-Abs, Acceleration-Abs - ascent Phase','NumberTitle','off');
