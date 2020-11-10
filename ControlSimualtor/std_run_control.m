@@ -112,8 +112,8 @@ while vz > -10 || n_old < nmax
     
     %[At] = controllo(Y0,t0);           % total aerobrakes wet Area
 %     A = At/3;                         % single aerobrake wet Area
-    A = settings.Atot/6;                % waiting for the control 
-    c = A/settings.brakes_width;        % approximated aerobrakes heigth --> control variable of the simulator
+    A = settings.Atot/6;                % waiting for the control
+    c = A/settings.brakesWidth;        % approximated aerobrakes heigth --> control variable of the simulator
     
     % dynamics
     [Tc,Yc] = ode45(@ascent, [t0, t1], Y0, [], settings, c, uw, vw, ww, uncert);

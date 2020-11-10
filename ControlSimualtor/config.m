@@ -31,8 +31,8 @@ filename_full = strcat(DATA_PATH,'MotorsList.mat');
 motors = load(filename_full,'MotorsByName');
 motors = motors.MotorsByName;
 
-name = 'M2020';
-%name = 'M1890';
+% name = 'M2020';
+name = 'M1890';
 %name = 'M1800';
 settings.motor.exp_time = motors.(name).t;
 settings.motor.exp_thrust = motors.(name).T;
@@ -105,10 +105,12 @@ clear('s');
 
 %% CONTROL SETTINGS 
 
-settings.Mach_control = 0.7;        % Mach of activation of aerobrakes 
-settings.freq = 0.1;                % dt between each controlo signal 
-settings.Atot = 0.08*0.04*3;        % [m^2] total area of aerobrakes (100% out)
-settings.brakes_width = 0.08;       % [m] aerobrakes width (the fixed in-plane length)
+settings.Mach_control = 0.7;                                        % Mach of activation of aerobrakes 
+settings.freq = 0.1;                                                % dt between each control signal 
+settings.brakesWidth = 0.116;                                       % [m] aerobrakes width (the fixed in-plane length)
+settings.brakesHeigth = 0.03;                                       % [m] max aerobrakes heigth (the control action)
+settings.Atot = settings.brakesWidth*settings.brakesHeigth*3;       % [m^2] total area of aerobrakes (100% out)
+
                                
 %% INTEGRATION OPTIONS
 settings.ode.final_time =  2000;                                    % [s] Final integration time
