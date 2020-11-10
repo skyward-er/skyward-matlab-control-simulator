@@ -1,4 +1,4 @@
-function [V] = InterpAero(settings, AoAvec, Mvec, Bvec, hvec, cvec, CmatF, CmatE, AoA, M, B, h, c, t)
+function [V, angle0] = InterpAero(settings, AoAvec, Mvec, Bvec, hvec, cvec, CmatF, CmatE, AoA, M, B, h, c, t)
 
 %{
 
@@ -53,5 +53,6 @@ else
     V = VE;
 end
 
+angle0 = [AoAvec(index(1)); Bvec(index(3))]; 
 
 

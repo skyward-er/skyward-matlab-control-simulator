@@ -182,18 +182,29 @@ H_datcom = settings.Altitudes;
 M_datcom = settings.Machs;
 C_datcom = settings.Controls;
 %
-CA = InterpAero(settings, A_datcom, M_datcom, B_datcom, H_datcom, C_datcom, CoeffsF.CA, CoeffsE.CA, alpha, M, beta, -z, c, t);
+[CA, angle0] = InterpAero(settings, A_datcom, M_datcom, B_datcom, H_datcom, C_datcom, CoeffsF.CA, CoeffsE.CA, alpha, M, beta, -z, c, t);
 CYB = InterpAero(settings, A_datcom, M_datcom, B_datcom, H_datcom, C_datcom, CoeffsF.CYB, CoeffsE.CYB, alpha, M, beta, -z, c, t);
+CY0 = InterpAero(settings, A_datcom, M_datcom, B_datcom, H_datcom, C_datcom, CoeffsF.CY, CoeffsE.CY, alpha, M, beta, -z, c, t);
 CNA = InterpAero(settings, A_datcom, M_datcom, B_datcom, H_datcom, C_datcom, CoeffsF.CNA, CoeffsE.CNA, alpha, M, beta, -z, c, t);
+CN0 = InterpAero(settings, A_datcom, M_datcom, B_datcom, H_datcom, C_datcom, CoeffsF.CN, CoeffsE.CN, alpha, M, beta, -z, c, t);
 Cl = InterpAero(settings, A_datcom, M_datcom, B_datcom, H_datcom, C_datcom, CoeffsF.CLL, CoeffsE.CLL, alpha, M, beta, -z, c, t);
 Clp = InterpAero(settings, A_datcom, M_datcom, B_datcom, H_datcom, C_datcom, CoeffsF.CLLP, CoeffsE.CLLP, alpha, M, beta, -z, c, t);
 Cma = InterpAero(settings, A_datcom, M_datcom, B_datcom, H_datcom, C_datcom, CoeffsF.CMA, CoeffsE.CMA, alpha, M, beta, -z, c, t);
+Cm0 = InterpAero(settings, A_datcom, M_datcom, B_datcom, H_datcom, C_datcom, CoeffsF.CM, CoeffsE.CM, alpha, M, beta, -z, c, t);
 Cmad = InterpAero(settings, A_datcom, M_datcom, B_datcom, H_datcom, C_datcom, CoeffsF.CMAD, CoeffsE.CMAD, alpha, M, beta, -z, c, t);
 Cmq = InterpAero(settings, A_datcom, M_datcom, B_datcom, H_datcom, C_datcom, CoeffsF.CMQ, CoeffsE.CMQ, alpha, M, beta, -z, c, t);
 Cnb = InterpAero(settings, A_datcom, M_datcom, B_datcom, H_datcom, C_datcom, CoeffsF.CLNB, CoeffsE.CLNB, alpha, M, beta, -z, c, t);
+Cn0 = InterpAero(settings, A_datcom, M_datcom, B_datcom, H_datcom, C_datcom, CoeffsF.CLN, CoeffsE.CLN, alpha, M, beta, -z, c, t);
 Cnr = InterpAero(settings, A_datcom, M_datcom, B_datcom, H_datcom, C_datcom, CoeffsF.CLNR, CoeffsE.CLNR, alpha, M, beta, -z, c, t);
 Cnp = InterpAero(settings, A_datcom, M_datcom, B_datcom, H_datcom, C_datcom, CoeffsF.CLNP, CoeffsE.CLNP, alpha, M, beta, -z, c, t);
 XCP_value = InterpAero(settings, A_datcom, M_datcom, B_datcom, H_datcom, C_datcom, CoeffsF.X_C_P, CoeffsE.X_C_P, alpha, M, beta, -z, c, t);
+
+alpha0 = angle0(1); beta0 = angle0(2);
+
+CN = (CN0 + CNA*(alpha-alpha0));
+CY = (CY0 + CYB*(beta-beta0));
+Cm = (Cm0 + Cma*(alpha-alpha0));
+Cn = (Cn0 + Cnb*(beta-beta0));
 
 if -z < settings.lrampa*sin(OMEGA)      % No torque on the Launch
     
@@ -228,8 +239,8 @@ else
     qdynL_V = 0.5*rho*V_norm*S*C; 
 
     X = qdyn*S*CA;              %[N] x-body component of the aerodynamics force
-    Y = qdyn*S*CYB*beta;            %[N] y-body component of the aerodynamics force
-    Z = qdyn*S*CNA*alpha;           %[N] z-body component of the aerodynamics force
+    Y = qdyn*S*CY;            %[N] y-body component of the aerodynamics force
+    Z = qdyn*S*CN;           %[N] z-body component of the aerodynamics force
     Fg = quatrotate(Q,[0 0 m*g])';  %[N] force due to the gravity in body frame
     
     F = Fg +[-X+T,+Y,-Z]';          %[N] total forces vector
@@ -243,9 +254,9 @@ else
     
     % Rotation
     dp = (Iyy-Izz)/Ixx*q*r + qdynL_V/Ixx*(V_norm*Cl+Clp*p*C/2)-Ixxdot*p/Ixx;
-    dq = (Izz-Ixx)/Iyy*p*r + qdynL_V/Iyy*(V_norm*Cma*alpha + (Cmad+Cmq)*q*C/2)...
+    dq = (Izz-Ixx)/Iyy*p*r + qdynL_V/Iyy*(V_norm*Cm + (Cmad+Cmq)*q*C/2)...
         -Iyydot*q/Iyy;
-    dr = (Ixx-Iyy)/Izz*p*q + qdynL_V/Izz*(V_norm*Cnb*beta + (Cnr*r+Cnp*p)*C/2)...
+    dr = (Ixx-Iyy)/Izz*p*q + qdynL_V/Izz*(V_norm*Cn + (Cnr*r+Cnp*p)*C/2)...
         -Izzdot*r/Izz;
     
 end
