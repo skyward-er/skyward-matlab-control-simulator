@@ -31,8 +31,8 @@ filename_full = strcat(DATA_PATH,'MotorsList.mat');
 motors = load(filename_full,'MotorsByName');
 motors = motors.MotorsByName;
 
-% name = 'M2020';
-name = 'M1890';
+name = 'M2020';
+% name = 'M1890';
 %name = 'M1800';
 settings.motor.exp_time = motors.(name).t;
 settings.motor.exp_thrust = motors.(name).T;

@@ -138,11 +138,11 @@ while vz > -10 || n_old < nmax
     
     %dAlphaMax = % 0.13 sec/60 degree
     
-%     % PLOT SERVO CONTROL ANGLE
-%     figure(10);
-%     plot(t0, alpha,'*'),grid on;
-%     hold on;
-%     xlabel('Time [s]'); ylabel('Control Angle [rad]')
+    % PLOT SERVO CONTROL ANGLE
+    figure(10);
+    plot(t0, alpha,'*'),grid on;
+    hold on;
+    xlabel('Time [s]'); ylabel('Control Angle [rad]')
     
     %% Calculate area of airbreaks
     % alpha varies from 0.6283 rad (retracted) to -0.2618 rad (extracted)
@@ -155,7 +155,7 @@ while vz > -10 || n_old < nmax
     
 %     [At] = controllo(Y0,t0);           % total aerobrakes wet Area
 %     A = At/3;                         % single aerobrake wet Area
-     A = settings.Atot/3;                % waiting for the control
+%      A = settings.Atot/3;                % waiting for the control
     
     c = A/settings.brakesWidth;        % approximated aerobrakes heigth --> control variable of the simulator
     
