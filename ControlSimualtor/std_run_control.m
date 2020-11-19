@@ -105,14 +105,26 @@ Tc_tot = zeros(nmax, 1);
 C = zeros(nmax, 1);
 n_old = 1;
 
+
+alphaDefault=settings.all_alpha(1);
+alpha=alphaDefault;
+alphaOld=alphaDefault;
+
+z=-Y0(3);
+zLast=z;
+
 % control phase dynamics integration
 while vz > -10 || n_old < nmax
     
-    % velocity and altitude
+    %% velocity and altitude
     z=-Y0(3);
-    Vc=Y0(4);
+    Vz=(z-zLast)/dt; % Caluclated vertical velocity
+    Vu=Y0(4);
+    zLast=z;
 
-    if Vc<255
+    %% Control
+    
+    if Vu<200 % start control when velocity under 250 m/s
         %% Controller
         % get index of actual hight z
         if z>=settings.hightInterval(end)
@@ -125,24 +137,34 @@ while vz > -10 || n_old < nmax
 
         % linear interpolate between the values for all_alpha at the actual hight
         % index
-        if Vc>=settings.all_Vz(iz,end)
+        if Vz>=settings.all_Vz(iz,end)
             alpha = settings.all_alpha(end);
-        elseif Vc<=settings.all_Vz(iz,1)
+        elseif Vz<=settings.all_Vz(iz,1)
             alpha = settings.all_alpha(1);
         else
-            alpha = interp1(settings.all_Vz(iz,:),settings.all_alpha,Vc);
+            alpha = interp1(settings.all_Vz(iz,:),settings.all_alpha,Vz);
         end
     else
         alpha = settings.all_alpha(1);
     end
     
-    %dAlphaMax = % 0.13 sec/60 degree
+    %% Limit changing speed of alpha
+    dAlphaMax = (pi/180*60)/0.13*dt; % 60 degree/0.13 sec from servo
+    dAlphaMax = dAlphaMax*0.1; % multiplied by a value < 1
+    difAlphas=alpha-alphaOld;
+    difAlphas=max(difAlphas,-dAlphaMax);
+    difAlphas=min(difAlphas,dAlphaMax);
+    alpha=alphaOld+difAlphas;
+    alphaOld=alpha;
+    
     
     % PLOT SERVO CONTROL ANGLE
     figure(10);
     plot(t0, alpha,'*'),grid on;
     hold on;
     xlabel('Time [s]'); ylabel('Control Angle [rad]')
+    
+    
     
     %% Calculate area of airbreaks
     % alpha varies from 0.6283 rad (retracted) to -0.2618 rad (extracted)
@@ -151,7 +173,7 @@ while vz > -10 || n_old < nmax
     
     % calculate air brake area
     Aall=(-9.43386*alpha^2-8.01285*alpha+8.76405)*10^-3; % area of all airbrakes (3)
-    A=0.01/3; % area of one airbrake
+    A=Aall/3; % area of one airbrake
     
 %     [At] = controllo(Y0,t0);           % total aerobrakes wet Area
 %     A = At/3;                         % single aerobrake wet Area
