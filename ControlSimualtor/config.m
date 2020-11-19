@@ -174,3 +174,10 @@ settings.wind.AzMax = (360)*pi/180;                   % [rad] Maximum Azimuth, u
 
 %% PLOT DETAILS
 settings.plots = true;
+
+
+%% CONTROL PARAMETER
+data=load('ControllerLookup.mat');
+settings.all_Vz=data.all_Vz;
+settings.all_alpha=data.all_alpha;
+settings.hightInterval=data.hightInterval;

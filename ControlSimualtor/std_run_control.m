@@ -108,11 +108,55 @@ n_old = 1;
 % control phase dynamics integration
 while vz > -10 || n_old < nmax
     
-    % controllo
+    % velocity and altitude
+    z=-Y0(3);
+    Vc=Y0(4);
+
+    if Vc<255
+        %% Controller
+        % get index of actual hight z
+        if z>=settings.hightInterval(end)
+            iz = length(settings.hightInterval);
+        elseif z<=settings.hightInterval(1)
+            iz = 1;
+        else
+            iz = interp1(settings.hightInterval,1:length(settings.hightInterval),z,'nearest');
+        end
+
+        % linear interpolate between the values for all_alpha at the actual hight
+        % index
+        if Vc>=settings.all_Vz(iz,end)
+            alpha = settings.all_alpha(end);
+        elseif Vc<=settings.all_Vz(iz,1)
+            alpha = settings.all_alpha(1);
+        else
+            alpha = interp1(settings.all_Vz(iz,:),settings.all_alpha,Vc);
+        end
+    else
+        alpha = settings.all_alpha(1);
+    end
     
-    %[At] = controllo(Y0,t0);           % total aerobrakes wet Area
+    %dAlphaMax = % 0.13 sec/60 degree
+    
+%     % PLOT SERVO CONTROL ANGLE
+%     figure(10);
+%     plot(t0, alpha,'*'),grid on;
+%     hold on;
+%     xlabel('Time [s]'); ylabel('Control Angle [rad]')
+    
+    %% Calculate area of airbreaks
+    % alpha varies from 0.6283 rad (retracted) to -0.2618 rad (extracted)
+    alpha=max(alpha,-0.2618);
+    alpha=min(alpha,0.6283);
+    
+    % calculate air brake area
+    Aall=(-9.43386*alpha^2-8.01285*alpha+8.76405)*10^-3; % area of all airbrakes (3)
+    A=0.01/3; % area of one airbrake
+    
+%     [At] = controllo(Y0,t0);           % total aerobrakes wet Area
 %     A = At/3;                         % single aerobrake wet Area
-    A = settings.Atot/6;                % waiting for the control
+     A = settings.Atot/3;                % waiting for the control
+    
     c = A/settings.brakesWidth;        % approximated aerobrakes heigth --> control variable of the simulator
     
     % dynamics

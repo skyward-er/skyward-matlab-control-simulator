@@ -121,6 +121,11 @@ if settings.plots
     subplot(1,2,2)
     plot(Tf, abs_A/9.80665), grid on;
     xlabel('time [s]'), ylabel('|A| [g]');
+    
+    % ALTITUDE
+    figure('Name','Altitude','NumberTitle','off');
+    plot(Tf, -Yf(:,3)),grid on;
+    xlabel('Time [s]'); ylabel('Altitude [m]')
        
 end
 
