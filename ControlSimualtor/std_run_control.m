@@ -114,10 +114,10 @@ while vz > -10 || n_old < nmax
 %     A = At/3;                         % single aerobrake wet Area
     A = settings.Atot/6;                % waiting for the control
     c = A/settings.brakesWidth;        % approximated aerobrakes heigth --> control variable of the simulator
-    
+   % tic 
     % dynamics
     [Tc,Yc] = ode45(@ascent, [t0, t1], Y0, [], settings, c, uw, vw, ww, uncert);
-    
+   % toc
     % evaluate the condition for cycle condition 
     Q = Yc(end,10:13);
     vels = quatrotate(quatconj(Q),Yc(end,4:6));
