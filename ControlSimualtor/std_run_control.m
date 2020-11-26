@@ -113,6 +113,9 @@ alphaOld=alphaDefault;
 z=-Y0(3);
 zLast=z;
 
+start1state=230; % velocity when control should start
+start2state=100; % velocity when control should end and alpha keeps last control value
+
 % control phase dynamics integration
 while vz > -10 || n_old < nmax
     
@@ -123,8 +126,7 @@ while vz > -10 || n_old < nmax
     zLast=z;
 
     %% Control
-    
-    if Vu<200 % start control when velocity under 250 m/s
+    if Vu<start1state && Vu>start2state % start control when velocity under 233 m/s
         %% Controller
         % get index of actual hight z
         if z>=settings.hightInterval(end)
@@ -139,18 +141,21 @@ while vz > -10 || n_old < nmax
         % index
         if Vz>=settings.all_Vz(iz,end)
             alpha = settings.all_alpha(end);
-        elseif Vz<=settings.all_Vz(iz,1)
+        elseif Vz<=settings.all_Vz(iz,1) 
             alpha = settings.all_alpha(1);
         else
             alpha = interp1(settings.all_Vz(iz,:),settings.all_alpha,Vz);
         end
+    % do not change alpha at end of the flight (not controllable)
+    elseif Vu<=start2state
+        alpha=alphaOld;
     else
         alpha = settings.all_alpha(1);
     end
     
     %% Limit changing speed of alpha
     dAlphaMax = (pi/180*60)/0.13*dt; % 60 degree/0.13 sec from servo
-    dAlphaMax = dAlphaMax*0.1; % multiplied by a value < 1
+    dAlphaMax = dAlphaMax*0.5; % multiplied by a value < 1
     difAlphas=alpha-alphaOld;
     difAlphas=max(difAlphas,-dAlphaMax);
     difAlphas=min(difAlphas,dAlphaMax);
@@ -167,12 +172,12 @@ while vz > -10 || n_old < nmax
     
     
     %% Calculate area of airbreaks
-    % alpha varies from 0.6283 rad (retracted) to -0.2618 rad (extracted)
-    alpha=max(alpha,-0.2618);
-    alpha=min(alpha,0.6283);
+    % alpha varies from 0 to 0.89 rad
+    alpha=max(alpha,0);
+    alpha=min(alpha,0.89);
     
     % calculate air brake area
-    Aall=(-9.43386*alpha^2-8.01285*alpha+8.76405)*10^-3; % area of all airbrakes (3)
+    Aall=(-9.43386*alpha^2 + 19.86779*alpha)*10^(-3); % area of all airbrakes (3)
     A=Aall/3; % area of one airbrake
     
 %     [At] = controllo(Y0,t0);           % total aerobrakes wet Area
