@@ -72,30 +72,27 @@ Iyy = Y(16);
 Izz = Y(17);
 
 %% QUATERION ATTITUDE
-
 Q = [q0 q1 q2 q3];
 Q_conj = [q0 -q1 -q2 -q3];
 normQ = norm(Q);
 
-if abs(normQ-1) > 0.1
+if abs(normQ - 1) > 0.1
     Q = Q/normQ;
 end
 
 
 %% ADDING WIND (supposed to be added in NED axes);
-
-
 if settings.wind.model
    
     if settings.stoch.N > 1
-        [uw,vw,ww] = wind_matlab_generator(settings,z,t,Hour,Day);
+        [uw, vw, ww] = wind_matlab_generator(settings, z, t, Hour, Day);
     else
-        [uw,vw,ww] = wind_matlab_generator(settings,z,t);
+        [uw, vw, ww] = wind_matlab_generator(settings, z, t);
     end
     
 elseif settings.wind.input
 
-    [uw,vw,ww] = wind_input_generator(settings,z,uncert);    
+    [uw, vw, ww] = wind_input_generator(settings, z, uncert);    
 end
 
 wind = quatrotate(Q, [uw vw ww]);
@@ -106,21 +103,42 @@ vr = v - wind(2);
 wr = w - wind(3);
 
 % Body to Inertial velocities
-Vels = quatrotate(Q_conj,[u v w]);
+Vels = quatrotate(Q_conj, [u v w]);
 V_norm = norm([ur vr wr]);
 
 %% ATMOSPHERE DATA
-
 if -z < 0     % z is directed as the gravity vector
     z = 0;
 end
 
-[~, a, P, rho] = atmosisa(-z+settings.z0);
+h = -z + settings.z0;
+
+atmC = [9.80665, 1.4, 287.0531, 0.0065, 11000, 20000, ...
+            1.225, 101325, 288.15]; % atmosisa constants:
+
+h(h > atmC(6)) = atmC(6);
+h(h < 0) = 0;
+hGrThHTS = (h > atmC(5));
+
+h_tmp = h;
+h_tmp(hGrThHTS) = atmC(5);
+
+T = atmC(9) - atmC(4)*h_tmp;
+
+expon = ones(size(h));
+expon(hGrThHTS) = exp(atmC(1)./(atmC(3)*T(hGrThHTS)).*(atmC(5) - h(hGrThHTS)));
+
+a = sqrt(T*atmC(2)*atmC(3));
+
+theta = T/atmC(9);
+
+P = atmC(8)*theta.^(atmC(1)/(atmC(4)*atmC(3))).*expon;
+rho = atmC(7)*theta.^((atmC(1)/(atmC(4)*atmC(3)))-1.0).*expon;  
+
 M = V_norm/a;
 M_value = M;
 
 %% CONSTANTS
-
 S = settings.S;              % [m^2] cross surface
 C = settings.C;              % [m]   caliber
 CoeffsE = settings.CoeffsE;  % Empty Rocket Coefficients
@@ -141,9 +159,7 @@ Ixxe = settings.Ixxe;        % [kg*m^2] Inertia to x-axis
 Iyye = settings.Iyye;        % [kg*m^2] Inertia to y-axis
 Izze = settings.Izze;        % [kg*m^2] Inertia to z-axis
 
-
 %% TIME-DEPENDENTS VARIABLES
-
 dI = 1/tb*([Ixxf Iyyf Izzf]'-[Ixxe Iyye Izze]');
 
 if t<tb
@@ -162,7 +178,6 @@ else             % for t >= tb the fligth condition is the empty one(no interpol
 end
 
 %% AERODYNAMICS ANGLES
-
 if not(ur < 1e-9 || V_norm < 1e-9)
     alpha = atan(wr/ur);
     beta = atan(vr/ur);             % beta = asin(vr/V_norm); is the classical notation, Datcom uses this one though. 
@@ -175,31 +190,61 @@ alpha_value = alpha;
 beta_value = beta;
 
 %% DATCOM COEFFICIENTS
-
 A_datcom = settings.Alphas*pi/180;
 B_datcom = settings.Betas*pi/180;
 H_datcom = settings.Altitudes;
 M_datcom = settings.Machs;
 C_datcom = settings.Controls;
-%
-[CA, angle0] = InterpAero(settings, A_datcom, M_datcom, B_datcom, H_datcom, C_datcom, CoeffsF.CA, CoeffsE.CA, alpha, M, beta, -z, c, t);
-CYB = InterpAero(settings, A_datcom, M_datcom, B_datcom, H_datcom, C_datcom, CoeffsF.CYB, CoeffsE.CYB, alpha, M, beta, -z, c, t);
-CY0 = InterpAero(settings, A_datcom, M_datcom, B_datcom, H_datcom, C_datcom, CoeffsF.CY, CoeffsE.CY, alpha, M, beta, -z, c, t);
-CNA = InterpAero(settings, A_datcom, M_datcom, B_datcom, H_datcom, C_datcom, CoeffsF.CNA, CoeffsE.CNA, alpha, M, beta, -z, c, t);
-CN0 = InterpAero(settings, A_datcom, M_datcom, B_datcom, H_datcom, C_datcom, CoeffsF.CN, CoeffsE.CN, alpha, M, beta, -z, c, t);
-Cl = InterpAero(settings, A_datcom, M_datcom, B_datcom, H_datcom, C_datcom, CoeffsF.CLL, CoeffsE.CLL, alpha, M, beta, -z, c, t);
-Clp = InterpAero(settings, A_datcom, M_datcom, B_datcom, H_datcom, C_datcom, CoeffsF.CLLP, CoeffsE.CLLP, alpha, M, beta, -z, c, t);
-Cma = InterpAero(settings, A_datcom, M_datcom, B_datcom, H_datcom, C_datcom, CoeffsF.CMA, CoeffsE.CMA, alpha, M, beta, -z, c, t);
-Cm0 = InterpAero(settings, A_datcom, M_datcom, B_datcom, H_datcom, C_datcom, CoeffsF.CM, CoeffsE.CM, alpha, M, beta, -z, c, t);
-Cmad = InterpAero(settings, A_datcom, M_datcom, B_datcom, H_datcom, C_datcom, CoeffsF.CMAD, CoeffsE.CMAD, alpha, M, beta, -z, c, t);
-Cmq = InterpAero(settings, A_datcom, M_datcom, B_datcom, H_datcom, C_datcom, CoeffsF.CMQ, CoeffsE.CMQ, alpha, M, beta, -z, c, t);
-Cnb = InterpAero(settings, A_datcom, M_datcom, B_datcom, H_datcom, C_datcom, CoeffsF.CLNB, CoeffsE.CLNB, alpha, M, beta, -z, c, t);
-Cn0 = InterpAero(settings, A_datcom, M_datcom, B_datcom, H_datcom, C_datcom, CoeffsF.CLN, CoeffsE.CLN, alpha, M, beta, -z, c, t);
-Cnr = InterpAero(settings, A_datcom, M_datcom, B_datcom, H_datcom, C_datcom, CoeffsF.CLNR, CoeffsE.CLNR, alpha, M, beta, -z, c, t);
-Cnp = InterpAero(settings, A_datcom, M_datcom, B_datcom, H_datcom, C_datcom, CoeffsF.CLNP, CoeffsE.CLNP, alpha, M, beta, -z, c, t);
-XCP_value = InterpAero(settings, A_datcom, M_datcom, B_datcom, H_datcom, C_datcom, CoeffsF.X_C_P, CoeffsE.X_C_P, alpha, M, beta, -z, c, t);
 
-alpha0 = angle0(1); beta0 = angle0(2);
+cellT = {A_datcom, M_datcom, B_datcom, H_datcom};
+inst = [alpha, M, beta, -z];
+
+index = zeros(4,1);
+for i = 1:4
+    [~, index(i)] = min(abs(cellT{i} - inst(i)));
+end
+
+
+coeffsNames = {'CA','CYB','CY','CNA','CN','CLL','CLLP','CMA','CM',...
+    'CMAD','CMQ','CLNB','CLN','CLNR','CLNP'};
+coeffsValues = zeros(15,1);
+
+for i = 1:14
+    
+    CmatE = CoeffsE.(coeffsNames{i});
+    CmatF = CoeffsF.(coeffsNames{i});
+    
+    if c == 0
+        VE = CmatE(index(1), index(2), index(3), index(4), 1);
+    else
+        c_cmp = C_datcom(c > C_datcom); 
+        n0 = length(c_cmp);
+        n1 = n0 + 1;
+        c0 = c_cmp(end);
+        c1 = C_datcom(n1);
+        C0 =  CmatE(index(1), index(2), index(3), index(4), n0);
+        C1 =  CmatE(index(1), index(2), index(3), index(4), n1);
+        VE = C1 + ((C1 - C0)/(c1 - c0))*(c - c1);
+    end
+
+    if t <= tb
+        VF = CmatF(index(1), index(2), index(3), index(4));
+        
+        coeffsValues(i) =  t/tb*(VE-VF)+VF;
+    else 
+        coeffsValues(i) = VE;
+    end
+
+end
+
+% Retrieve Coefficients 
+CA = coeffsValues(1); CYB = coeffsValues(2); CY0 = coeffsValues(3);
+CNA = coeffsValues(4); CN0 = coeffsValues(5); Cl = coeffsValues(6);
+Clp = coeffsValues(7); Cma = coeffsValues(8); Cm0 = coeffsValues(9);
+Cmad = coeffsValues(10); Cmq = coeffsValues(11); Cnb = coeffsValues(12);
+Cn0 = coeffsValues(13); Cnr = coeffsValues(14); Cnp = coeffsValues(15);
+
+alpha0 = A_datcom(index(1)); beta0 = B_datcom(index(3));
 
 CN = (CN0 + CNA*(alpha-alpha0));
 CY = (CY0 + CYB*(beta-beta0));
@@ -223,8 +268,6 @@ if -z < settings.lrampa*sin(OMEGA)      % No torque on the Launch
     beta_value = NaN;
     Y = 0;
     Z = 0;
-    XCP_value = NaN;
-    
     
     if T < Fg                           % No velocity untill T = Fg
         du = 0;
@@ -234,7 +277,6 @@ else
     
     %% FORCES
     % first computed in the body-frame reference system
-    
     qdyn = 0.5*rho*V_norm^2;        %[Pa] dynamics pressure
     qdynL_V = 0.5*rho*V_norm*S*C; 
 
@@ -246,7 +288,6 @@ else
     F = Fg +[-X+T,+Y,-Z]';          %[N] total forces vector
     
     %% STATE DERIVATIVES
-    
     % velocity
     du = F(1)/m-q*w+r*v;
     dv = F(2)/m-r*u+p*w;
@@ -269,7 +310,6 @@ OM = 1/2* [ 0 -p -q -r  ;
 dQQ = OM*Q';
 
 %% FINAL DERIVATIVE STATE ASSEMBLING
-
 dY(1:3) = Vels;
 dY(4) = du;
 dY(5) = dv;
@@ -286,40 +326,40 @@ dY(18:20) = [p q r];
 dY = dY';
 
 %% SAVING QUANTITIES FOR PLOTS 
-
-parout.integration.t = t;
-
-parout.interp.M = M_value;
-parout.interp.alpha = alpha_value;
-parout.interp.beta = beta_value;
-parout.interp.alt = -z;
-
-parout.wind.NED_wind = [uw, vw, ww];
-parout.wind.body_wind = wind;
-
-parout.velocities=Vels;
-
-parout.forces.AeroDyn_Forces = [X, Y, Z];
-parout.forces.T = T;
-
-parout.air.rho = rho;
-parout.air.P = P;
-
-parout.accelerations.body_acc = [du, dv, dw];
-parout.accelerations.ang_acc = [dp, dq, dr];
-
-parout.coeff.CA = CA;
-parout.coeff.CYB = CYB;
-parout.coeff.CNA = CNA;
-parout.coeff.Cl = Cl;
-parout.coeff.Clp = Clp;
-parout.coeff.Cma = Cma;
-parout.coeff.Cmad = Cmad;
-parout.coeff.Cmq = Cmq;
-parout.coeff.Cnb = Cnb;
-parout.coeff.Cnr = Cnr;
-parout.coeff.Cnp = Cnp;
-parout.coeff.XCP = XCP_value;
+if not(settings.electronics)
+    parout.integration.t = t;
+    
+    parout.interp.M = M_value;
+    parout.interp.alpha = alpha_value;
+    parout.interp.beta = beta_value;
+    parout.interp.alt = -z;
+    
+    parout.wind.NED_wind = [uw, vw, ww];
+    parout.wind.body_wind = wind;
+    
+    parout.velocities=Vels;
+    
+    parout.forces.AeroDyn_Forces = [X, Y, Z];
+    parout.forces.T = T;
+    
+    parout.air.rho = rho;
+    parout.air.P = P;
+    
+    parout.accelerations.body_acc = [du, dv, dw];
+    parout.accelerations.ang_acc = [dp, dq, dr];
+    
+    parout.coeff.CA = CA;
+    parout.coeff.CYB = CYB;
+    parout.coeff.CNA = CNA;
+    parout.coeff.Cl = Cl;
+    parout.coeff.Clp = Clp;
+    parout.coeff.Cma = Cma;
+    parout.coeff.Cmad = Cmad;
+    parout.coeff.Cmq = Cmq;
+    parout.coeff.Cnb = Cnb;
+    parout.coeff.Cnr = Cnr;
+    parout.coeff.Cnp = Cnp;
+end
 
 
 

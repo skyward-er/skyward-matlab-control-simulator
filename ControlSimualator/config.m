@@ -10,9 +10,14 @@ Release date: 16/04/2016
 
 %}
 
+%% SIMULATION SETTINGS
+settings.electronics = false;
+settings.ascentOnly = false;
+settings.ballisticFligth = false;
+
 %% LAUNCH SETUP
 % launchpad
-settings.z0 = 200;                                                                    %[m] Launchpad Altitude
+settings.z0 = 109;                                                                    %[m] Launchpad Altitude
 settings.lrampa = 4.9;                                                              %[m] LaunchPad route (distance from ground of the first hook)
 settings.lat0 = 44.519272;                                                          % Launchpad latitude
 settings.lon0 = 11.642333;                                                          % Launchpad longitude
@@ -22,7 +27,6 @@ settings.lon0 = 11.642333;                                                      
 % angles must be the same.
 settings.OMEGA = 84*pi/180;        %[rad] Minimum Elevation Angle, user input in degrees (ex. 80)
 settings.PHI = 180*pi/180;         %[rad] Minimum Azimuth Angle from North Direction, user input in degrees (ex. 90)
-settings.upwind = false;              % If true, phi is selected according to wind direction (constant wind model only)
 
 %% ENGINE DETAILS
 % load motors data 
@@ -31,8 +35,8 @@ filename_full = strcat(DATA_PATH,'MotorsList.mat');
 motors = load(filename_full,'MotorsByName');
 motors = motors.MotorsByName;
 
-% name = 'M2020';
-name = 'M1890';
+name = 'M2020';
+% name = 'M1890';
 %name = 'M1800';
 settings.motor.exp_time = motors.(name).t;
 settings.motor.exp_thrust = motors.(name).T;
@@ -111,6 +115,20 @@ settings.brakesWidth = 0.116;                                       % [m] aerobr
 settings.brakesHeigth = 0.03;                                       % [m] max aerobrakes heigth (the control action)
 settings.Atot = settings.brakesWidth*settings.brakesHeigth*3;       % [m^2] total area of aerobrakes (100% out)
 
+%% PARACHUTES DETAILS
+% parachute 1
+settings.para(1).S = 1.55;                                          % [m^2]   Surface
+settings.para(1).mass = 0.4;                                        % [kg]   Parachute Mass
+settings.para(1).CD = 0.75;                                         % [/] Parachute Drag Coefficient
+settings.para(1).CL = 0;                                            % [/] Parachute Lift Coefficient
+settings.para(1).z_cut = 300;                                       % [m] Final altitude of the parachute
+
+% parachute 2
+settings.para(2).S = 10.5;                                          % [m^2]   Surface
+settings.para(2).mass = 0.8;                                        % [kg]   Parachute Mass
+settings.para(2).CD = 0.7;                                          % [/] Parachute Drag Coefficient
+settings.para(2).CL = 0;                                            % [/] Parachute Lift Coefficient
+settings.para(2).z_cut = 0;                                         % [m] Final altitude of the parachute
                                
 %% INTEGRATION OPTIONS
 settings.ode.final_time =  2000;                                    % [s] Final integration time
@@ -159,8 +177,8 @@ settings.wind.input_uncertainty = [1, 1];
 
 % Wind is generated randomly from the minimum to the maximum parameters which defines the wind.
 % Setting the same values for min and max will fix the parameters of the wind.
-settings.wind.MagMin = 0;                           % [m/s] Minimum Magnitude
-settings.wind.MagMax = 0;                          % [m/s] Maximum Magnitude
+settings.wind.MagMin = 1;                           % [m/s] Minimum Magnitude
+settings.wind.MagMax = 1;                          % [m/s] Maximum Magnitude
 settings.wind.ElMin = 0*pi/180;                     % [rad] Minimum Elevation, user input in degrees (ex. 0)
 settings.wind.ElMax = 0*pi/180;                     % [rad] Maximum Elevation, user input in degrees (ex. 0) (Max == 90 Deg)
 settings.wind.AzMin = (360)*pi/180;                   % [rad] Minimum Azimuth, user input in degrees (ex. 90)
