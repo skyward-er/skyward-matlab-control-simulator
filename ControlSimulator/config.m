@@ -13,7 +13,8 @@ Release date: 16/04/2016
 %% SIMULATION SETTINGS
 settings.electronics = false;
 settings.ascentOnly = false;
-settings.ballisticFligth = false;
+settings.ballisticFligth = true;
+settings.dataNoise = true;
 
 %% LAUNCH SETUP
 % launchpad

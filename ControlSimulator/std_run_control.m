@@ -101,19 +101,21 @@ cpuTimes = zeros(nmax,1);
 iTimes = 0;
 
 while flagStopIntegration || n_old < nmax
+    tic 
+    iTimes = iTimes + 1;
     
     lastFlagAscent = flagAscent;
-    
-    iTimes = iTimes + 1;
-    tic
 
-    %%%%%%%%%%%%%%%% to be removed %%%%%%%%%%%%%%%%
-    if t0 >= settings.tb && mach <= 0.7
-%         [x, flagBurning, flagAeroBrakes, flagAscent, flagPara1, flagPara2, flagFligth] = controlAlgorithm();
-        A = settings.Atot/6;                % waiting for the control
-        x = A/settings.brakesWidth;        % approximated aerobrakes heigth --> control variable of the simulator
-    else 
-        x = 0;
+    if t0 <= settings.tb
+        flagBurning = true;
+    else
+        flagBurning = false;
+    end
+    
+    if not(flagBurning) && mach <=0.7
+        flagAeroBrakes = true;
+    else
+        flagAeroBrakes = false;
     end
     
     if z < 0
@@ -140,9 +142,7 @@ while flagStopIntegration || n_old < nmax
         flagPara1 = false;
         flagPara2 = false;
     end
-    
-    
-    %%%%%%%%%%%%%%%% to be removed %%%%%%%%%%%%%%%%
+   
     
     % dynamics
     if settings.ballisticFligth
@@ -166,7 +166,33 @@ while flagStopIntegration || n_old < nmax
         end
     end
     
+    %%%%
+    % acc_body, ang_vel, q --> 100hz
+    % pos/vel --> 10hz
+    % p --> 20hz
+    % dt = t1-t0 = 1/fc    Y(0), ...., Y(1) --> fk
     
+    %%%%%
+    if dataNoise
+        Yf = acquisitionSystem(Yf);    
+    end
+    %%%%%
+    
+    
+    %%%%%%% kalmann filter %%%%%%%%
+    % kalman(p, acc_body, ang_vel, q, [u, v, w]ned, [x, y, z]ned )
+    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    
+    if flagAeroBrakes
+        % [alpha] = controlAlgorithm(z, vz, V, Yf, Tf);
+        % alpha -- > x;
+        A = settings.Atot/6;                % waiting for the control
+        x = A/settings.brakesWidth;         % approximated aerobrakes heigth --> control variable of the simulator
+    else 
+        x = 0;
+    end    
+
     % vertical velocity and position
     if flagAscent
         Q = Yf(end, 10:13);
