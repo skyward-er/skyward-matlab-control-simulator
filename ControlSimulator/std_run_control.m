@@ -91,7 +91,8 @@ z = 1;
 flagStopIntegration = true;
 nmax = 10000;
 mach = 0;
-flagMatr = false(nmax, 4);
+x = 0;
+flagMatr = false(nmax, 6);
 flagAscent = false;
 Yf_tot = zeros(nmax, 20);
 Tf_tot = zeros(nmax, 1);
@@ -173,7 +174,7 @@ while flagStopIntegration || n_old < nmax
     % dt = t1-t0 = 1/fc    Y(0), ...., Y(1) --> fk
     
     %%%%%
-    if dataNoise
+    if settings.dataNoise
         Yf = acquisitionSystem(Yf);    
     end
     %%%%%
@@ -234,7 +235,7 @@ while flagStopIntegration || n_old < nmax
          flagStopIntegration = flagFligth;
      end        
     
-     flagMatr(n_old:n_old+n-1, :) = repmat([flagFligth, flagAscent, flagPara1, flagPara2], n, 1);
+     flagMatr(n_old:n_old+n-1, :) = repmat([flagFligth, flagAscent, flagBurning, flagAeroBrakes, flagPara1, flagPara2], n, 1);
 end
 cpuTimes = cpuTimes(1:iTimes);
 
