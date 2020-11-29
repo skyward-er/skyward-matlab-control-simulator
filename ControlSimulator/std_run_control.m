@@ -83,7 +83,7 @@ end
 
 %% INTEGRATION
 % setting initial condition before control phase
-dt = settings.freq;
+dt = 1/settings.controlFrequency;
 t0 = 0;
 t1 = t0 + dt;
 vz = 1;
@@ -204,9 +204,7 @@ while flagStopIntegration || n_old < nmax
     end
     z = -Yf(end, 3);
     
-    % update ode every cycle 
-    t0 = t0 + dt;
-    t1 = t1 + dt;
+
     
     if lastFlagAscent && not(flagAscent)
         Y0 = [Yf(end, 1:3), vels, Yf(end, 7:end)];
@@ -218,6 +216,10 @@ while flagStopIntegration || n_old < nmax
     [~, a, ~, ~] = atmosisa(z);        % pressure and temperature at each sample time
     normV = norm(Yf(end, 4:6));
     mach = normV/a;
+    
+    % time update
+    t0 = t0 + dt;
+    t1 = t1 + dt;
     
     % assemble total state
     [n, ~] = size(Yf);

@@ -108,10 +108,17 @@ settings.Machs = s.State.Machs';
 settings.Controls = s.State.hprot';
 clear('s');
 
+%% CONTROL AND SENSOR FREQUENCIES
+settings.controlFrequency = 10;                                     % [hz] control action frequency 
+settings.accelerometerFrequency = 100;                                     % [hz] control action frequency 
+settings.gyroFrequency = 100;                                     % [hz] control action frequency 
+settings.magnetometerFrequency = 100;                                     % [hz] control action frequency 
+settings.gpsFrequency = 10;                                     % [hz] control action frequency 
+settings.barometerFrequency = 10;                                     % [hz] control action frequency 
+
 %% CONTROL SETTINGS 
 
 settings.Mach_control = 0.7;                                        % Mach of activation of aerobrakes 
-settings.freq = 0.1;                                                % dt between each control signal 
 settings.brakesWidth = 0.116;                                       % [m] aerobrakes width (the fixed in-plane length)
 settings.brakesHeigth = 0.03;                                       % [m] max aerobrakes heigth (the control action)
 settings.Atot = settings.brakesWidth*settings.brakesHeigth*3;       % [m^2] total area of aerobrakes (100% out)
