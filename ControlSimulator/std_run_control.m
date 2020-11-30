@@ -25,14 +25,6 @@ Revision date: 09/10/2019
 
 %}
 
-if settings.wind.model && settings.wind.input
-    error('Both wind model and input wind are true, select just one of them')
-end
-
-if settings.wind.HourMin ~= settings.wind.HourMax || settings.wind.HourMin ~= settings.wind.HourMax
-    error('With the wind model the day and the hour of launch must be unique, check config.m')
-end
-
 if not(settings.ballisticFligth) && settings.ascentOnly
    error('To simulate a landing with the parachutes, settings.ascentOnly must be false') 
 end
@@ -49,7 +41,7 @@ theta0 = [0 0 0]';
 Y0 = [X0; V0; W0; Q0; settings.m0; settings.Ixxf; settings.Iyyf; settings.Izzf; theta0];
 
 %% WIND GENERATION
-if settings.wind.model || settings.wind.input   % will be computed inside the integrations
+if settings.wind.input   % will be computed inside the integrations
     uw = 0; vw = 0; ww = 0;
 else
     [uw,vw,ww,~] = wind_const_generator(settings.wind.AzMin, settings.wind.AzMax,...
@@ -83,7 +75,7 @@ end
 
 %% INTEGRATION
 % setting initial condition before control phase
-dt = 1/settings.controlFrequency;
+dt = 1/settings.frequencies.controlFrequency;
 t0 = 0;
 t1 = t0 + dt;
 vz = 1;
@@ -166,23 +158,15 @@ while flagStopIntegration || n_old < nmax
                 settings.Iyye*ones(nd, 1), settings.Iyye*ones(nd, 1), zeros(nd, 3)];
         end
     end
+
+    [sensorData] = manageSignalFrequencies(flagAscent, settings, Yf, Tf, x, uw, vw, ww, uncert);
     
-    %%%%
-    % acc_body, ang_vel, q --> 100hz
-    % pos/vel --> 10hz
-    % p --> 20hz
-    % dt = t1-t0 = 1/fc    Y(0), ...., Y(1) --> fk
-    
-    %%%%%
     if settings.dataNoise
         Yf = acquisitionSystem(Yf);    
     end
-    %%%%%
-    
-    
+  
     %%%%%%% kalmann filter %%%%%%%%
     % kalman(p, acc_body, ang_vel, q, [u, v, w]ned, [x, y, z]ned )
-    
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     if flagAeroBrakes
@@ -242,7 +226,6 @@ end
 cpuTimes = cpuTimes(1:iTimes);
 
 %% ASSEMBLE TOTAL FLIGHT STATE
-
 Yf = Yf_tot(1:n_old, :);
 Tf = Tf_tot(1:n_old, :);
 flagMatr = flagMatr(1:n_old, :);

@@ -1,4 +1,4 @@
-function dY = descentParachute(t, Y, settings, uw, vw, ww, para, uncert, Hour, Day)
+function dY = descentParachute(~, Y, settings, uw, vw, ww, para, uncert)
 %{ 
 
 descentParachute - ode function of the 3DOF Rigid Rocket-Paraachute Model
@@ -48,18 +48,8 @@ w = Y(6);
 
 %% ADDING WIND (supposed to be added in NED axes);
 
-if settings.wind.model
-    
-    if settings.stoch.N > 1
-        [uw, vw, ww] = wind_matlab_generator(settings, z, t, Hour, Day);
-    else
-        [uw, vw, ww] = wind_matlab_generator(settings, z, t);
-    end
-    
-elseif settings.wind.input
-    
+if settings.wind.input 
     [uw, vw, ww] = wind_input_generator(settings, z, uncert);    
-    
 end
 
 wind = [uw vw ww];

@@ -1,4 +1,4 @@
-function [dY, parout] = ascent(t, Y, settings, c, uw, vw, ww, uncert, Hour, Day)
+function [dY, parout] = ascent(t, Y, settings, c, uw, vw, ww, uncert)
 %{ 
 
 ASCENT - ode function of the 6DOF Rigid Rocket Model
@@ -82,16 +82,7 @@ end
 
 
 %% ADDING WIND (supposed to be added in NED axes);
-if settings.wind.model
-   
-    if settings.stoch.N > 1
-        [uw, vw, ww] = wind_matlab_generator(settings, z, t, Hour, Day);
-    else
-        [uw, vw, ww] = wind_matlab_generator(settings, z, t);
-    end
-    
-elseif settings.wind.input
-
+if settings.wind.input
     [uw, vw, ww] = wind_input_generator(settings, z, uncert);    
 end
 
@@ -209,7 +200,7 @@ coeffsNames = {'CA','CYB','CY','CNA','CN','CLL','CLLP','CMA','CM',...
     'CMAD','CMQ','CLNB','CLN','CLNR','CLNP'};
 coeffsValues = zeros(15,1);
 
-for i = 1:14
+for i = 1:15
     
     CmatE = CoeffsE.(coeffsNames{i});
     CmatF = CoeffsF.(coeffsNames{i});
@@ -337,7 +328,7 @@ if not(settings.electronics)
     parout.wind.NED_wind = [uw, vw, ww];
     parout.wind.body_wind = wind;
     
-    parout.velocities=Vels;
+    parout.velocities = Vels;
     
     parout.forces.AeroDyn_Forces = [X, Y, Z];
     parout.forces.T = T;
