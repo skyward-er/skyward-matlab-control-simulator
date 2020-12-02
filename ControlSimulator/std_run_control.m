@@ -101,6 +101,45 @@ n_old = 1;
 cpuTimes = zeros(nmax,1);
 iTimes = 0;
 
+
+
+%%%%%%%%%%%%%%%%%%%%% VARIABLES NEEDED FOR CONTROL %%%%%%%%%%%%%%%%%%%%%%%%
+
+% Define global variables
+global coeff_Cd data_1 data_2 data_3 data_4 data_5 data_6 data_7 data_8 data_9 data_10 data_11
+
+% Load coefficients for Cd
+data = load('coeffs.mat');
+coeff_Cd = data.coeffs;
+
+% Load the trajectories
+data_1 = load('Trajectory_1.mat');
+data_2 = load('Trajectory_2.mat');
+data_3 = load('Trajectory_3.mat');
+data_4 = load('Trajectory_4.mat');
+data_5 = load('Trajectory_5.mat');
+data_6 = load('Trajectory_6.mat');
+data_7 = load('Trajectory_7.mat');
+data_8 = load('Trajectory_8.mat');
+data_9 = load('Trajectory_9.mat');
+data_10 = load('Trajectory_10.mat');
+data_11 = load('Trajectory_11.mat');
+
+% Define global variables
+global Kp Ki I alpha_degree_prec iteration_flag chosen_trajectory saturation
+Kp = 40; % 40
+Ki = 8; % 8
+I = 0;
+alpha_degree_prec = 0;
+iteration_flag = 1;
+saturation = false;
+
+index_plot = 1; % To plot
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
 while flagStopIntegration || n_old < nmax
     tic 
     iTimes = iTimes + 1;
@@ -177,8 +216,12 @@ while flagStopIntegration || n_old < nmax
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     if flagAeroBrakes
-         alpha_degree = controlAlgorithm(z, vz, vx);
+         alpha_degree = controlAlgorithm(z, vz, normV, dt);
          x = get_extension_from_angle(alpha_degree);
+         
+         % Save the values of the control variable to plot it
+         plot_control_variable(index_plot) = alpha_degree;
+         index_plot = index_plot + 1;
     else 
         x = 0;
     end    
@@ -188,10 +231,8 @@ while flagStopIntegration || n_old < nmax
         Q = Yf(end, 10:13);
         vels = quatrotate(quatconj(Q), Yf(end, 4:6));
         vz = - vels(3);
-        vx = vels(1); % Needed for the control algorithm. Ask if it is right
     else
         vz = -Yf(end, 6);
-        vx = Yf(end, 4);  % Needed for the control algorithm. Ask if it is right
     end
     z = -Yf(end, 3);
     
@@ -237,8 +278,57 @@ Yf = Yf_tot(1:n_old, :);
 Tf = Tf_tot(1:n_old, :);
 flagMatr = flagMatr(1:n_old, :);
 
-%% RETRIVE PARAMETERS FROM THE ODE
-if not(settings.electronics)
-    dataBallisticFlight = RecallOdeFcn(@ascent, Tf(flagMatr(:, 2)), Yf(flagMatr(:, 2), :), settings, C, uw, vw, ww, uncert);
+%% RETRIVE PARAMETERS FROM THE ODE (commentato senò non stampava grafici)
+% if not(settings.electronics)
+%     dataBallisticFlight = RecallOdeFcn(@ascent, Tf(flagMatr(:, 2)), Yf(flagMatr(:, 2), :), settings, C, uw, vw, ww, uncert);
+
+    
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+% Obtain the control variable
+time = 0:dt:(length(plot_control_variable)-1)*dt;
+% length(Ya)
+% size(Ya)
+% size(Tf)
+% length(Yf)
+% plot_control_variable = [zeros(length(Ya),1);
+%                          control_variable(:,1)];
+% size(plot_control_variable)                  
+                     
+% Obtain the altitude
+plot_z = -Yf(:,3);
+
+% Obtain the vertical velocity
+nStates = length(Yf);
+plot_Vz = zeros(nStates, 1);
+for index = 1:nStates
+    Q = Yf(index,10:13);
+    vels = quatrotate(quatconj(Q), Yf(index,4:6));
+    plot_Vz(index) = - vels(3);
+end
+
+% Control variable: aerobrake_surface_total
+figure('Name','Total aerobrake surface after burning phase','NumberTitle','off');
+plot(time, plot_control_variable), grid on;
+% plot(Tf, plot_control_variable), grid on;
+axis([0,20, 0,60])
+xlabel('time [s]'), ylabel('A [m^2]');
+
+% Altitude
+figure('Name','Time, Altitude','NumberTitle','off');
+plot(Tf, plot_z), grid on;
+xlabel('time [s]'), ylabel('z [m]');
+
+
+% Vertical Velocity
+figure('Name','Time, Vertical Velocity','NumberTitle','off');
+plot(Tf, plot_Vz), grid on;
+xlabel('time [s]'), ylabel('Vz [m/s]');
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
 end
 
