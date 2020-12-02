@@ -170,10 +170,14 @@ while flagStopIntegration || n_old < nmax
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     if flagAeroBrakes
-        % [alpha] = controlAlgorithm(z, vz, V, Yf, Tf);
-        % alpha -- > x;
-        A = settings.Atot/6;                % waiting for the control
-        x = A/settings.brakesWidth;         % approximated aerobrakes heigth --> control variable of the simulator
+         % New method
+         alpha_degree = controlAlgorithm(z, vz, vx);
+         x = get_extension_from_angle(alpha_degree);
+         
+         % Old method
+         A = settings.Atot/6;                 % waiting for the control
+         A = 0.01/3; % doesn't work
+         x = A/settings.brakesWidth;          % approximated aerobrakes heigth --> control variable of the simulator
     else 
         x = 0;
     end    
@@ -183,8 +187,10 @@ while flagStopIntegration || n_old < nmax
         Q = Yf(end, 10:13);
         vels = quatrotate(quatconj(Q), Yf(end, 4:6));
         vz = - vels(3);
+        vx = -vels(1); % Needed for the control algorithm. Ask if it is right
     else
         vz = -Yf(end, 6);
+        vx = -Yf(end, 4);  % Needed for the control algorithm. Ask if it is right
     end
     z = -Yf(end, 3);
     
