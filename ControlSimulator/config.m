@@ -22,6 +22,7 @@ settings.z0 = 109;                                                          %[m]
 settings.lrampa = 4.9;                                                      %[m] LaunchPad route (distance from ground of the first hook)
 settings.lat0 = 44.519272;                                                  % Launchpad latitude
 settings.lon0 = 11.642333;                                                  % Launchpad longitude
+settings.launchDate = [2021, 10, 15];                                       % [YYYY, mm, dd] date of launch
 
 % launchpad directions
 % for a single run the maximum and the minimum value of the following
@@ -149,7 +150,7 @@ settings.ode.final_time =  2000;                                            % [s
 % - stopped (it has to be created)
 % - InitialStep is the highest value tried by the solver
 
-settings.ode.optionsasc1 = odeset('Events',@event_mach,'InitialStep',1);    %ODE options for not control phase 
+settings.ode.optionsasc1 = odeset('Events',@event_mach,'InitialStep',1);    % ODE options for not control phase 
 
 %% WIND DETAILS
 % select which model you want to use:
@@ -158,10 +159,10 @@ settings.ode.optionsasc1 = odeset('Events',@event_mach,'InitialStep',1);    %ODE
 settings.wind.input = false;
 % Wind is generated for every altitude interpolating with the coefficient defined below
 
-settings.wind.input_ground = 7;                                             %wind magnitude at the ground [m/s]
-settings.wind.input_alt = [0 100 600 750 900 1500 2500];                    %altitude vector [m]
-settings.wind.input_mult = [0 0 10 15 20 30 30];                            %percentage of increasing magnitude at each altitude
-settings.wind.input_azimut = [30 30 30 30 30 30 30];                        %wind azimut angle at each altitude (toward wind incoming direction) [deg]
+settings.wind.input_ground = 7;                                             % wind magnitude at the ground [m/s]
+settings.wind.input_alt = [0 100 600 750 900 1500 2500];                    % altitude vector [m]
+settings.wind.input_mult = [0 0 10 15 20 30 30];                            % percentage of increasing magnitude at each altitude
+settings.wind.input_azimut = [30 30 30 30 30 30 30];                        % wind azimut angle at each altitude (toward wind incoming direction) [deg]
 
 settings.wind.input_uncertainty = [1, 1];
 % settings.wind.input_uncertainty = [a,b];      wind uncertanties:

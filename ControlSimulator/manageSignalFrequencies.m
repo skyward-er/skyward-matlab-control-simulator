@@ -1,4 +1,4 @@
-function [sensorData] = manageSignalFrequencies(flagAscent, settings, Y, T, x, uw, vw, ww, uncert)
+function [sensorData] = manageSignalFrequencies(magneticFieldApprox, flagAscent, settings, Y, T, x, uw, vw, ww, uncert)
 
 %{
 
@@ -101,6 +101,8 @@ if freq.magnetometerFrequency > freq.controlFrequency
         error('the sensor frequency must be a multiple of the control frequency');
     end
     sensorData.magnetometer.time = linspace(T(1), T(end), N);
+    Q = zeros(N, 4);
+    z = zeros(1, N);
     if settings.ballisticFligth || (not(settings.ballisticFligth) && flagAscent)
         for i = 1:N
             iTimeMagnetometer = sensorData.magnetometer.time(i);
@@ -108,23 +110,31 @@ if freq.magnetometerFrequency > freq.controlFrequency
                 [index0] = find(iTimeMagnetometer < T);
                 index1 = index0(1);
                 index0 = index1 - 1;
-                Y1 = Y(index1, 10:13);
-                Y0 = Y(index0, 10:13);
+                Y1 = Y(index1, [3, 10:13]);
+                Y0 = Y(index0, [3, 10:13]);
                 T1 = T(index1);
                 T0 = T(index0);
                 % linear interpolation between the 2 states
                 m = (Y1 - Y0)./(T1 - T0);
                 q = Y1 - m*T1;
-                sensorData.magnetometer.measures(i, :) = m*iTimeMagnetometer + q;
+                Yinterp = m*iTimeMagnetometer + q;
+                z(i) = - Yinterp(1);
+                Q(i, :) = Yinterp(2:end);
             else
-                sensorData.magnetometer.measures(i, :) = Y(iTimeMagnetometer == T, 10:13);
+                z(i) = - Y(iTimeMagnetometer == T, 3);
+                Q(i, :) = Y(iTimeMagnetometer == T, 10:13);
             end
         end
+        magnFieldInertial = magneticFieldApprox(z + settings.z0)';
+        sensorData.magnetometer.measure = quatrotate(Q, magnFieldInertial);
     else
-        sensorData.magnetometer.measures(1:N, 1:4) = repmat(zeros(1, 4), N, 1);
+        sensorData.magnetometer.measure = repmat(magneticFieldApprox(0), N, 1);
     end
 else
-    sensorData.magnetometer.measures(1, :) = Y(end, 10:13);
+    z = -Y(end, 3);
+    Q = Y(end, 10:13);
+    magnFieldInertial = magneticFieldApprox(z + settings.z0)';
+    sensorData.magnetometer.measure = quatrotate(Q, magnFieldInertial);
     sensorData.magnetometer.time = T(end);
 end
 
@@ -204,7 +214,6 @@ sensorData.gps.velocityMeasures(:, 3) = -sensorData.gps.velocityMeasures(:, 3);
 
 
 %% barometer 
-
 if freq.barometerFrequency > freq.controlFrequency
     N = freq.barometerFrequency/freq.controlFrequency;
     z = zeros(N, 1);

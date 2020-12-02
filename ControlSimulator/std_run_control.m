@@ -73,6 +73,14 @@ else
     uncert = [0,0];
 end
 
+%% MAGNETIC FIELD MODEL
+dy = decyear(settings.launchDate);
+hmax = 6000;
+[XYZ0] = wrldmagm(0, settings.lat0, settings.lon0, dy, '2020');
+[XYZh] = wrldmagm(hmax, settings.lat0, settings.lon0, dy, '2020');
+
+magneticFieldApprox = @(zSlm) XYZ0 + (XYZh-XYZ0)./hmax.*zSlm;
+
 %% INTEGRATION
 % setting initial condition before control phase
 dt = 1/settings.frequencies.controlFrequency;
@@ -105,7 +113,7 @@ while flagStopIntegration || n_old < nmax
         flagBurning = false;
     end
     
-    if not(flagBurning) && mach <=0.7
+    if flagAscent && not(flagBurning) && mach <=0.7
         flagAeroBrakes = true;
     else
         flagAeroBrakes = false;
@@ -135,7 +143,6 @@ while flagStopIntegration || n_old < nmax
         flagPara1 = false;
         flagPara2 = false;
     end
-   
     
     % dynamics
     if settings.ballisticFligth
@@ -159,7 +166,7 @@ while flagStopIntegration || n_old < nmax
         end
     end
 
-    [sensorData] = manageSignalFrequencies(flagAscent, settings, Yf, Tf, x, uw, vw, ww, uncert);
+    [sensorData] = manageSignalFrequencies(magneticFieldApprox, flagAscent, settings, Yf, Tf, x, uw, vw, ww, uncert);
     
     if settings.dataNoise
         Yf = acquisitionSystem(Yf);    
@@ -170,27 +177,21 @@ while flagStopIntegration || n_old < nmax
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     if flagAeroBrakes
-         % New method
          alpha_degree = controlAlgorithm(z, vz, vx);
          x = get_extension_from_angle(alpha_degree);
-         
-         % Old method
-         A = settings.Atot/6;                 % waiting for the control
-         A = 0.01/3; % doesn't work
-         x = A/settings.brakesWidth;          % approximated aerobrakes heigth --> control variable of the simulator
     else 
         x = 0;
     end    
 
     % vertical velocity and position
-    if flagAscent
+    if flagAscent || (not(flagAscent) && settings.ballisticFligth)
         Q = Yf(end, 10:13);
         vels = quatrotate(quatconj(Q), Yf(end, 4:6));
         vz = - vels(3);
-        vx = -vels(1); % Needed for the control algorithm. Ask if it is right
+        vx = vels(1); % Needed for the control algorithm. Ask if it is right
     else
         vz = -Yf(end, 6);
-        vx = -Yf(end, 4);  % Needed for the control algorithm. Ask if it is right
+        vx = Yf(end, 4);  % Needed for the control algorithm. Ask if it is right
     end
     z = -Yf(end, 3);
     
