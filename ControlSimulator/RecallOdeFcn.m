@@ -58,7 +58,7 @@ for i = 1:NT
 %     all_steps.coeff.Cnr(i) = single_step.coeff.Cnr;
 %     all_steps.coeff.Cnp(i) = single_step.coeff.Cnp;
     
-    if isfield(single_step.coeff, 'XCP')
-        all_steps.coeff.XCP(i) = single_step.coeff.XCP;
-    end
+%     if isfield(single_step.coeff, 'XCP')
+%         all_steps.coeff.XCP(i) = single_step.coeff.XCP;
+%     end
 end
