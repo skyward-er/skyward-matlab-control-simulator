@@ -11,7 +11,7 @@ Release date: 16/04/2016
 %}
 
 %% SIMULATION SETTINGS
-settings.electronics = true;
+settings.electronics = false;
 settings.ascentOnly = false;
 settings.ballisticFligth = true;
 settings.dataNoise = false;
@@ -189,3 +189,6 @@ settings.wind.AzMax = (360)*pi/180;                                         % [r
 
 %% PLOT DETAILS
 settings.plots = true;
+
+%% Control
+run('configControl.m');

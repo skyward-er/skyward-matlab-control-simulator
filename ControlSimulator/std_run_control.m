@@ -177,7 +177,14 @@ while flagStopIntegration || n_old < nmax
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     if flagAeroBrakes
-         alpha_degree = controlAlgorithm(z, vz, vx);
+         alpha_degree = controlAlgorithm(z, vz, normV ,settings);
+         
+         % PLOT SERVO CONTROL ANGLE
+         figure(10);
+         plot(t0, alpha_degree,'*'),grid on;
+         hold on;
+         xlabel('Time [s]'); ylabel('Control Angle [deg]')
+        
          x = get_extension_from_angle(alpha_degree);
     else 
         x = 0;
