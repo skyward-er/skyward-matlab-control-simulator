@@ -118,8 +118,8 @@ data_trajectories = struct_trajectories.trajectories_saving;
 
 % Define global variables
 global Kp Ki I alpha_degree_prec index_min_value iteration_flag chosen_trajectory saturation
-Kp = 70; 
-Ki = 10; 
+Kp = 150; %70
+Ki = 10; %10 
 I = 0;
 alpha_degree_prec = 0;
 iteration_flag = 1;
@@ -308,7 +308,7 @@ figure('Name','Total aerobrake surface after burning phase','NumberTitle','off')
 plot(time, plot_control_variable), grid on;
 % plot(Tf, plot_control_variable), grid on;
 axis([0,20, 0,60])
-xlabel('time [s]'), ylabel('A [m^2]');
+xlabel('time [s]'), ylabel('Angle [deg]');
 
 
 % Altitude real vs setpoint
@@ -317,7 +317,7 @@ plot(time, plot_z_real,'DisplayName','real','LineWidth',0.8), grid on;
 hold on
 plot(time, plot_z_setpoint,'DisplayName','setpoint','LineWidth',0.8), grid on;
 axis([0,20, 0, 3100])
-xlabel('time [s]'), ylabel('A [m^2]');
+xlabel('time [s]'), ylabel('z [m]');
 hold off
 legend('Location','southeast')
 
@@ -328,7 +328,7 @@ plot(time, plot_Vz_real,'DisplayName','real','LineWidth',0.8), grid on;
 hold on
 plot(time, plot_Vz_setpoint, 'DisplayName','setpoint', 'LineWidth',0.8), grid on;
 axis([0,20, -50,300])
-xlabel('time [s]'), ylabel('A [m^2]');
+xlabel('time [s]'), ylabel('Vz [m]');
 hold off
 legend
 
@@ -336,6 +336,7 @@ legend
 % Total altitude
 figure('Name','Time, Altitude','NumberTitle','off');
 plot(Tf, plot_z), grid on;
+axis([0,50, 0, 3100])
 xlabel('time [s]'), ylabel('z [m]');
 
 

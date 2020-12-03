@@ -17,9 +17,10 @@ for ind = 1:length(data_trajectories)
 % Select a z trajectory and a Vz trajectory
 z_ref = data_trajectories(ind).Z_ref(1:100); % To speed up select only the first values, not ALL
 Vz_ref = data_trajectories(ind).V_ref(1:100); % To speed up select only the first values, not ALL
+distances_from_current_state = sqrt( (z_ref-z).^2 + (Vz_ref-Vz).^2 );
 
-% Find the value of z_reference nearer to z_misured
-[min_value, index_min_value] = min( abs(z_ref - z) ); 
+% Find the nearest point to the current trajectory
+[min_value, index_min_value] = min( distances_from_current_state ); 
 
 if (min_value < best_min)
     best_min = min_value;
@@ -55,11 +56,15 @@ Vz_ref = data_trajectories(chosen_trajectory).V_ref(index_min_value:end);
 % I select the reference altitude and vertical velocity
 % The reference altitude must NOT be below the current altitude
 if ( z_ref(index_min_value) < z && index_min_value+1 < length(z_ref) )
+%     real = z
+    real = Vz
     z_setpoint = z_ref(index_min_value+1);
-    Vz_setpoint = Vz_ref(index_min_value+1);
+    Vz_setpoint = Vz_ref(index_min_value+1)
 else
+%     real = z
+    real = Vz
     z_setpoint = z_ref(index_min_value);
-    Vz_setpoint = Vz_ref(index_min_value);
+    Vz_setpoint = Vz_ref(index_min_value)
 end
 
 end  
