@@ -1,13 +1,11 @@
-function [alpha_degree] = controlAlgorithm(z,Vz,V_mod,sample_time)
+function [alpha_degree, Vz_setpoint, z_setpoint] = controlAlgorithm(z,Vz,V_mod,sample_time)
 
 % Define global variables
-global coeff_Cd data_1 data_2 data_3 data_4 data_5 data_6 data_7 data_8 data_9 data_10 data_11
-global Kp Ki I alpha_degree_prec iteration_flag chosen_trajectory saturation
+global data_trajectories coeff_Cd 
+global Kp Ki I alpha_degree_prec index_min_value iteration_flag chosen_trajectory saturation
 
 
 %% TRAJECTORY SELECTION and REFERENCES COMPUTATION
-
-data_trajectories = [data_1, data_2, data_3, data_4, data_5, data_6, data_7, data_8, data_9, data_10, data_11];
 
 if iteration_flag == 1 % Choose the nearest trajectory ( only at the first iteration )
     
@@ -17,8 +15,8 @@ best_index = inf;
 for ind = 1:length(data_trajectories)
 
 % Select a z trajectory and a Vz trajectory
-z_ref = data_trajectories(ind).Z_ref;
-Vz_ref = data_trajectories(ind).V_ref;
+z_ref = data_trajectories(ind).Z_ref(1:100); % To speed up select only the first values, not ALL
+Vz_ref = data_trajectories(ind).V_ref(1:100); % To speed up select only the first values, not ALL
 
 % Find the value of z_reference nearer to z_misured
 [min_value, index_min_value] = min( abs(z_ref - z) ); 
@@ -26,38 +24,52 @@ Vz_ref = data_trajectories(ind).V_ref;
 if (min_value < best_min)
     best_min = min_value;
     best_index = index_min_value;
-    chosen_trajectory = ind;
+    chosen_trajectory = ind;  
 end
 
 end
+
+% Save the actual index to speed up the research
+index_min_value = best_index;
 
 % I select the reference altitude and the reference vertical velocity
-z_setpoint = z_ref(best_index);
-Vz_setpoint = Vz_ref(best_index);
+z_setpoint  =  data_trajectories(chosen_trajectory).Z_ref(index_min_value);
+Vz_setpoint =  data_trajectories(chosen_trajectory).V_ref(index_min_value);
 
 iteration_flag = 0; % Don't enter anymore the if condition
 
 else  % For the following iterations keep tracking the chosen trajectory
     
 % Select the z trajectory and the Vz trajectory
-z_ref =  data_trajectories(chosen_trajectory).Z_ref;
-Vz_ref = data_trajectories(chosen_trajectory).V_ref;
+% To speed up the research, I reduce the vector at each iteration: Z_ref(index_min_value:end)
+z_ref =  data_trajectories(chosen_trajectory).Z_ref(index_min_value:end);
+Vz_ref = data_trajectories(chosen_trajectory).V_ref(index_min_value:end);
 
 % Find the value of z_reference nearer to z_misured
 [~, index_min_value] = min( abs(z_ref - z) ); 
 
-% I select the reference altitude and the reference vertical velocity
-z_setpoint = z_ref(index_min_value);
-Vz_setpoint = Vz_ref(index_min_value);
+% % I select the reference altitude and vertical velocity
+% z_setpoint = z_ref(index_min_value);
+% Vz_setpoint = Vz_ref(index_min_value);
 
+% I select the reference altitude and vertical velocity
+% The reference altitude must NOT be below the current altitude
+if ( z_ref(index_min_value) < z && index_min_value+1 < length(z_ref) )
+    z_setpoint = z_ref(index_min_value+1);
+    Vz_setpoint = Vz_ref(index_min_value+1);
+else
+    z_setpoint = z_ref(index_min_value);
+    Vz_setpoint = Vz_ref(index_min_value);
 end
+
+end  
 
 
 %% PID ALGORITHM
 
 Umin = 0;      % F_drag_min = 0
 Umax = 1000;   % F_drag_max = 0.5*1.225*(0.0201+0.01)*1*250^2
-dt = 0.1; % ASK THE FINAL STEP TIME !!!!!!!!!!
+dt = 0.1;      % ASK THE FINAL STEP TIME !!!!!!!!!!
 
 error = (Vz - Vz_setpoint);
 
@@ -86,8 +98,6 @@ end
 
 % Parameters
 ro = getRho(z);
-m = 22;
-g = 9.81;
 diameter = 0.15; 
 S0 = (pi*diameter^2)/4;  
 
@@ -105,10 +115,10 @@ Cd_available = Cd_available';
 
 % For all possible delta_S compute Fdrag.
 % Then choose the delta_S which gives an Fdrag which has the minimum error if compared with F_drag_pid
-[~, index_min_value] = min( abs(U - 0.5*ro*S0*Cd_available*Vz*V_mod) ); 
+[~, index_minimum] = min( abs(U - 0.5*ro*S0*Cd_available*Vz*V_mod) ); 
 
 % Cd_available = Cd_available(index_min_value)
-delta_S = delta_S_available(index_min_value);  % delta_S belongs to [0; 0.01]
+delta_S = delta_S_available(index_minimum);  % delta_S belongs to [0; 0.01]
 
 %% TRANSFORMATION FROM delta_S to SERVOMOTOR ANGLE DEGREES
 
@@ -126,7 +136,7 @@ elseif (alpha_rad > 0.89)
     alpha_rad = 0.89;
 end
 
-alpha_degree = (alpha_rad*180)/pi
+alpha_degree = (alpha_rad*180)/pi;
 
 %% LIMIT THE RATE OF THE CONTROL VARIABLE
 

@@ -106,29 +106,20 @@ iTimes = 0;
 %%%%%%%%%%%%%%%%%%%%% VARIABLES NEEDED FOR CONTROL %%%%%%%%%%%%%%%%%%%%%%%%
 
 % Define global variables
-global coeff_Cd data_1 data_2 data_3 data_4 data_5 data_6 data_7 data_8 data_9 data_10 data_11
+global data_trajectories coeff_Cd 
 
 % Load coefficients for Cd
 data = load('coeffs.mat');
 coeff_Cd = data.coeffs;
 
 % Load the trajectories
-data_1 = load('Trajectory_1.mat');
-data_2 = load('Trajectory_2.mat');
-data_3 = load('Trajectory_3.mat');
-data_4 = load('Trajectory_4.mat');
-data_5 = load('Trajectory_5.mat');
-data_6 = load('Trajectory_6.mat');
-data_7 = load('Trajectory_7.mat');
-data_8 = load('Trajectory_8.mat');
-data_9 = load('Trajectory_9.mat');
-data_10 = load('Trajectory_10.mat');
-data_11 = load('Trajectory_11.mat');
+struct_trajectories = load('Trajectories');
+data_trajectories = struct_trajectories.trajectories_saving;
 
 % Define global variables
-global Kp Ki I alpha_degree_prec iteration_flag chosen_trajectory saturation
-Kp = 40; % 40
-Ki = 8; % 8
+global Kp Ki I alpha_degree_prec index_min_value iteration_flag chosen_trajectory saturation
+Kp = 70; 
+Ki = 10; 
 I = 0;
 alpha_degree_prec = 0;
 iteration_flag = 1;
@@ -216,10 +207,14 @@ while flagStopIntegration || n_old < nmax
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     if flagAeroBrakes
-         alpha_degree = controlAlgorithm(z, vz, normV, dt);
+         [alpha_degree, Vz_setpoint, z_setpoint] = controlAlgorithm(z, vz, normV, dt);
          x = get_extension_from_angle(alpha_degree);
          
-         % Save the values of the control variable to plot it
+         % Save the values to plot them
+         plot_Vz_real(index_plot) = vz;
+         plot_z_real(index_plot) = z;
+         plot_Vz_setpoint(index_plot) = Vz_setpoint;
+         plot_z_setpoint(index_plot) = z_setpoint;
          plot_control_variable(index_plot) = alpha_degree;
          index_plot = index_plot + 1;
     else 
@@ -296,10 +291,10 @@ time = 0:dt:(length(plot_control_variable)-1)*dt;
 %                          control_variable(:,1)];
 % size(plot_control_variable)                  
                      
-% Obtain the altitude
+% Obtain the total altitude
 plot_z = -Yf(:,3);
 
-% Obtain the vertical velocity
+% Obtain the total vertical velocity
 nStates = length(Yf);
 plot_Vz = zeros(nStates, 1);
 for index = 1:nStates
@@ -315,20 +310,42 @@ plot(time, plot_control_variable), grid on;
 axis([0,20, 0,60])
 xlabel('time [s]'), ylabel('A [m^2]');
 
-% Altitude
+
+% Altitude real vs setpoint
+figure('Name','Altitude real vs setpoint after burning phase','NumberTitle','off');
+plot(time, plot_z_real,'DisplayName','real','LineWidth',0.8), grid on;
+hold on
+plot(time, plot_z_setpoint,'DisplayName','setpoint','LineWidth',0.8), grid on;
+axis([0,20, 0, 3100])
+xlabel('time [s]'), ylabel('A [m^2]');
+hold off
+legend('Location','southeast')
+
+
+% Vertical velocity real vs setpoint
+figure('Name','Vertical velocity real vs setpoint after burning phase','NumberTitle','off');
+plot(time, plot_Vz_real,'DisplayName','real','LineWidth',0.8), grid on;
+hold on
+plot(time, plot_Vz_setpoint, 'DisplayName','setpoint', 'LineWidth',0.8), grid on;
+axis([0,20, -50,300])
+xlabel('time [s]'), ylabel('A [m^2]');
+hold off
+legend
+
+
+% Total altitude
 figure('Name','Time, Altitude','NumberTitle','off');
 plot(Tf, plot_z), grid on;
 xlabel('time [s]'), ylabel('z [m]');
 
 
-% Vertical Velocity
+% Total vertical velocity
 figure('Name','Time, Vertical Velocity','NumberTitle','off');
 plot(Tf, plot_Vz), grid on;
 xlabel('time [s]'), ylabel('Vz [m/s]');
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 
 end
 
