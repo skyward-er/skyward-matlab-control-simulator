@@ -11,9 +11,9 @@ Release date: 16/04/2016
 %}
 
 %% SIMULATION SETTINGS
-settings.electronics = true;
+settings.electronics = false;
 settings.ascentOnly = false;
-settings.ballisticFligth = true;
+settings.ballisticFligth = false;
 settings.dataNoise = false;
 
 %% LAUNCH SETUP
@@ -28,7 +28,7 @@ settings.launchDate = [2021, 10, 15];                                       % [Y
 % for a single run the maximum and the minimum value of the following
 % angles must be the same.
 settings.OMEGA = 84*pi/180;                                                 %[rad] Minimum Elevation Angle, user input in degrees (ex. 80)
-settings.PHI = 180*pi/180;                                                  %[rad] Minimum Azimuth Angle from North Direction, user input in degrees (ex. 90)
+settings.PHI = 0*pi/180;                                                  %[rad] Minimum Azimuth Angle from North Direction, user input in degrees (ex. 90)
 
 %% ENGINE DETAILS
 % load motors data 
@@ -65,14 +65,14 @@ L = 3;                                                                      % [m
 % z-axis: downward
 
 % inertias for full configuration (with all the propellant embarqued) obtained with CAD's
-settings.Ixxf = 0.008795446;                                                % [kg*m^2] Inertia to x-axis
-settings.Iyyf = 2.050393979;                                                % [kg*m^2] Inertia to y-axis
-settings.Izzf = 2.050413838;                                                % [kg*m^2] Inertia to z-axis
+settings.Ixxf = 0.0540;                     % [kg*m^2] Inertia to x-axis
+settings.Iyyf = 13.7274;                    % [kg*m^2] Inertia to y-axis
+settings.Izzf = 13.7302;                    % [kg*m^2] Inertia to z-axis
 
 % inertias for empty configuration (all the propellant consumed) obtained with CAD's
-settings.Ixxe = 0.008472446;                                                % [kg*m^2] Inertia to x-axis
-settings.Iyye = 1.712284592;                                                % [kg*m^2] Inertia to y-axis
-settings.Izze = 1.712304085;                                                % [kg*m^2] Inertia to z-axis
+settings.Ixxe = 0.0498;                     % [kg*m^2] Inertia to x-axis
+settings.Iyye = 11.5612;                    % [kg*m^2] Inertia to y-axis
+settings.Izze = 11.5640;                    % [kg*m^2] Inertia to z-axis
 
 %% AERODYNAMICS DETAILS
 % These coefficients are obtained using MISSILE DATCOM
@@ -120,8 +120,8 @@ settings.frequencies.barometerFrequency = 20;                               % [h
 %% CONTROL SETTINGS 
 
 settings.Mach_control = 0.7;                                                % Mach of activation of aerobrakes 
-settings.brakesWidth = 0.116;                                               % [m] aerobrakes width (the fixed in-plane length)
-settings.brakesHeigth = 0.03;                                               % [m] max aerobrakes heigth (the control action)
+settings.brakesWidth = 0.088;                                               % [m] aerobrakes width (the fixed in-plane length)
+settings.brakesHeigth = 0.0387;                                               % [m] max aerobrakes heigth (the control action)
 settings.Atot = settings.brakesWidth*settings.brakesHeigth*3;               % [m^2] total area of aerobrakes (100% out)
 
 %% PARACHUTES DETAILS
