@@ -118,8 +118,8 @@ data_trajectories = struct_trajectories.trajectories_saving;
 
 % Define global variables
 global Kp Ki I alpha_degree_prec index_min_value iteration_flag chosen_trajectory saturation
-Kp = 150; %70
-Ki = 10; %10 
+Kp = 100; %70
+Ki = 5; %10 
 I = 0;
 alpha_degree_prec = 0;
 iteration_flag = 1;
@@ -207,6 +207,7 @@ while flagStopIntegration || n_old < nmax
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     if flagAeroBrakes
+         tempo = index_plot*0.1 - 0.1
          [alpha_degree, Vz_setpoint, z_setpoint] = controlAlgorithm(z, vz, normV, dt);
          x = get_extension_from_angle(alpha_degree);
          

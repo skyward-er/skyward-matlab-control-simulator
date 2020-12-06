@@ -15,9 +15,9 @@ best_index = inf;
 for ind = 1:length(data_trajectories)
 
 % Select a z trajectory and a Vz trajectory
-z_ref = data_trajectories(ind).Z_ref(1:100); % To speed up select only the first values, not ALL
-Vz_ref = data_trajectories(ind).V_ref(1:100); % To speed up select only the first values, not ALL
-distances_from_current_state = sqrt( (z_ref-z).^2 + (Vz_ref-Vz).^2 );
+z_ref = data_trajectories(ind).Z_ref(1:50); % To speed up select only the first values, not ALL
+Vz_ref = data_trajectories(ind).V_ref(1:50); % To speed up select only the first values, not ALL
+distances_from_current_state = sqrt( (z_ref-z).^2 + (Vz_ref-Vz).^2 ); % sqrt evitabile!!!!
 
 % Find the nearest point to the current trajectory
 [min_value, index_min_value] = min( distances_from_current_state ); 
@@ -34,49 +34,83 @@ end
 index_min_value = best_index;
 
 % I select the reference altitude and the reference vertical velocity
-z_setpoint  =  data_trajectories(chosen_trajectory).Z_ref(index_min_value);
-Vz_setpoint =  data_trajectories(chosen_trajectory).V_ref(index_min_value);
+z_setpoint  =  data_trajectories(chosen_trajectory).Z_ref(index_min_value)
+Vz_setpoint =  data_trajectories(chosen_trajectory).V_ref(index_min_value)
+z
+Vz
 
 iteration_flag = 0; % Don't enter anymore the if condition
 
 else  % For the following iterations keep tracking the chosen trajectory
     
-% Select the z trajectory and the Vz trajectory
-% To speed up the research, I reduce the vector at each iteration: Z_ref(index_min_value:end)
-z_ref =  data_trajectories(chosen_trajectory).Z_ref(index_min_value:end);
-Vz_ref = data_trajectories(chosen_trajectory).V_ref(index_min_value:end);
+% % Select the z trajectory and the Vz trajectory
+% % To speed up the research, I reduce the vector at each iteration: Z_ref(index_min_value:end)
+% z_ref =  data_trajectories(chosen_trajectory).Z_ref(index_min_value:end); % index-2:end
+% Vz_ref = data_trajectories(chosen_trajectory).V_ref(index_min_value:end);
+
+
+% Select the z trajectory and the Vz trajectory ( da togliere e sostituire pezzo sopra)
+z_ref =  data_trajectories(chosen_trajectory).Z_ref;
+Vz_ref = data_trajectories(chosen_trajectory).V_ref;
+
+prec = index_min_value  %%%%%%%%%%%%%% da togliere
 
 % Find the value of z_reference nearer to z_misured
-[~, index_min_value] = min( abs(z_ref - z) ); 
+% [~, index_min_value] = min( abs(z_ref - z) )
 
+
+    
 % % I select the reference altitude and vertical velocity
-% z_setpoint = z_ref(index_min_value);
-% Vz_setpoint = Vz_ref(index_min_value);
+% % The reference altitude must NOT be below the current altitude
+% if ( z_ref(index_min_value) <= z && index_min_value+1 < length(z_ref) )
+% %     indice=index_min_value+1
+%     real = z
+%     z_setpoint = z_ref(index_min_value+1);
+%     real = Vz
+%     Vz_setpoint = Vz_ref(index_min_value+1)
+% else
+% %     indice=index_min_value
+%     real = z
+%     z_setpoint = z_ref(index_min_value);
+%     real = Vz
+%     Vz_setpoint = Vz_ref(index_min_value)
+% end
 
-% I select the reference altitude and vertical velocity
-% The reference altitude must NOT be below the current altitude
-if ( z_ref(index_min_value) < z && index_min_value+1 < length(z_ref) )
-%     real = z
-    real = Vz
-    z_setpoint = z_ref(index_min_value+1);
-    Vz_setpoint = Vz_ref(index_min_value+1)
-else
-%     real = z
-    real = Vz
-    z_setpoint = z_ref(index_min_value);
-    Vz_setpoint = Vz_ref(index_min_value)
-end
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% togliere
+% if ( z_ref(index_min_value) <= z && index_min_value+1 < length(z_ref) )
+% index_min_value = index_min_value +1;
+% end
+% 
+% if (index_min_value <= prec && index_min_value+1 < length(z_ref))
+%     index_min_value = index_min_value +1;
+% end
+% 
+% index_min_value
+% 
+% z_setpoint = z_ref(index_min_value);
+% Vz_setpoint = Vz_ref(index_min_value)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%% scorro ogni valore array
+index_min_value = index_min_value +1;
+z_setpoint = z_ref(index_min_value);
+Vz_setpoint = Vz_ref(index_min_value)
+%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 end  
 
 
 %% PID ALGORITHM
 
+% If e>0 the rocket is too fast. I slow it down with Fx>0 --> open aerobrakes
+% If e<0 the rocket is too slow. I speed it up with Fx<0 --> close aerobrakes
+
 Umin = 0;      % F_drag_min = 0
 Umax = 1000;   % F_drag_max = 0.5*1.225*(0.0201+0.01)*1*250^2
 dt = 0.1;      % ASK THE FINAL STEP TIME !!!!!!!!!!
 
-error = (Vz - Vz_setpoint);
+error = (Vz - Vz_setpoint); % > 0
+% err_z = z - z_setpoint    % < 0
 
 P = Kp*error;
 
@@ -97,9 +131,6 @@ saturation = false;
 end
 
 %% TRANSFORMATION FROM U to delta_S
-
-% If I forecast an overshoot, e>0, u>0, Fx>0 --> closed aerobrakes
-% If I forecast an undershoot, e<0, u<0, Fx<0 --> open aerobrakes
 
 % Parameters
 ro = getRho(z);
