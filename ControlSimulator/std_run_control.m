@@ -118,8 +118,8 @@ data_trajectories = struct_trajectories.trajectories_saving;
 
 % Define global variables
 global Kp Ki I alpha_degree_prec index_min_value iteration_flag chosen_trajectory saturation
-Kp = 100; %70
-Ki = 5; %10 
+Kp = 70; %70
+Ki = 41; %41
 I = 0;
 alpha_degree_prec = 0;
 iteration_flag = 1;
@@ -274,23 +274,18 @@ Yf = Yf_tot(1:n_old, :);
 Tf = Tf_tot(1:n_old, :);
 flagMatr = flagMatr(1:n_old, :);
 
+
 %% RETRIVE PARAMETERS FROM THE ODE (commentato senò non stampava grafici)
-% if not(settings.electronics)
-%     dataBallisticFlight = RecallOdeFcn(@ascent, Tf(flagMatr(:, 2)), Yf(flagMatr(:, 2), :), settings, C, uw, vw, ww, uncert);
+if not(settings.electronics)
+    dataBallisticFlight = RecallOdeFcn(@ascent, Tf(flagMatr(:, 2)), Yf(flagMatr(:, 2), :), settings, C, uw, vw, ww, uncert);
 
     
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+%% PLOT THE RESULTS
 
 % Obtain the control variable
-time = 0:dt:(length(plot_control_variable)-1)*dt;
-% length(Ya)
-% size(Ya)
-% size(Tf)
-% length(Yf)
-% plot_control_variable = [zeros(length(Ya),1);
-%                          control_variable(:,1)];
-% size(plot_control_variable)                  
+time = 0:dt:(length(plot_control_variable)-1)*dt;                 
                      
 % Obtain the total altitude
 plot_z = -Yf(:,3);
@@ -307,7 +302,6 @@ end
 % Control variable: aerobrake_surface_total
 figure('Name','Total aerobrake surface after burning phase','NumberTitle','off');
 plot(time, plot_control_variable), grid on;
-% plot(Tf, plot_control_variable), grid on;
 axis([0,20, 0,60])
 xlabel('time [s]'), ylabel('Angle [deg]');
 
@@ -329,15 +323,25 @@ plot(time, plot_Vz_real,'DisplayName','real','LineWidth',0.8), grid on;
 hold on
 plot(time, plot_Vz_setpoint, 'DisplayName','setpoint', 'LineWidth',0.8), grid on;
 axis([0,20, -50,300])
-xlabel('time [s]'), ylabel('Vz [m]');
+xlabel('time [s]'), ylabel('Vz [m/s]');
 hold off
 legend
 
 
+% V(z) real vs setpoint
+figure('Name','V(z) real vs setpoint after burning phase','NumberTitle','off');
+plot(plot_z_real, plot_Vz_real,'DisplayName','real','LineWidth',0.8), grid on;
+hold on
+plot(plot_z_setpoint, plot_Vz_setpoint, 'DisplayName','setpoint', 'LineWidth',0.8), grid on;
+axis([1100,3200, -50, 250])
+xlabel('z [m]'), ylabel('Vz [m/s]');
+hold off
+legend
+
 % Total altitude
 figure('Name','Time, Altitude','NumberTitle','off');
 plot(Tf, plot_z), grid on;
-axis([0,50, 0, 3100])
+axis([0,100, 0, 3100])
 xlabel('time [s]'), ylabel('z [m]');
 
 
@@ -346,8 +350,9 @@ figure('Name','Time, Vertical Velocity','NumberTitle','off');
 plot(Tf, plot_Vz), grid on;
 xlabel('time [s]'), ylabel('Vz [m/s]');
 
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
 
 end
 

@@ -17,7 +17,7 @@ for ind = 1:length(data_trajectories)
 % Select a z trajectory and a Vz trajectory
 z_ref = data_trajectories(ind).Z_ref(1:50); % To speed up select only the first values, not ALL
 Vz_ref = data_trajectories(ind).V_ref(1:50); % To speed up select only the first values, not ALL
-distances_from_current_state = sqrt( (z_ref-z).^2 + (Vz_ref-Vz).^2 ); % sqrt evitabile!!!!
+distances_from_current_state = (z_ref-z).^2 + (Vz_ref-Vz).^2; % sqrt is avoidable
 
 % Find the nearest point to the current trajectory
 [min_value, index_min_value] = min( distances_from_current_state ); 
@@ -42,59 +42,39 @@ Vz
 iteration_flag = 0; % Don't enter anymore the if condition
 
 else  % For the following iterations keep tracking the chosen trajectory
-    
-% % Select the z trajectory and the Vz trajectory
-% % To speed up the research, I reduce the vector at each iteration: Z_ref(index_min_value:end)
-% z_ref =  data_trajectories(chosen_trajectory).Z_ref(index_min_value:end); % index-2:end
-% Vz_ref = data_trajectories(chosen_trajectory).V_ref(index_min_value:end);
 
-
-% Select the z trajectory and the Vz trajectory ( da togliere e sostituire pezzo sopra)
-z_ref =  data_trajectories(chosen_trajectory).Z_ref;
+% Select the z trajectory and the Vz trajectory 
+% To speed up the research, I reduce the vector at each iteration
+z_ref =  data_trajectories(chosen_trajectory).Z_ref;   % .Z_ref( index_min_value-5 : end );
 Vz_ref = data_trajectories(chosen_trajectory).V_ref;
 
-prec = index_min_value  %%%%%%%%%%%%%% da togliere
+% Find the value of z_reference nearer to z_misured ( try distance from V(z) )
+[~, index_min_value] = min( abs(z_ref - z) );
 
-% Find the value of z_reference nearer to z_misured
-% [~, index_min_value] = min( abs(z_ref - z) )
+z_setpoint = z_ref(index_min_value);
+Vz_setpoint = Vz_ref(index_min_value)
 
 
-    
 % % I select the reference altitude and vertical velocity
 % % The reference altitude must NOT be below the current altitude
 % if ( z_ref(index_min_value) <= z && index_min_value+1 < length(z_ref) )
-% %     indice=index_min_value+1
+%     indice=index_min_value+1
 %     real = z
-%     z_setpoint = z_ref(index_min_value+1);
+%     z_setpoint = z_ref(index_min_value+1)
 %     real = Vz
 %     Vz_setpoint = Vz_ref(index_min_value+1)
 % else
-% %     indice=index_min_value
+%     indice=index_min_value
 %     real = z
-%     z_setpoint = z_ref(index_min_value);
+%     z_setpoint = z_ref(index_min_value)
 %     real = Vz
 %     Vz_setpoint = Vz_ref(index_min_value)
 % end
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% togliere
-% if ( z_ref(index_min_value) <= z && index_min_value+1 < length(z_ref) )
+%%%%%%%%%%%%%%%%%%%%%%%%%% scorro ogni valore array in successione senza logica
 % index_min_value = index_min_value +1;
-% end
-% 
-% if (index_min_value <= prec && index_min_value+1 < length(z_ref))
-%     index_min_value = index_min_value +1;
-% end
-% 
-% index_min_value
-% 
 % z_setpoint = z_ref(index_min_value);
 % Vz_setpoint = Vz_ref(index_min_value)
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-%%%%%%%%%%%%%%%%%%%%%%%%%% scorro ogni valore array
-index_min_value = index_min_value +1;
-z_setpoint = z_ref(index_min_value);
-Vz_setpoint = Vz_ref(index_min_value)
 %%%%%%%%%%%%%%%%%%%%%%%%%%
 
 end  
@@ -107,7 +87,7 @@ end
 
 Umin = 0;      % F_drag_min = 0
 Umax = 1000;   % F_drag_max = 0.5*1.225*(0.0201+0.01)*1*250^2
-dt = 0.1;      % ASK THE FINAL STEP TIME !!!!!!!!!!
+dt = 0.1;      % se viene modificato, bisogna modificare pure i PID values
 
 error = (Vz - Vz_setpoint); % > 0
 % err_z = z - z_setpoint    % < 0
@@ -163,7 +143,7 @@ a = -9.43386/1000;
 b = 19.86779/1000;
 
 alpha_rad = (-b + sqrt(b^2 + 4*a*delta_S)) / (2*a);
-% alpha_rad_rad = (-b - sqrt(b^2 + 4*a*delta_S)) / (2*a);
+% alpha_rad_rad = (-b - sqrt(b^2 + 4*a*delta_S)) / (2*a); % son sicuro che è sempre la prima?
 
 % Alpha saturation
 if (alpha_rad < 0)
@@ -176,8 +156,8 @@ alpha_degree = (alpha_rad*180)/pi;
 
 %% LIMIT THE RATE OF THE CONTROL VARIABLE
 
-rate_limiter_max = 60/0.13; % 60deg/0.13s
-rate_limiter_min = -60/0.13;
+rate_limiter_max =  60/0.2; % datasheet: 60deg/0.13s --> increased for robustness
+rate_limiter_min = -60/0.2;
 
 rate = (alpha_degree - alpha_degree_prec) / sample_time;
 
@@ -191,8 +171,7 @@ alpha_degree_prec = alpha_degree;
 
 % Testing:
 % alpha_degree = 25;
-
+% z_setpoint = 9;
+% Vz_setpoint = 5;
 end
-
-
 
