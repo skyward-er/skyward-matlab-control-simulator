@@ -341,7 +341,7 @@ legend
 % Total altitude
 figure('Name','Time, Altitude','NumberTitle','off');
 plot(Tf, plot_z), grid on;
-axis([0,100, 0, 3100])
+axis([0,50, 0, 3100])
 xlabel('time [s]'), ylabel('z [m]');
 
 
