@@ -1,4 +1,4 @@
-function [alpha_degree, Vz_setpoint, z_setpoint] = controlAlgorithm(z,Vz,V_mod,sample_time)
+function [alpha_degree, Vz_setpoint, z_setpoint] = controlAlgorithmLinearized(z,Vz,V_mod,sample_time)
 
 % Define global variables
 global data_trajectories coeff_Cd 
@@ -57,14 +57,6 @@ z_setpoint = z_ref(index_min_value);
 Vz_setpoint = Vz_ref(index_min_value);
 
 
-% % Ha senso inseguire il riferimento k=2 steps dopo?
-% if (index_min_value+2 < length(z_ref))
-% z_setpoint = z_ref(index_min_value+2);
-% Vz_setpoint = Vz_ref(index_min_value+2);
-% end
-
-
-
 % % I select the reference altitude and vertical velocity
 % % The reference altitude must NOT be below the current altitude
 % if ( z_ref(index_min_value) <= z && index_min_value+1 < length(z_ref) )
@@ -95,12 +87,11 @@ end
 % If e>0 the rocket is too fast. I slow it down with Fx>0 --> open aerobrakes
 % If e<0 the rocket is too slow. I speed it up with Fx<0 --> close aerobrakes
 
-Umin = 0;      % F_drag_min = 0
-Umax = 1000;   % F_drag_max = 0.5*1.225*(0.0201+0.01)*1*250^2
+Umin = -1200;  % U_min = -22*9.8 - 0.5*1.225*(0.0201+0.01)*1*250^2
+Umax = -220;   % U_max = -22*9.8
 dt = 0.1;      % se viene modificato, bisogna modificare pure i PID values
 
-error = (Vz - Vz_setpoint); % > 0
-% err_z = z - z_setpoint    % < 0
+error = (Vz_setpoint - Vz); % cambiato il segno
 
 P = Kp*error;
 
@@ -143,7 +134,14 @@ Cd_available = Cd_available';
 
 % For all possible delta_S compute Fdrag.
 % Then choose the delta_S which gives an Fdrag which has the minimum error if compared with F_drag_pid
-[~, index_minimum] = min( abs(U - 0.5*ro*S0*Cd_available*Vz*V_mod) ); 
+% [~, index_minimum] = min( abs(U - 0.5*ro*S0*Cd_available*Vz*V_mod) ); 
+
+
+U_linearization = -m*g-0.5*ro*S0*Cd_available*Vz*V_mod;
+[~, index_minimum] = min( abs(abs(U) - abs(U_linearization)) ); % ????????????
+
+% pid = U
+% formula = U_linearization
 
 % Cd_available = Cd_available(index_min_value)
 delta_S = delta_S_available(index_minimum);  % delta_S belongs to [0; 0.01]
