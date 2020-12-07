@@ -1,4 +1,4 @@
-function [alpha_degree, Vz_setpoint, z_setpoint] = controlAlgorithm(z,Vz,V_mod,sample_time)
+function [alpha_degree, Vz_setpoint, z_setpoint, pid, U_linear, Cd] = controlAlgorithm(z,Vz,V_mod,sample_time)
 
 % Define global variables
 global data_trajectories coeff_Cd 
@@ -56,32 +56,21 @@ distances_from_current_state = (z_ref-z).^2 + (Vz_ref-Vz).^2;
 z_setpoint = z_ref(index_min_value);
 Vz_setpoint = Vz_ref(index_min_value);
 
+% % Interpolation
+% if (z_setpoint <= z  &&  index_min_value+1 < length(z_ref))
+% x_axis = [z_ref(index_min_value), z_ref(index_min_value+1)];
+% y_axis = [Vz_ref(index_min_value), Vz_ref(index_min_value+1)];
+% z_setpoint  = z;
+% Vz_setpoint = interp1(x_axis,y_axis,z);
+% end
 
-% % Ha senso inseguire il riferimento k=2 steps dopo?
-% if (index_min_value+2 < length(z_ref))
+% % Ha senso inseguire il riferimento k=2 steps dopo? Risultato non buono
+% if (z_setpoint <= z  &&  index_min_value+2 < length(z_ref))
 % z_setpoint = z_ref(index_min_value+2);
 % Vz_setpoint = Vz_ref(index_min_value+2);
 % end
 
-
-
-% % I select the reference altitude and vertical velocity
-% % The reference altitude must NOT be below the current altitude
-% if ( z_ref(index_min_value) <= z && index_min_value+1 < length(z_ref) )
-%     indice=index_min_value+1
-%     real = z
-%     z_setpoint = z_ref(index_min_value+1)
-%     real = Vz
-%     Vz_setpoint = Vz_ref(index_min_value+1)
-% else
-%     indice=index_min_value
-%     real = z
-%     z_setpoint = z_ref(index_min_value)
-%     real = Vz
-%     Vz_setpoint = Vz_ref(index_min_value)
-% end
-
-%%%%%%%%%%%%%%%%%%%%%%%%%% scorro ogni valore array in successione senza logica
+% % scorro ogni valore array in successione senza logica
 % index_min_value = index_min_value +1;
 % z_setpoint = z_ref(index_min_value);
 % Vz_setpoint = Vz_ref(index_min_value)
@@ -95,11 +84,12 @@ end
 % If e>0 the rocket is too fast. I slow it down with Fx>0 --> open aerobrakes
 % If e<0 the rocket is too slow. I speed it up with Fx<0 --> close aerobrakes
 
-Umin = 0;      % F_drag_min = 0
-Umax = 1000;   % F_drag_max = 0.5*1.225*(0.0201+0.01)*1*250^2
+Umin = 0;     
+Umax = 1000;
+% Umax = 0.5*getRho(z)*0.0177*1*Vz*V_mod;
 dt = 0.1;      % se viene modificato, bisogna modificare pure i PID values
 
-error = (Vz - Vz_setpoint); % > 0
+error = (Vz - Vz_setpoint); % > 0 (in teoria)
 % err_z = z - z_setpoint    % < 0
 
 P = Kp*error;
@@ -111,10 +101,10 @@ end
 U = P + I;
     
 if ( U < Umin)  
-U=Umin; 
+U=Umin; % fully close
 saturation = true;                                         
 elseif ( U > Umax) 
-U=Umax; 
+U=Umax; % fully open
 saturation = true;                          
 else
 saturation = false;
@@ -130,7 +120,7 @@ diameter = 0.15;
 S0 = (pi*diameter^2)/4;  
 
 % Range of values for the control variable
-delta_S_available = 0.0:0.001:0.01; 
+delta_S_available = [0.0:0.001:0.01]'; 
 
 % Get the Cd for each possible aerobrake surface
 Cd_available = 1:length(delta_S_available);
@@ -138,14 +128,17 @@ for ind = 1:length(delta_S_available)
 Cd_available(ind) = getDrag(V_mod,z,delta_S_available(ind), coeff_Cd);
 end
 
-delta_S_available = delta_S_available';
 Cd_available = Cd_available';
 
 % For all possible delta_S compute Fdrag.
 % Then choose the delta_S which gives an Fdrag which has the minimum error if compared with F_drag_pid
 [~, index_minimum] = min( abs(U - 0.5*ro*S0*Cd_available*Vz*V_mod) ); 
 
-% Cd_available = Cd_available(index_min_value)
+% Plot
+pid = U;
+U_linear = 0.5*ro*S0*Cd_available(index_minimum)*Vz*V_mod;
+
+Cd = Cd_available(index_minimum)
 delta_S = delta_S_available(index_minimum);  % delta_S belongs to [0; 0.01]
 
 %% TRANSFORMATION FROM delta_S to SERVOMOTOR ANGLE DEGREES
@@ -157,7 +150,7 @@ b = 19.86779/1000;
 alpha_rad = (-b + sqrt(b^2 + 4*a*delta_S)) / (2*a);
 % alpha_rad_rad = (-b - sqrt(b^2 + 4*a*delta_S)) / (2*a); % son sicuro che è sempre la prima?
 
-% Alpha saturation
+% Alpha saturation ( possibili problemi per azione integrale ? )
 if (alpha_rad < 0)
     alpha_rad = 0;
 elseif (alpha_rad > 0.89)
@@ -179,6 +172,7 @@ elseif (rate < rate_limiter_min)
     alpha_degree = sample_time*rate_limiter_min + alpha_degree_prec;
 end
 
+alpha_degree = round(alpha_degree);
 alpha_degree_prec = alpha_degree;
 
 % Testing:

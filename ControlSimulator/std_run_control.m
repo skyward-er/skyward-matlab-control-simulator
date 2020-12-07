@@ -117,12 +117,13 @@ struct_trajectories = load('Trajectories');
 data_trajectories = struct_trajectories.trajectories_saving;
 
 % Define global variables
-global Kp Ki I alpha_degree_prec index_min_value iteration_flag chosen_trajectory saturation
-% Kp = 70; % using Fdrag nel pid
-% Ki = 41; % using Fdrag nel pid
-Kp = 50; % using u nel pid
-Ki = 30; % using u nel pid
+global Kp Ki I Cddd alpha_degree_prec index_min_value iteration_flag chosen_trajectory saturation
+Kp = 65; % using Fdrag nel pid
+Ki = 41; % using Fdrag nel pid
+% Kp = 50; % using u nel pid
+% Ki = 30; % using u nel pid
 I = 0;
+Cddd=1; %%%%%%%
 alpha_degree_prec = 0;
 iteration_flag = 1;
 saturation = false;
@@ -210,8 +211,8 @@ while flagStopIntegration || n_old < nmax
     
     if flagAeroBrakes
          tempo = index_plot*0.1 - 0.1
-         %[alpha_degree, Vz_setpoint, z_setpoint] = controlAlgorithm(z, vz, normV, dt);
-         [alpha_degree, Vz_setpoint, z_setpoint] = controlAlgorithmLinearized(z, vz, normV, dt);
+         [alpha_degree, Vz_setpoint, z_setpoint, pid,U_linear, Cdd] = controlAlgorithm(z, vz, normV, dt);
+         %[alpha_degree, Vz_setpoint, z_setpoint, pid,U_linear, Cdd] = controlAlgorithmLinearized(z, vz, normV, dt);
          x = get_extension_from_angle(alpha_degree);
          
          % Save the values to plot them
@@ -220,6 +221,9 @@ while flagStopIntegration || n_old < nmax
          plot_Vz_setpoint(index_plot) = Vz_setpoint;
          plot_z_setpoint(index_plot) = z_setpoint;
          plot_control_variable(index_plot) = alpha_degree;
+         plot_Cd(index_plot) = Cdd;
+         plot_pid(index_plot) = pid;
+         plot_U_linear(index_plot) = U_linear;
          index_plot = index_plot + 1;
     else 
         x = 0;
@@ -302,12 +306,25 @@ for index = 1:nStates
     plot_Vz(index) = - vels(3);
 end
 
-% Control variable: aerobrake_surface_total
-figure('Name','Total aerobrake surface after burning phase','NumberTitle','off');
+% Control variable: servo angle
+figure('Name','Servo angle after burning phase','NumberTitle','off');
 plot(time, plot_control_variable), grid on;
 axis([0,20, 0,60])
 xlabel('time [s]'), ylabel('Angle [deg]');
 
+% Control variable: pid vs linearization
+figure('Name','Linearization of the control variable','NumberTitle','off');
+plot(time, plot_U_linear, 'DisplayName','Linearized','LineWidth',0.8), grid on;
+hold on
+plot(time, plot_pid, 'DisplayName','PID','LineWidth',0.8), grid on;
+xlabel('time [s]'), ylabel('U [N]');
+hold off
+legend('Location','southeast')
+
+% Cd
+figure('Name','Cd','NumberTitle','off');
+plot(time, plot_Cd), grid on;
+xlabel('time [s]'), ylabel('Cd []');
 
 % Altitude real vs setpoint
 figure('Name','Altitude real vs setpoint after burning phase','NumberTitle','off');
@@ -319,7 +336,6 @@ xlabel('time [s]'), ylabel('z [m]');
 hold off
 legend('Location','southeast')
 
-
 % Vertical velocity real vs setpoint
 figure('Name','Vertical velocity real vs setpoint after burning phase','NumberTitle','off');
 plot(time, plot_Vz_real,'DisplayName','real','LineWidth',0.8), grid on;
@@ -329,7 +345,6 @@ axis([0,20, -50,300])
 xlabel('time [s]'), ylabel('Vz [m/s]');
 hold off
 legend
-
 
 % V(z) real vs setpoint
 figure('Name','V(z) real vs setpoint after burning phase','NumberTitle','off');
@@ -346,7 +361,6 @@ figure('Name','Time, Altitude','NumberTitle','off');
 plot(Tf, plot_z), grid on;
 axis([0,50, 0, 3100])
 xlabel('time [s]'), ylabel('z [m]');
-
 
 % Total vertical velocity
 figure('Name','Time, Vertical Velocity','NumberTitle','off');

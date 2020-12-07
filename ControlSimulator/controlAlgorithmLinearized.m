@@ -1,8 +1,8 @@
-function [alpha_degree, Vz_setpoint, z_setpoint] = controlAlgorithmLinearized(z,Vz,V_mod,sample_time)
+function [alpha_degree, Vz_setpoint, z_setpoint, U, formula, Cd] = controlAlgorithmLinearized(z,Vz,V_mod,sample_time)
 
 % Define global variables
 global data_trajectories coeff_Cd 
-global Kp Ki I alpha_degree_prec index_min_value iteration_flag chosen_trajectory saturation
+global Kp Ki I Cddd alpha_degree_prec index_min_value iteration_flag chosen_trajectory saturation
 
 
 %% TRAJECTORY SELECTION and REFERENCES COMPUTATION
@@ -56,29 +56,6 @@ distances_from_current_state = (z_ref-z).^2 + (Vz_ref-Vz).^2;
 z_setpoint = z_ref(index_min_value);
 Vz_setpoint = Vz_ref(index_min_value);
 
-
-% % I select the reference altitude and vertical velocity
-% % The reference altitude must NOT be below the current altitude
-% if ( z_ref(index_min_value) <= z && index_min_value+1 < length(z_ref) )
-%     indice=index_min_value+1
-%     real = z
-%     z_setpoint = z_ref(index_min_value+1)
-%     real = Vz
-%     Vz_setpoint = Vz_ref(index_min_value+1)
-% else
-%     indice=index_min_value
-%     real = z
-%     z_setpoint = z_ref(index_min_value)
-%     real = Vz
-%     Vz_setpoint = Vz_ref(index_min_value)
-% end
-
-%%%%%%%%%%%%%%%%%%%%%%%%%% scorro ogni valore array in successione senza logica
-% index_min_value = index_min_value +1;
-% z_setpoint = z_ref(index_min_value);
-% Vz_setpoint = Vz_ref(index_min_value)
-%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 end  
 
 
@@ -87,9 +64,10 @@ end
 % If e>0 the rocket is too fast. I slow it down with Fx>0 --> open aerobrakes
 % If e<0 the rocket is too slow. I speed it up with Fx<0 --> close aerobrakes
 
-Umin = -1200;  % U_min = -22*9.8 - 0.5*1.225*(0.0201+0.01)*1*250^2
-Umax = -220;   % U_max = -22*9.8
-dt = 0.1;      % se viene modificato, bisogna modificare pure i PID values
+% Umin = -215.6 - 0.5*getRho(z)*0.0177*(Cddd+0.1)*Vz*V_mod;
+Umin = -215.6 - 0.5*getRho(z)*0.0177*1*Vz*V_mod;
+Umax = -215.6;   % U_max = -22*9.8
+dt = 0.1;        % se viene modificato, bisogna modificare pure i PID values
 
 error = (Vz_setpoint - Vz); % cambiato il segno
 
@@ -102,10 +80,10 @@ end
 U = P + I;
     
 if ( U < Umin)  
-U=Umin; 
+U=Umin; % fully opened
 saturation = true;                                         
 elseif ( U > Umax) 
-U=Umax; 
+U=Umax; % fuly closed
 saturation = true;                          
 else
 saturation = false;
@@ -121,7 +99,7 @@ diameter = 0.15;
 S0 = (pi*diameter^2)/4;  
 
 % Range of values for the control variable
-delta_S_available = 0.0:0.001:0.01; 
+delta_S_available = [0.0:0.001:0.01]'; 
 
 % Get the Cd for each possible aerobrake surface
 Cd_available = 1:length(delta_S_available);
@@ -129,21 +107,21 @@ for ind = 1:length(delta_S_available)
 Cd_available(ind) = getDrag(V_mod,z,delta_S_available(ind), coeff_Cd);
 end
 
-delta_S_available = delta_S_available';
 Cd_available = Cd_available';
 
 % For all possible delta_S compute Fdrag.
 % Then choose the delta_S which gives an Fdrag which has the minimum error if compared with F_drag_pid
-% [~, index_minimum] = min( abs(U - 0.5*ro*S0*Cd_available*Vz*V_mod) ); 
-
-
 U_linearization = -m*g-0.5*ro*S0*Cd_available*Vz*V_mod;
-[~, index_minimum] = min( abs(abs(U) - abs(U_linearization)) ); % ????????????
+[~, index_minimum] = min( abs(abs(U) - abs(U_linearization)) ); 
 
-% pid = U
-% formula = U_linearization
+% Plot
+pid = U;
+formula = -m*g-0.5*ro*S0*Cd_available(index_minimum)*Vz*V_mod;
 
-% Cd_available = Cd_available(index_min_value)
+Cd = Cd_available(index_minimum);
+
+Cddd = Cd; %%%%%%%%%%%%%
+
 delta_S = delta_S_available(index_minimum);  % delta_S belongs to [0; 0.01]
 
 %% TRANSFORMATION FROM delta_S to SERVOMOTOR ANGLE DEGREES
@@ -177,6 +155,7 @@ elseif (rate < rate_limiter_min)
     alpha_degree = sample_time*rate_limiter_min + alpha_degree_prec;
 end
 
+alpha_degree = round(alpha_degree);
 alpha_degree_prec = alpha_degree;
 
 % Testing:
