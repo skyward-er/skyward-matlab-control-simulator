@@ -4,7 +4,6 @@ function [alpha_degree, Vz_setpoint, z_setpoint, pid, U_linear, Cd] = controlAlg
 global data_trajectories coeff_Cd 
 global Kp Ki I alpha_degree_prec index_min_value iteration_flag chosen_trajectory saturation
 
-
 %% TRAJECTORY SELECTION and REFERENCES COMPUTATION
 
 if iteration_flag == 1 % Choose the nearest trajectory ( only at the first iteration )
@@ -43,20 +42,20 @@ else  % For the following iterations keep tracking the chosen trajectory
 
 % Select the z trajectory and the Vz trajectory 
 % To speed up the research, I reduce the vector at each iteration
-z_ref =  data_trajectories(chosen_trajectory).Z_ref;   % .Z_ref( index_min_value-5 : end );
-Vz_ref = data_trajectories(chosen_trajectory).V_ref;
+z_ref =  data_trajectories(chosen_trajectory).Z_ref(index_min_value-1:end);  % Add if-else for problem in index limits
+Vz_ref = data_trajectories(chosen_trajectory).V_ref(index_min_value-1:end);  % (index_min_value-1:end)
 
 % 1) Find the value of the altitude in z_reference nearer to z_misured 
 % [~, index_min_value] = min( abs(z_ref - z) );
 
 % 2) Find the reference using Vz(z)
 distances_from_current_state = (z_ref-z).^2 + (Vz_ref-Vz).^2; 
-[~, index_min_value] = min( distances_from_current_state ); 
+[~, index_min_value] = min( distances_from_current_state );
 
 z_setpoint = z_ref(index_min_value);
 Vz_setpoint = Vz_ref(index_min_value);
 
-% % Interpolation
+% % Interpolation ? Risultato buono
 % if (z_setpoint <= z  &&  index_min_value+1 < length(z_ref))
 % x_axis = [z_ref(index_min_value), z_ref(index_min_value+1)];
 % y_axis = [Vz_ref(index_min_value), Vz_ref(index_min_value+1)];
@@ -70,34 +69,36 @@ Vz_setpoint = Vz_ref(index_min_value);
 % Vz_setpoint = Vz_ref(index_min_value+2);
 % end
 
-% % scorro ogni valore array in successione senza logica
+% Scorro ogni valore array in successione senza logica ? Risultato medio
 % index_min_value = index_min_value +1;
 % z_setpoint = z_ref(index_min_value);
-% Vz_setpoint = Vz_ref(index_min_value)
-%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Vz_setpoint = Vz_ref(index_min_value);
 
 end  
-
 
 %% PID ALGORITHM
 
 % If e>0 the rocket is too fast. I slow it down with Fx>0 --> open aerobrakes
 % If e<0 the rocket is too slow. I speed it up with Fx<0 --> close aerobrakes
 
+% Parameters
+m = 22;
+g = 9.81;
+ro = getRho(z);
+diameter = 0.15; 
+S0 = (pi*diameter^2)/4;   % Calcolata a ogni loop, definirla globale
+
+% Control variable limits
 Umin = 0;     
-Umax = 1000;
-% Umax = 0.5*getRho(z)*0.0177*1*Vz*V_mod;
-dt = 0.1;      % se viene modificato, bisogna modificare pure i PID values
+% Umax = 1000;
+Umax = 0.5*ro*S0*1*Vz*V_mod;
 
+% PID
 error = (Vz - Vz_setpoint); % > 0 (in teoria)
-% err_z = z - z_setpoint    % < 0
-
 P = Kp*error;
-
 if saturation == false
-I = I + Ki*error*dt;
+I = I + Ki*error;
 end
-
 U = P + I;
     
 if ( U < Umin)  
@@ -112,15 +113,8 @@ end
 
 %% TRANSFORMATION FROM U to delta_S
 
-% Parameters
-m = 22;
-g = 9.81;
-ro = getRho(z);
-diameter = 0.15; 
-S0 = (pi*diameter^2)/4;  
-
-% Range of values for the control variable
-delta_S_available = [0.0:0.001:0.01]'; 
+% Possible range of values for the control variable
+delta_S_available = [0.0:0.001/2:0.01]'; % Chiedere velocità: step 0.001 o 0.001/2 ?????
 
 % Get the Cd for each possible aerobrake surface
 Cd_available = 1:length(delta_S_available);
@@ -130,16 +124,15 @@ end
 
 Cd_available = Cd_available';
 
-% For all possible delta_S compute Fdrag.
+% For all possible delta_S compute Fdrag
 % Then choose the delta_S which gives an Fdrag which has the minimum error if compared with F_drag_pid
-[~, index_minimum] = min( abs(U - 0.5*ro*S0*Cd_available*Vz*V_mod) ); 
+[~, index_minimum] = min( abs(U - 0.5*ro*S0*Cd_available*Vz*V_mod) );
+delta_S = delta_S_available(index_minimum); 
 
-% Plot
+% Just for plotting
 pid = U;
 U_linear = 0.5*ro*S0*Cd_available(index_minimum)*Vz*V_mod;
-
-Cd = Cd_available(index_minimum)
-delta_S = delta_S_available(index_minimum);  % delta_S belongs to [0; 0.01]
+Cd = Cd_available(index_minimum);
 
 %% TRANSFORMATION FROM delta_S to SERVOMOTOR ANGLE DEGREES
 
@@ -180,4 +173,3 @@ alpha_degree_prec = alpha_degree;
 % z_setpoint = 9;
 % Vz_setpoint = 5;
 end
-

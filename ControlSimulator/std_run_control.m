@@ -117,13 +117,12 @@ struct_trajectories = load('Trajectories');
 data_trajectories = struct_trajectories.trajectories_saving;
 
 % Define global variables
-global Kp Ki I Cddd alpha_degree_prec index_min_value iteration_flag chosen_trajectory saturation
-Kp = 65; % using Fdrag nel pid
-Ki = 41; % using Fdrag nel pid
-% Kp = 50; % using u nel pid
-% Ki = 30; % using u nel pid
+global Kp Ki I alpha_degree_prec index_min_value iteration_flag chosen_trajectory saturation
+% Kp = 77; % using Fdrag nel pid
+% Ki = 5; % using Fdrag nel pid
+Kp = 50; % using u nel pid
+Ki = 37; % using u nel pid
 I = 0;
-Cddd=1; %%%%%%%
 alpha_degree_prec = 0;
 iteration_flag = 1;
 saturation = false;
@@ -211,8 +210,8 @@ while flagStopIntegration || n_old < nmax
     
     if flagAeroBrakes
          tempo = index_plot*0.1 - 0.1
-         [alpha_degree, Vz_setpoint, z_setpoint, pid,U_linear, Cdd] = controlAlgorithm(z, vz, normV, dt);
-         %[alpha_degree, Vz_setpoint, z_setpoint, pid,U_linear, Cdd] = controlAlgorithmLinearized(z, vz, normV, dt);
+%          [alpha_degree, Vz_setpoint, z_setpoint, pid,U_linear, Cdd] = controlAlgorithm(z, vz, normV, dt);
+         [alpha_degree, Vz_setpoint, z_setpoint, pid,U_linear, Cdd] = controlAlgorithmLinearized(z, vz, normV, dt);
          x = get_extension_from_angle(alpha_degree);
          
          % Save the values to plot them
@@ -232,12 +231,18 @@ while flagStopIntegration || n_old < nmax
     % vertical velocity and position
     if flagAscent || (not(flagAscent) && settings.ballisticFligth)
         Q = Yf(end, 10:13);
-        vels = quatrotate(quatconj(Q), Yf(end, 4:6));
-        vz = - vels(3);
+        vels = quatrotate(quatconj(Q), Yf(end, 4:6)); 
+        vz = - vels(3);   % down
+%         vx = vels(2);   % north
+%         vy = vels(1);   % east
     else
-        vz = -Yf(end, 6);
+        vz = -Yf(end, 6);  
+%         vx = Yf(end, 5); 
+%         vy = Yf(end, 4); 
     end
     z = -Yf(end, 3);
+%     x = Yf(end, 2);
+%     y = Yf(end, 1);
     
 
     
@@ -319,7 +324,7 @@ hold on
 plot(time, plot_pid, 'DisplayName','PID','LineWidth',0.8), grid on;
 xlabel('time [s]'), ylabel('U [N]');
 hold off
-legend('Location','southeast')
+% legend('Location','northeast')
 
 % Cd
 figure('Name','Cd','NumberTitle','off');
@@ -334,7 +339,7 @@ plot(time, plot_z_setpoint,'DisplayName','setpoint','LineWidth',0.8), grid on;
 axis([0,20, 0, 3100])
 xlabel('time [s]'), ylabel('z [m]');
 hold off
-legend('Location','southeast')
+% legend('Location','southeast')
 
 % Vertical velocity real vs setpoint
 figure('Name','Vertical velocity real vs setpoint after burning phase','NumberTitle','off');
@@ -344,7 +349,7 @@ plot(time, plot_Vz_setpoint, 'DisplayName','setpoint', 'LineWidth',0.8), grid on
 axis([0,20, -50,300])
 xlabel('time [s]'), ylabel('Vz [m/s]');
 hold off
-legend
+% legend
 
 % V(z) real vs setpoint
 figure('Name','V(z) real vs setpoint after burning phase','NumberTitle','off');
@@ -354,7 +359,7 @@ plot(plot_z_setpoint, plot_Vz_setpoint, 'DisplayName','setpoint', 'LineWidth',0.
 axis([1100,3200, -50, 250])
 xlabel('z [m]'), ylabel('Vz [m/s]');
 hold off
-legend
+% legend
 
 % Total altitude
 figure('Name','Time, Altitude','NumberTitle','off');

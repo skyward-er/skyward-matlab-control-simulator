@@ -2,8 +2,7 @@ function [alpha_degree, Vz_setpoint, z_setpoint, U, formula, Cd] = controlAlgori
 
 % Define global variables
 global data_trajectories coeff_Cd 
-global Kp Ki I Cddd alpha_degree_prec index_min_value iteration_flag chosen_trajectory saturation
-
+global Kp Ki I alpha_degree_prec index_min_value iteration_flag chosen_trajectory saturation
 
 %% TRAJECTORY SELECTION and REFERENCES COMPUTATION
 
@@ -34,8 +33,8 @@ end
 index_min_value = best_index;
 
 % I select the reference altitude and the reference vertical velocity
-z_setpoint  =  data_trajectories(chosen_trajectory).Z_ref(index_min_value)
-Vz_setpoint =  data_trajectories(chosen_trajectory).V_ref(index_min_value)
+z_setpoint  =  data_trajectories(chosen_trajectory).Z_ref(index_min_value);
+Vz_setpoint =  data_trajectories(chosen_trajectory).V_ref(index_min_value);
 
 iteration_flag = 0; % Don't enter anymore the if condition
 
@@ -43,8 +42,8 @@ else  % For the following iterations keep tracking the chosen trajectory
 
 % Select the z trajectory and the Vz trajectory 
 % To speed up the research, I reduce the vector at each iteration
-z_ref =  data_trajectories(chosen_trajectory).Z_ref;   % .Z_ref( index_min_value-5 : end );
-Vz_ref = data_trajectories(chosen_trajectory).V_ref;
+z_ref =  data_trajectories(chosen_trajectory).Z_ref(index_min_value-1:end);  % Add if-else for problems in index limits
+Vz_ref = data_trajectories(chosen_trajectory).V_ref(index_min_value-1:end);
 
 % 1) Find the value of the altitude in z_reference nearer to z_misured 
 % [~, index_min_value] = min( abs(z_ref - z) );
@@ -58,25 +57,30 @@ Vz_setpoint = Vz_ref(index_min_value);
 
 end  
 
-
 %% PID ALGORITHM
 
 % If e>0 the rocket is too fast. I slow it down with Fx>0 --> open aerobrakes
 % If e<0 the rocket is too slow. I speed it up with Fx<0 --> close aerobrakes
 
-% Umin = -215.6 - 0.5*getRho(z)*0.0177*(Cddd+0.1)*Vz*V_mod;
-Umin = -215.6 - 0.5*getRho(z)*0.0177*1*Vz*V_mod;
-Umax = -215.6;   % U_max = -22*9.8
-dt = 0.1;        % se viene modificato, bisogna modificare pure i PID values
+% Parameters
+m = 22;
+g = 9.81;
+ro = getRho(z);
+diameter = 0.15; 
+S0 = (pi*diameter^2)/4;    % Calcolata a ogni loop, definirla globale
 
-error = (Vz_setpoint - Vz); % cambiato il segno
+% Control variable limits
+% Umin = -m*g - 0.5*ro*S0*(Cddd+0.1)*Vz*V_mod;
+Umin = -m*g - 0.5*ro*S0*1*Vz*V_mod;
+Umax = -m*g; 
+dt = 0.1;   % se viene modificato, bisogna modificare pure i PID values
 
+% PID
+error = (Vz_setpoint - Vz); % Changed the signum
 P = Kp*error;
-
 if saturation == false
 I = I + Ki*error*dt;
 end
-
 U = P + I;
     
 if ( U < Umin)  
@@ -91,15 +95,8 @@ end
 
 %% TRANSFORMATION FROM U to delta_S
 
-% Parameters
-m = 22;
-g = 9.81;
-ro = getRho(z);
-diameter = 0.15; 
-S0 = (pi*diameter^2)/4;  
-
 % Range of values for the control variable
-delta_S_available = [0.0:0.001:0.01]'; 
+delta_S_available = [0.0:0.001/2:0.01]';   % Chiedere velocità: step 0.001 o 0.001/2 ?????
 
 % Get the Cd for each possible aerobrake surface
 Cd_available = 1:length(delta_S_available);
@@ -109,20 +106,16 @@ end
 
 Cd_available = Cd_available';
 
-% For all possible delta_S compute Fdrag.
-% Then choose the delta_S which gives an Fdrag which has the minimum error if compared with F_drag_pid
+% For all possible delta_S compute U
+% Then choose the delta_S which gives an U which has the minimum error if compared with U_pid
 U_linearization = -m*g-0.5*ro*S0*Cd_available*Vz*V_mod;
 [~, index_minimum] = min( abs(abs(U) - abs(U_linearization)) ); 
+delta_S = delta_S_available(index_minimum);  
 
-% Plot
+% Just for plotting
 pid = U;
 formula = -m*g-0.5*ro*S0*Cd_available(index_minimum)*Vz*V_mod;
-
 Cd = Cd_available(index_minimum);
-
-Cddd = Cd; %%%%%%%%%%%%%
-
-delta_S = delta_S_available(index_minimum);  % delta_S belongs to [0; 0.01]
 
 %% TRANSFORMATION FROM delta_S to SERVOMOTOR ANGLE DEGREES
 
@@ -163,4 +156,3 @@ alpha_degree_prec = alpha_degree;
 % z_setpoint = 9;
 % Vz_setpoint = 5;
 end
-
