@@ -132,7 +132,6 @@ index_plot = 1; % To plot
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
 while flagStopIntegration || n_old < nmax
     tic 
     iTimes = iTimes + 1;
@@ -209,9 +208,13 @@ while flagStopIntegration || n_old < nmax
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     if flagAeroBrakes
-         tempo = index_plot*0.1 - 0.1
-%          [alpha_degree, Vz_setpoint, z_setpoint, pid,U_linear, Cdd] = controlAlgorithm(z, vz, normV, dt);
-         [alpha_degree, Vz_setpoint, z_setpoint, pid,U_linear, Cdd] = controlAlgorithmLinearized(z, vz, normV, dt);
+%         yy
+%         vyy
+%          xxx
+%          vxxx
+         tempo = index_plot*0.1 - 0.1;
+         %[alpha_degree, Vz_setpoint, z_setpoint, pid,U_linear, Cdd, delta_S] = controlAlgorithm(z, vz, normV, dt);
+         [alpha_degree, Vz_setpoint, z_setpoint, pid,U_linear, Cdd, delta_S] = controlAlgorithmLinearized(z, vz, normV, dt);
          x = get_extension_from_angle(alpha_degree);
          
          % Save the values to plot them
@@ -223,6 +226,7 @@ while flagStopIntegration || n_old < nmax
          plot_Cd(index_plot) = Cdd;
          plot_pid(index_plot) = pid;
          plot_U_linear(index_plot) = U_linear;
+         plot_delta_S(index_plot) = delta_S;
          index_plot = index_plot + 1;
     else 
         x = 0;
@@ -233,16 +237,16 @@ while flagStopIntegration || n_old < nmax
         Q = Yf(end, 10:13);
         vels = quatrotate(quatconj(Q), Yf(end, 4:6)); 
         vz = - vels(3);   % down
-%         vx = vels(2);   % north
-%         vy = vels(1);   % east
+        vxxx = vels(2);   % north
+        vyy = vels(1);   % east
     else
         vz = -Yf(end, 6);  
 %         vx = Yf(end, 5); 
 %         vy = Yf(end, 4); 
     end
     z = -Yf(end, 3);
-%     x = Yf(end, 2);
-%     y = Yf(end, 1);
+    xxx = Yf(end, 2);
+    yy = Yf(end, 1);
     
 
     
@@ -325,6 +329,11 @@ plot(time, plot_pid, 'DisplayName','PID','LineWidth',0.8), grid on;
 xlabel('time [s]'), ylabel('U [N]');
 hold off
 % legend('Location','northeast')
+
+% delta_S
+figure('Name','Delta_S','NumberTitle','off');
+plot(time, plot_delta_S), grid on;
+xlabel('time [s]'), ylabel('A [m^2]');
 
 % Cd
 figure('Name','Cd','NumberTitle','off');

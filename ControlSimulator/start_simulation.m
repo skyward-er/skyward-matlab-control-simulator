@@ -95,12 +95,12 @@ if settings.plots && not(settings.electronics)
 %     figure('Name', 'Forces - ascent Phase', 'NumberTitle', 'off');
 %     plot(Tf(flagMatr(:, 2)), data_flight.forces.AeroDyn_Forces(:, 1)),grid on;
 %     xlabel('Time [s]'); ylabel('X-body force [N]')
-    
-    % CA
-    figure('Name', 'Axial Drag Coefficient - ascent Phase', 'NumberTitle', 'off');
-    plot(Tf(flagMatr(:, 2)), data_flight.coeff.CA), title('Axial Drag Coefficient vs time'), grid on;
-    xlabel('Time [s]'); ylabel('CA [/]')
-    
+%     
+%     % CA
+%     figure('Name', 'Axial Drag Coefficient - ascent Phase', 'NumberTitle', 'off');
+%     plot(Tf(flagMatr(:, 2)), data_flight.coeff.CA), title('Axial Drag Coefficient vs time'), grid on;
+%     xlabel('Time [s]'); ylabel('CA [/]')
+%     
 %     % ACCELERATION
 %     figure('Name', 'Velocity-Abs, Acceleration-Abs - ascent Phase', 'NumberTitle', 'off');
 %     subplot(1, 2, 1)

@@ -1,4 +1,4 @@
-function [alpha_degree, Vz_setpoint, z_setpoint, pid, U_linear, Cd] = controlAlgorithm(z,Vz,V_mod,sample_time)
+function [alpha_degree, Vz_setpoint, z_setpoint, pid, U_linear, Cd, delta_S] = controlAlgorithm(z,Vz,V_mod,sample_time)
 
 % Define global variables
 global data_trajectories coeff_Cd 
@@ -33,8 +33,8 @@ end
 index_min_value = best_index;
 
 % I select the reference altitude and the reference vertical velocity
-z_setpoint  =  data_trajectories(chosen_trajectory).Z_ref(index_min_value)
-Vz_setpoint =  data_trajectories(chosen_trajectory).V_ref(index_min_value)
+z_setpoint  =  data_trajectories(chosen_trajectory).Z_ref(index_min_value);
+Vz_setpoint =  data_trajectories(chosen_trajectory).V_ref(index_min_value);
 
 iteration_flag = 0; % Don't enter anymore the if condition
 

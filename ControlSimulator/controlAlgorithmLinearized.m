@@ -1,4 +1,4 @@
-function [alpha_degree, Vz_setpoint, z_setpoint, U, formula, Cd] = controlAlgorithmLinearized(z,Vz,V_mod,sample_time)
+function [alpha_degree, Vz_setpoint, z_setpoint, U, formula, Cd, delta_S] = controlAlgorithmLinearized(z,Vz,V_mod,sample_time)
 
 % Define global variables
 global data_trajectories coeff_Cd 
