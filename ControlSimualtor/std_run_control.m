@@ -1,4 +1,4 @@
-function [Yf, Tf, data_flight] = std_run_control(settings)
+function [Yf, Tf, cpuTimes, flagMatr, dataBallisticFlight] = std_run_control(settings)
 %{
 
 STD_RUN_BALLISTIC - This function runs a standard ballistic (non-stochastic) simulation
@@ -25,21 +25,13 @@ Revision date: 09/10/2019
 
 %}
 
-if settings.wind.model && settings.wind.input
-    error('Both wind model and input wind are true, select just one of them')
-end
+run('initSensors.m')
 
-if settings.wind.HourMin ~= settings.wind.HourMax || settings.wind.HourMin ~= settings.wind.HourMax
-    error('In standard simulations with the wind model the day and the hour of launch must be unique, check config.m')
+if not(settings.ballisticFligth) && settings.ascentOnly
+   error('To simulate a landing with the parachutes, settings.ascentOnly must be false') 
 end
 
 %% STARTING CONDITIONS
-% Attitude
-
-if settings.upwind
-    settings.PHI = mod(Azw + pi, 2*pi);
-end
-
 % Attitude
 Q0 = angle2quat(settings.PHI, settings.OMEGA, 0*pi/180, 'ZYX')';
 
@@ -48,11 +40,10 @@ X0 = [0 0 0]';
 V0 = [0 0 0]';
 W0 = [0 0 0]';
 theta0 = [0 0 0]';
-Y0a = [X0; V0; W0; Q0; settings.m0; settings.Ixxf; settings.Iyyf; settings.Izzf; theta0];
+Y0 = [X0; V0; W0; Q0; settings.m0; settings.Ixxf; settings.Iyyf; settings.Izzf; theta0];
 
 %% WIND GENERATION
-
-if settings.wind.model || settings.wind.input   % will be computed inside the integrations
+if settings.wind.input   % will be computed inside the integrations
     uw = 0; vw = 0; ww = 0;
 else
     [uw,vw,ww,~] = wind_const_generator(settings.wind.AzMin, settings.wind.AzMax,...
@@ -84,73 +75,231 @@ else
     uncert = [0,0];
 end
 
-tf = settings.ode.final_time;
-
-%% BURNING ASCENT
-c = 0;
-[Ta, Ya] = ode113(@ascent, [0, tf], Y0a, settings.ode.optionsasc1, settings, c, uw, vw, ww, uncert);
-
-%% CONTROL PHASE
-
+%% INTEGRATION
 % setting initial condition before control phase
-dt = settings.freq;
-t0 = Ta(end);
+dt = 1/settings.frequencies.controlFrequency;
+t0 = 0;
 t1 = t0 + dt;
 vz = 1;
-Y0 = Ya(end,:);
-% [~, ~, p0, ~] = atmosisa(Ya(end,3));
+z = 1;
+flagStopIntegration = true;
 nmax = 10000;
-Yc_tot = zeros(nmax, 20);
-Tc_tot = zeros(nmax, 1);
+mach = 0;
+x = 0;
+flagMatr = false(nmax, 6);
+flagAscent = false;
+Yf_tot = zeros(nmax, 20);
+Tf_tot = zeros(nmax, 1);
 C = zeros(nmax, 1);
 n_old = 1;
+cpuTimes = zeros(nmax,1);
+iTimes = 0;
 
-% control phase dynamics integration
-while vz > -10 || n_old < nmax
+while flagStopIntegration || n_old < nmax
+    tic 
+    iTimes = iTimes + 1;
     
-    % controllo
+    lastFlagAscent = flagAscent;
+
+    if t0 <= settings.tb
+        flagBurning = true;
+    else
+        flagBurning = false;
+    end
     
-    %[At] = controllo(Y0,t0);           % total aerobrakes wet Area
-%     A = At/3;                         % single aerobrake wet Area
-    A = settings.Atot/6;                % waiting for the control
-    c = A/settings.brakesWidth;        % approximated aerobrakes heigth --> control variable of the simulator
-   % tic 
+    if not(flagBurning) && mach <=0.7
+        flagAeroBrakes = true;
+    else
+        flagAeroBrakes = false;
+    end
+    
+    if z < 0
+        flagFligth = false;
+    else
+        flagFligth = true;
+    end
+    
+    if vz >= 0
+        flagAscent = true;
+    else
+        flagAscent = false;
+    end
+    
+    if not(flagAscent) 
+        if z >= settings.para(1).z_cut
+            flagPara1 = true;
+            flagPara2 = false;
+        else
+            flagPara1 = false;
+            flagPara2 = true;
+        end
+    else
+        flagPara1 = false;
+        flagPara2 = false;
+    end
+   
+    
     % dynamics
-    [Tc,Yc] = ode45(@ascent, [t0, t1], Y0, [], settings, c, uw, vw, ww, uncert);
-   % toc
-    % evaluate the condition for cycle condition 
-    Q = Yc(end,10:13);
-    vels = quatrotate(quatconj(Q),Yc(end,4:6));
-    vz = - vels(3);
+    if settings.ballisticFligth
+        [Tf, Yf] = ode45(@ascent, [t0, t1], Y0, [], settings, x, uw, vw, ww, uncert);
+    else
+        if flagAscent
+            [Tf, Yf] = ode45(@ascent, [t0, t1], Y0, [], settings, x, uw, vw, ww, uncert);
+        else
+            if flagPara1 
+                para = 1; 
+            end
+            if flagPara2 
+                para = 2; 
+            end
+            
+            Y0 = Y0(1:6);
+            [Tf, Yd] = ode45(@descentParachute, [t0, t1], Y0, [], settings, uw, vw, ww, para, uncert);
+            [nd, ~] = size(Yd);
+            Yf = [Yd, zeros(nd, 7), settings.m0*ones(nd, 1), settings.Ixxe*ones(nd, 1), ...
+                settings.Iyye*ones(nd, 1), settings.Iyye*ones(nd, 1), zeros(nd, 3)];
+        end
+    end
+
+    [sensorData] = manageSignalFrequencies(flagAscent, settings, Yf, Tf, x, uw, vw, ww, uncert);
     
-    % update ode every cycle 
+    a_body  = zeros(length(sensorData.accelerometer.time),3);
+    omega   = zeros(length(sensorData.accelerometer.time),3);
+    pos_gps = zeros(length(sensorData.gps.time),3);
+    vel_gps = zeros(length(sensorData.gps.time),3);
+%     mag
+    pres    = zeros(length(sensorData.barometer.time),1);
+    if settings.dataNoise
+       %Loop to dirt the acceleration and angular velocity (since they will
+       %have the same freq.)
+       for ii=1:length(sensorData.accelerometer.time)
+           
+           [a_body(ii,1),a_body(ii,2),a_body(ii,3)]   = ACCEL_LSM9DS1.sens...
+                                                       (sensorData.accelerometer.measures(ii,1),...
+                                                        sensorData.accelerometer.measures(ii,2),...
+                                                        sensorData.accelerometer.measures(ii,3),50);
+           [omega(ii,1),omega(ii,2),omega(ii,3)]      = GYRO_LSM9DS1.sens...
+                                                       (sensorData.gyro.measures(ii,1)*180*1000/pi,...
+                                                        sensorData.gyro.measures(ii,2)*180*1000/pi,...
+                                                        sensorData.gyro.measures(ii,3)*180*1000/pi,50);
+       end
+       omega                                      = omega*pi/180/1000;
+       %Loop to dirt GPS measurements
+       for ii=1:length(sensorData.gps.time)
+           [pos_gps(ii,1),pos_gps(ii,2),pos_gps(ii,3)] = GPS_NEOM9N.sens...
+                                                         (sensorData.gps.positionMeasures(ii,1),...
+                                                          sensorData.gps.positionMeasures(ii,2),...
+                                                          sensorData.gps.positionMeasures(ii,3),50);
+           [vel_gps(ii,1),vel_gps(ii,2),vel_gps(ii,3)]  = GPS_NEOM9N.sens...
+                                                         (sensorData.gps.velocityMeasures(ii,1),...
+                                                          sensorData.gps.velocityMeasures(ii,2),...
+                                                          sensorData.gps.velocityMeasures(ii,3),50);
+       end
+       
+       %Loop to dirt the magnetometer
+       for ii=1:length(sensorData.magnetometer.time)
+           
+       end
+       
+       %Loop to dirt the barometer
+       for ii=1:length(sensorData.barometer.time)
+           pres(ii) = MS580301BA01.sens(sensorData.barometer.measures(ii)/100,50);
+           
+       end
+       pres=pres*100;
+    end
+    
+%     %Plots to check the correct dirt
+%     close all
+%     figure %Acceleration
+%     plot(sensorData.accelerometer.time,sensorData.accelerometer.measures(:,1),'DisplayName','Real x comp.')
+%     hold on
+%     plot(sensorData.accelerometer.time,sensorData.accelerometer.measures(:,2),'DisplayName','Real y comp.')
+%     plot(sensorData.accelerometer.time,sensorData.accelerometer.measures(:,3),'DisplayName','Real z comp.')
+%     plot(sensorData.accelerometer.time,a_body(:,1),'DisplayName','Noisy x comp.')
+%     plot(sensorData.accelerometer.time,a_body(:,2),'DisplayName','Noisy y comp.')
+%     plot(sensorData.accelerometer.time,a_body(:,3),'DisplayName','Noisy z comp.')
+%     grid on
+%     title('Acceleration comparison before and after noise')
+%     %------------
+%     figure %Angular velocity
+%     plot(sensorData.gyro.time,sensorData.gyro.measures(:,1),'DisplayName','Real x comp.')
+%     hold on
+%     plot(sensorData.gyro.time,sensorData.gyro.measures(:,2),'DisplayName','Real y comp.')
+%     plot(sensorData.gyro.time,sensorData.gyro.measures(:,3),'DisplayName','Real z comp.')
+%     plot(sensorData.gyro.time,omega(:,1),'DisplayName','Noisy x comp.')
+%     plot(sensorData.gyro.time,omega(:,2),'DisplayName','Noisy y comp.')
+%     plot(sensorData.gyro.time,omega(:,3),'DisplayName','Noisy z comp.')
+%     grid on
+%     title('Angular velocity comparison before and after noise')
+
+    %%%%%%% kalmann filter %%%%%%%%
+    % kalman(p, acc_body, ang_vel, q, [u, v, w]ned, [x, y, z]ned )
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    
+    if flagAeroBrakes
+        % [alpha] = controlAlgorithm(z, vz, V, Yf, Tf);
+        % alpha -- > x;
+        A = settings.Atot/6;                % waiting for the control
+        x = A/settings.brakesWidth;         % approximated aerobrakes heigth --> control variable of the simulator
+    else 
+        x = 0;
+    end    
+
+    % vertical velocity and position
+    if flagAscent
+        Q = Yf(end, 10:13);
+        vels = quatrotate(quatconj(Q), Yf(end, 4:6));
+        vz = - vels(3);
+    else
+        vz = -Yf(end, 6);
+    end
+    z = -Yf(end, 3);
+    
+
+    
+    if lastFlagAscent && not(flagAscent)
+        Y0 = [Yf(end, 1:3), vels, Yf(end, 7:end)];
+    else
+        Y0 = Yf(end, :);
+    end
+    
+    % atmosphere
+    [~, a, ~, ~] = atmosisa(z);        % pressure and temperature at each sample time
+    normV = norm(Yf(end, 4:6));
+    mach = normV/a;
+    
+    % time update
     t0 = t0 + dt;
     t1 = t1 + dt;
-    Y0 = Yc(end,:);
-%     [T, ~, p0, ~] = atmosisa(Yc(end, 3));        % pressure and temperature at each sample time  
-            
+    
     % assemble total state
-    [n, ~] = size(Yc);
-    Yc_tot(n_old:n_old+n-1,:) = Yc(1:end,:);
-    Tc_tot(n_old:n_old+n-1) = Tc(1:end,1);
-    C(n_old:n_old+n-1) = c;
+    [n, ~] = size(Yf);
+    Yf_tot(n_old:n_old+n-1, :) = Yf(1:end, :);
+    Tf_tot(n_old:n_old+n-1) = Tf(1:end, 1);
+    C(n_old:n_old+n-1) = x;
     
     n_old = n_old + n -1;
    
+    cpuTimes(iTimes) = toc;
+    
+     if settings.ascentOnly
+         flagStopIntegration = flagAscent;
+     else
+         flagStopIntegration = flagFligth;
+     end        
+    
+     flagMatr(n_old:n_old+n-1, :) = repmat([flagFligth, flagAscent, flagBurning, flagAeroBrakes, flagPara1, flagPara2], n, 1);
 end
-
+cpuTimes = cpuTimes(1:iTimes);
 
 %% ASSEMBLE TOTAL FLIGHT STATE
-
-Yc_tot = Yc_tot(1:n_old,:);
-Tc_tot = Tc_tot(1:n_old,:);
-
-Yf = [Ya; Yc_tot(2:end,:)];
-Tf = [Ta; Tc_tot(2:end,:)];
-
-C = [zeros(length(Ta) - 1, 1); C];
+Yf = Yf_tot(1:n_old, :);
+Tf = Tf_tot(1:n_old, :);
+flagMatr = flagMatr(1:n_old, :);
 
 %% RETRIVE PARAMETERS FROM THE ODE
-data_flight = RecallOdeFcn(@ascent, Tf, Yf, settings, C, uw, vw, ww, uncert);
-
+if not(settings.electronics)
+    dataBallisticFlight = RecallOdeFcn(@ascent, Tf(flagMatr(:, 2)), Yf(flagMatr(:, 2), :), settings, C, uw, vw, ww, uncert);
+end
 

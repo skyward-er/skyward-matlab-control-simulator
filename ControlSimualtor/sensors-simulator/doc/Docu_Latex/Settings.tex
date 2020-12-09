@@ -1,0 +1,103 @@
+% Customization file for the titlepage and document
+%************************************************************
+% Required stuff
+%************************************************************
+\usepackage{graphicx}
+\usepackage{euler}
+\usepackage[detect-all]{siunitx}
+\usepackage{sectsty}
+\usepackage[font={footnotesize }]{caption}
+\usepackage{multicol}
+\usepackage{prettyref}
+
+\usepackage{listings}
+
+\allsectionsfont{\rmfamily}
+
+% Page customization
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+
+% Color
+\usepackage{color}
+\definecolor{light-gray}{gray}{0.85}
+\definecolor{dark-gray}{gray}{0.75}
+
+\fancyhead{}  % clear all header fields
+\fancyhead[LO,RE]{\rule[-2ex]{0pt}{2ex}\fontsize{9}{11} \selectfont \myPhase}
+\fancyhead[RO,LE]{\raisebox{-0.35cm}{\includegraphics[height=1.2cm,keepaspectratio]{gfx/Logo_TotalBlack.pdf}}}
+\fancyhead[CO,CE]{\fontsize{9}{11} \selectfont \myIPT}
+\fancyfoot{}  % clear all footer fields
+\fancyfoot[RO,LE]{\fontsize{5.5}{8} \selectfont This work is to be considered classified. The use is allowed only for Skyward Experimental Rocketry related activities and projects. For public access please contact \href{mailto:info@skywarder.eu}{info@skywarder.eu}}
+\fancyfoot[RE,LO]{\fontsize{9}{11} \selectfont \thepage}
+\fancyheadoffset[LE,RO]{0.2pt}
+\renewcommand{\headrulewidth}{0.2pt}
+\renewcommand{\footrulewidth}{0.2pt}
+\renewcommand{\headrule}{\hbox to\headwidth{%
+   \leaders\hrule height \headrulewidth\hfill}}
+\renewcommand{\footrule}{\hbox to\headwidth{%
+    \leaders\hrule height \headrulewidth\hfill}}
+\hypersetup{colorlinks=true, linkcolor=blue ,linktoc=page,citecolor=black}
+
+\usepackage{pdfpages} %per includere pdf di più pagine
+
+
+% Custom notes
+\usepackage{xargs}                      % Use more than one optional parameter in a new commands
+\usepackage[pdftex,dvipsnames]{xcolor}  % Coloured text etc.
+
+\usepackage[colorinlistoftodos,prependcaption,textsize=tiny]{todonotes}
+
+\usepackage{nameref}
+
+\newcommandx{\unsure}[2][1=]{\todo[linecolor=red,backgroundcolor=red!25,bordercolor=red,#1]{#2}}
+\newcommandx{\change}[2][1=]{\todo[linecolor=blue,backgroundcolor=blue!25,bordercolor=blue,#1]{#2}}
+\newcommandx{\info}[2][1=]{\todo[linecolor=OliveGreen,backgroundcolor=OliveGreen!25,bordercolor=OliveGreen,#1]{#2}}
+\newcommandx{\improvement}[2][1=]{\todo[linecolor=Plum,backgroundcolor=Plum!25,bordercolor=Plum,#1]{#2}}
+\newcommandx{\thiswillnotshow}[2][1=]{\todo[disable,#1]{#2}}
+\reversemarginpar
+\setlength{\marginparwidth}{2cm}
+%End custom notes
+
+
+%************************************************************
+% Redefining numbering for sections
+%************************************************************
+%\renewcommand*\thesection{\arabic{section}}
+
+%************************************************************
+% Cross reference set-up
+%************************************************************
+\newrefformat{tab}{Table\,\ref{#1}}
+\newrefformat{fig}{Figure\,\ref{#1}}
+\newrefformat{eq}{Eq.\,\textup{(\ref{#1})}}
+\newrefformat{sec}{Sec.\,\ref{#1}}
+\newrefformat{sub}{Sec.\,\ref{#1}}
+
+%************************************************************
+% Fancy stuff
+%************************************************************
+\newcommand{\titlecap}[1]{\Huge{\textrm{#1}}}
+\newcommand{\subtitlecap}[1]{\Large{\textsc{#1}}}
+\newcommand{\sscap}[1]{\textbf{#1}}
+\newcommand{\strong}[1]{\textbf{#1}}
+\setlength{\headheight}{60pt} %%or
+
+%************************************************************
+% Helpful stuff to modify here, not in the LyX Document
+%************************************************************
+\newcommand{\myDate}{\today}
+\newcommand{\myGroup}{Skyward Experimental Rocketry}
+\newcommand{\myUrl}{\url{http://www.skywarder.eu}}
+\newcommand{\myUni}{Politecnico di Milano}
+
+\newcommand{\myPhase}{}
+\newcommand{\myProject}{Entry Project 2020}
+\newcommand{\myRevision}{0}
+\newcommand{\myIPT}{Software \& Control Systems Team}
+\newcommand{\myTitle}{Matlab Sensor Model}
+\newcommand{\myAuthor}{Jan H\"ammelmann}
+\newcommand{\myEditor}{}
+\newcommand{\myEmail}{jan.hammelmann@skywarder.eu}
+
+\newcommand{\mail}[1]{\href{mailto:#1}{\texttt{#1}}}
