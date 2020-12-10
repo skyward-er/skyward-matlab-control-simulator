@@ -129,7 +129,7 @@ saturation = false;
 
 index_plot = 1; % To plot
 
-
+fprintf('START:\n\n\n');
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 while flagStopIntegration || n_old < nmax
@@ -208,13 +208,13 @@ while flagStopIntegration || n_old < nmax
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     if flagAeroBrakes
-%         yy
-%         vyy
+%          yyy
+%          vyyy
 %          xxx
 %          vxxx
          tempo = index_plot*0.1 - 0.1;
-         %[alpha_degree, Vz_setpoint, z_setpoint, pid,U_linear, Cdd, delta_S] = controlAlgorithm(z, vz, normV, dt);
-         [alpha_degree, Vz_setpoint, z_setpoint, pid,U_linear, Cdd, delta_S] = controlAlgorithmLinearized(z, vz, normV, dt);
+%          [alpha_degree, Vz_setpoint, z_setpoint, pid,U_linear, Cdd, delta_S] = controlAlgorithm(z, vz, normV, dt);
+        [alpha_degree, Vz_setpoint, z_setpoint, pid,U_linear, Cdd, delta_S] = controlAlgorithmLinearized(z, vz, normV, dt);
          x = get_extension_from_angle(alpha_degree);
          
          % Save the values to plot them
@@ -238,7 +238,7 @@ while flagStopIntegration || n_old < nmax
         vels = quatrotate(quatconj(Q), Yf(end, 4:6)); 
         vz = - vels(3);   % down
         vxxx = vels(2);   % north
-        vyy = vels(1);   % east
+        vyyy = vels(1);   % east
     else
         vz = -Yf(end, 6);  
 %         vx = Yf(end, 5); 
@@ -246,7 +246,7 @@ while flagStopIntegration || n_old < nmax
     end
     z = -Yf(end, 3);
     xxx = Yf(end, 2);
-    yy = Yf(end, 1);
+    yyy = Yf(end, 1);
     
 
     
@@ -328,7 +328,7 @@ hold on
 plot(time, plot_pid, 'DisplayName','PID','LineWidth',0.8), grid on;
 xlabel('time [s]'), ylabel('U [N]');
 hold off
-% legend('Location','northeast')
+legend('Location','northeast')
 
 % delta_S
 figure('Name','Delta_S','NumberTitle','off');
@@ -348,7 +348,7 @@ plot(time, plot_z_setpoint,'DisplayName','setpoint','LineWidth',0.8), grid on;
 axis([0,20, 0, 3100])
 xlabel('time [s]'), ylabel('z [m]');
 hold off
-% legend('Location','southeast')
+legend('Location','southeast')
 
 % Vertical velocity real vs setpoint
 figure('Name','Vertical velocity real vs setpoint after burning phase','NumberTitle','off');
@@ -358,7 +358,7 @@ plot(time, plot_Vz_setpoint, 'DisplayName','setpoint', 'LineWidth',0.8), grid on
 axis([0,20, -50,300])
 xlabel('time [s]'), ylabel('Vz [m/s]');
 hold off
-% legend
+legend
 
 % V(z) real vs setpoint
 figure('Name','V(z) real vs setpoint after burning phase','NumberTitle','off');
@@ -368,7 +368,7 @@ plot(plot_z_setpoint, plot_Vz_setpoint, 'DisplayName','setpoint', 'LineWidth',0.
 axis([1100,3200, -50, 250])
 xlabel('z [m]'), ylabel('Vz [m/s]');
 hold off
-% legend
+legend
 
 % Total altitude
 figure('Name','Time, Altitude','NumberTitle','off');
