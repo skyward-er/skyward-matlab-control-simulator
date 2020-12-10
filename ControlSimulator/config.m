@@ -39,7 +39,6 @@ motors = motors.MotorsByName;
 
 name = 'M2020';
 % name = 'M1890';
-%name = 'M1800';
 settings.motor.exp_time = motors.(name).t;
 settings.motor.exp_thrust = motors.(name).T;
 settings.mp = motors.(name).mp;                                             % [kg]   Propellant Mass                                                
@@ -164,8 +163,8 @@ settings.wind.input_alt = [0 100 600 750 900 1500 2500];                    % al
 settings.wind.input_mult = [0 0 10 15 20 30 30];                            % percentage of increasing magnitude at each altitude
 settings.wind.input_azimut = [30 30 30 30 30 30 30];                        % wind azimut angle at each altitude (toward wind incoming direction) [deg]
 
-settings.wind.input_uncertainty = [1, 1];
-% settings.wind.input_uncertainty = [a,b];      wind uncertanties:
+settings.wind.input_uncertainty = [4, 20];
+%settings.wind.input_uncertainty = [a,b];      wind uncertanties:
 % - a, wind magnitude percentage uncertanty: magn = magn *(1 +- a)
 % - b, wind direction band uncertanty: dir = dir 1 +- b
 
@@ -174,8 +173,8 @@ settings.wind.input_uncertainty = [1, 1];
 
 % Wind is generated randomly from the minimum to the maximum parameters which defines the wind.
 % Setting the same values for min and max will fix the parameters of the wind.
-settings.wind.MagMin = 1;                                                   % [m/s] Minimum Magnitude
-settings.wind.MagMax = 1;                                                   % [m/s] Maximum Magnitude
+settings.wind.MagMin = 4;                                                   % [m/s] Minimum Magnitude
+settings.wind.MagMax = 4;                                                   % [m/s] Maximum Magnitude
 settings.wind.ElMin = 0*pi/180;                                             % [rad] Minimum Elevation, user input in degrees (ex. 0)
 settings.wind.ElMax = 0*pi/180;                                             % [rad] Maximum Elevation, user input in degrees (ex. 0) (Max == 90 Deg)
 settings.wind.AzMin = (360)*pi/180;                                         % [rad] Minimum Azimuth, user input in degrees (ex. 90)

@@ -101,6 +101,9 @@ n_old = 1;
 cpuTimes = zeros(nmax,1);
 iTimes = 0;
 
+%% INIT SENSORS
+run('./Sensors/initSensors.m');
+
 while flagStopIntegration || n_old < nmax
     tic 
     iTimes = iTimes + 1;
@@ -177,7 +180,9 @@ while flagStopIntegration || n_old < nmax
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     if flagAeroBrakes
-         alpha_degree = controlAlgorithm(z, vz, normV ,settings);
+         [xs,ys,zs]=testSensorPosition.sens(xpos,ypos,z,0);
+         [vxs,vys,vzs]=testSensorVelocity.sens(vx,vy,vz,0);
+         alpha_degree = controlAlgorithm(zs, vz, sqrt(vxs^2+vys^2+vzs^2) ,settings);
          
          % PLOT SERVO CONTROL ANGLE
          figure(10);
@@ -196,12 +201,15 @@ while flagStopIntegration || n_old < nmax
         vels = quatrotate(quatconj(Q), Yf(end, 4:6));
         vz = - vels(3);
         vx = vels(1); % Needed for the control algorithm. Ask if it is right
+        vy = vels(2);
     else
         vz = -Yf(end, 6);
         vx = Yf(end, 4);  % Needed for the control algorithm. Ask if it is right
+        vy = Yf(end, 5);
     end
     z = -Yf(end, 3);
-    
+    xpos = Yf(end, 1);
+    ypos = Yf(end, 2);
 
     
     if lastFlagAscent && not(flagAscent)

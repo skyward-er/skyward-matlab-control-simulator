@@ -46,7 +46,7 @@ end
 
 %% Limit changing speed of alpha
 dAlphaMax = (pi/180*60)/0.13*settings.control.dt; % 60 degree/0.13 sec from servo
-dAlphaMax = dAlphaMax*1; % multiplied by a value < 1
+dAlphaMax = dAlphaMax*0.05; % multiplied by a value < 1
 difAlphas=alpha-alphaOld;
 difAlphas=max(difAlphas,-dAlphaMax);
 difAlphas=min(difAlphas,dAlphaMax);
