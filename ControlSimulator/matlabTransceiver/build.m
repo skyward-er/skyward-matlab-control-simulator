@@ -1,0 +1,2 @@
+clc
+mex matlabTransceiver/serialbridge.cpp matlabTransceiver/serialib.cpp

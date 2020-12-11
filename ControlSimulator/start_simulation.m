@@ -10,7 +10,7 @@ Release date: 16/04/2016
 %}
 
 close all
-clear 
+clear
 clc
 
 path = genpath(pwd);
@@ -18,6 +18,8 @@ addpath(path);
 
 %% LOAD DATA
 run('config.m');
+
+serialbridge("Open", "COM6", 256000); % Initialization of the serial port
 
 %% START THE CHOSEN SIMULATION
 % T = vector of time used by ODE, [s] also for Tf Ta
@@ -112,5 +114,5 @@ if settings.plots && not(settings.electronics)
     xlabel('time [s]'), ylabel('|A| [g]');
        
 end
-
+serialbridge("Close")
 clearvars -except Yf data_flight settings

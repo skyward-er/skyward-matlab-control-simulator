@@ -177,7 +177,12 @@ while flagStopIntegration || n_old < nmax
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     if flagAeroBrakes
-         alpha_degree = controlAlgorithm(z, vz, vx);
+%          alpha_degree = controlAlgorithm(z, vz, vx);
+         % Socket
+        serialbridge("Write", structToSingles(sensorData));
+        alpha_degree = serialbridge("Read", 1);
+         % end_Socket
+         
          x = get_extension_from_angle(alpha_degree);
     else 
         x = 0;
