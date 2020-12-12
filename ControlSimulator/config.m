@@ -37,9 +37,9 @@ filename_full = strcat(DATA_PATH,'MotorsList.mat');
 motors = load(filename_full,'MotorsByName');
 motors = motors.MotorsByName;
 
-name = 'M2020';
-% name = 'M1890';
-%name = 'M1800';
+name = 'M2020'; % USE THIS
+%name = 'M1890';  % UNFEASIBLE, TOO STRONG TO DECELERATE
+%name = 'M1800'; % UNFEASIBLE, TOO STRONG TO DECELERATE
 settings.motor.exp_time = motors.(name).t;
 settings.motor.exp_thrust = motors.(name).T;
 settings.mp = motors.(name).mp;                                             % [kg]   Propellant Mass                                                

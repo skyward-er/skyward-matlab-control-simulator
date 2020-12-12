@@ -44,7 +44,7 @@ else  % For the following iterations keep tracking the chosen trajectory
     Vz_ref = data_trajectories(chosen_trajectory).V_ref(index_min_value-1:end);  
 
     % 1) Find the value of the altitude in z_reference nearer to z_misured 
-    % [~, index_min_value] = min( abs(z_ref - z) );
+    %[~, index_min_value] = min( abs(z_ref - z) );
 
     % 2) Find the reference using Vz(z)
     distances_from_current_state = (z_ref-z).^2 + (Vz_ref-Vz).^2; 

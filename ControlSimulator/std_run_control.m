@@ -118,10 +118,10 @@ data_trajectories = struct_trajectories.trajectories_saving;
 
 % Define global variables
 global Kp Ki I alpha_degree_prec index_min_value iteration_flag chosen_trajectory saturation
-% Kp = 77; % using Fdrag nel pid
-% Ki = 5; % using Fdrag nel pid
-Kp = 50; % using u nel pid
-Ki = 37; % using u nel pid
+Kp = 77; % using Fdrag nel pid
+Ki = 5; % using Fdrag nel pid
+% Kp = 50; % using u nel pid
+% Ki = 37; % using u nel pid
 I = 0;
 alpha_degree_prec = 0;
 iteration_flag = 1;
@@ -213,8 +213,8 @@ while flagStopIntegration || n_old < nmax
 %          xxx
 %          vxxx
          tempo = index_plot*0.1 - 0.1;
-%          [alpha_degree, Vz_setpoint, z_setpoint, pid,U_linear, Cdd, delta_S] = controlAlgorithm(z, vz, normV, dt);
-        [alpha_degree, Vz_setpoint, z_setpoint, pid,U_linear, Cdd, delta_S] = controlAlgorithmLinearized(z, vz, normV, dt);
+         [alpha_degree, Vz_setpoint, z_setpoint, pid,U_linear, Cdd, delta_S] = controlAlgorithm(z, vz, normV, dt);
+%         [alpha_degree, Vz_setpoint, z_setpoint, pid,U_linear, Cdd, delta_S] = controlAlgorithmLinearized(z, vz, normV, dt);
          x = get_extension_from_angle(alpha_degree);
          
          % Save the values to plot them
