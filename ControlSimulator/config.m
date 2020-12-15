@@ -28,7 +28,7 @@ settings.launchDate = [2021, 10, 15];                                       % [Y
 % for a single run the maximum and the minimum value of the following
 % angles must be the same.
 settings.OMEGA = 84*pi/180;                                                 %[rad] Minimum Elevation Angle, user input in degrees (ex. 80)
-settings.PHI = 180*pi/180;                                                  %[rad] Minimum Azimuth Angle from North Direction, user input in degrees (ex. 90)
+settings.PHI = 0*pi/180;                                                  %[rad] Minimum Azimuth Angle from North Direction, user input in degrees (ex. 90)
 
 %% ENGINE DETAILS
 % load motors data 
@@ -37,8 +37,9 @@ filename_full = strcat(DATA_PATH,'MotorsList.mat');
 motors = load(filename_full,'MotorsByName');
 motors = motors.MotorsByName;
 
-name = 'M2020';
-% name = 'M1890';
+name = 'M2020'; % USE THIS
+%name = 'M1890';  % UNFEASIBLE, TOO STRONG TO DECELERATE
+%name = 'M1800'; % UNFEASIBLE, TOO STRONG TO DECELERATE
 settings.motor.exp_time = motors.(name).t;
 settings.motor.exp_thrust = motors.(name).T;
 settings.mp = motors.(name).mp;                                             % [kg]   Propellant Mass                                                
@@ -64,14 +65,14 @@ L = 3;                                                                      % [m
 % z-axis: downward
 
 % inertias for full configuration (with all the propellant embarqued) obtained with CAD's
-settings.Ixxf = 0.008795446;                                                % [kg*m^2] Inertia to x-axis
-settings.Iyyf = 2.050393979;                                                % [kg*m^2] Inertia to y-axis
-settings.Izzf = 2.050413838;                                                % [kg*m^2] Inertia to z-axis
+settings.Ixxf = 0.0540;                     % [kg*m^2] Inertia to x-axis
+settings.Iyyf = 13.7274;                    % [kg*m^2] Inertia to y-axis
+settings.Izzf = 13.7302;                    % [kg*m^2] Inertia to z-axis
 
 % inertias for empty configuration (all the propellant consumed) obtained with CAD's
-settings.Ixxe = 0.008472446;                                                % [kg*m^2] Inertia to x-axis
-settings.Iyye = 1.712284592;                                                % [kg*m^2] Inertia to y-axis
-settings.Izze = 1.712304085;                                                % [kg*m^2] Inertia to z-axis
+settings.Ixxe = 0.0498;                     % [kg*m^2] Inertia to x-axis
+settings.Iyye = 11.5612;                    % [kg*m^2] Inertia to y-axis
+settings.Izze = 11.5640;                    % [kg*m^2] Inertia to z-axis
 
 %% AERODYNAMICS DETAILS
 % These coefficients are obtained using MISSILE DATCOM
@@ -119,8 +120,8 @@ settings.frequencies.barometerFrequency = 20;                               % [h
 %% CONTROL SETTINGS 
 
 settings.Mach_control = 0.7;                                                % Mach of activation of aerobrakes 
-settings.brakesWidth = 0.116;                                               % [m] aerobrakes width (the fixed in-plane length)
-settings.brakesHeigth = 0.03;                                               % [m] max aerobrakes heigth (the control action)
+settings.brakesWidth = 0.088;                                               % [m] aerobrakes width (the fixed in-plane length)
+settings.brakesHeigth = 0.0387;                                               % [m] max aerobrakes heigth (the control action)
 settings.Atot = settings.brakesWidth*settings.brakesHeigth*3;               % [m^2] total area of aerobrakes (100% out)
 
 %% PARACHUTES DETAILS
@@ -155,16 +156,16 @@ settings.ode.optionsasc1 = odeset('Events',@event_mach,'InitialStep',1);    % OD
 % select which model you want to use:
 
 %%%%% Input wind
-settings.wind.input = false;
+settings.wind.input = true;
 % Wind is generated for every altitude interpolating with the coefficient defined below
 
 settings.wind.input_ground = 7;                                             % wind magnitude at the ground [m/s]
-settings.wind.input_alt = [0 100 600 750 900 1500 2500];                    % altitude vector [m]
-settings.wind.input_mult = [0 0 10 15 20 30 30];                            % percentage of increasing magnitude at each altitude
-settings.wind.input_azimut = [30 30 30 30 30 30 30];                        % wind azimut angle at each altitude (toward wind incoming direction) [deg]
+settings.wind.input_alt = [0 100 600 750 900 1500 2500 3000 3500];                    % altitude vector [m]
+settings.wind.input_mult = [0 0 10 15 20 30 30 30 30];                            % percentage of increasing magnitude at each altitude
+settings.wind.input_azimut = [30 30 30 30 30 30 30 30 30];                        % wind azimut angle at each altitude (toward wind incoming direction) [deg]
 
-settings.wind.input_uncertainty = [4, 20];
-%settings.wind.input_uncertainty = [a,b];      wind uncertanties:
+settings.wind.input_uncertainty = [1, 1];
+% settings.wind.input_uncertainty = [a,b];      wind uncertanties:
 % - a, wind magnitude percentage uncertanty: magn = magn *(1 +- a)
 % - b, wind direction band uncertanty: dir = dir 1 +- b
 
@@ -173,8 +174,8 @@ settings.wind.input_uncertainty = [4, 20];
 
 % Wind is generated randomly from the minimum to the maximum parameters which defines the wind.
 % Setting the same values for min and max will fix the parameters of the wind.
-settings.wind.MagMin = 4;                                                   % [m/s] Minimum Magnitude
-settings.wind.MagMax = 4;                                                   % [m/s] Maximum Magnitude
+settings.wind.MagMin = 1;                                                   % [m/s] Minimum Magnitude
+settings.wind.MagMax = 1;                                                   % [m/s] Maximum Magnitude
 settings.wind.ElMin = 0*pi/180;                                             % [rad] Minimum Elevation, user input in degrees (ex. 0)
 settings.wind.ElMax = 0*pi/180;                                             % [rad] Maximum Elevation, user input in degrees (ex. 0) (Max == 90 Deg)
 settings.wind.AzMin = (360)*pi/180;                                         % [rad] Minimum Azimuth, user input in degrees (ex. 90)
@@ -189,5 +190,4 @@ settings.wind.AzMax = (360)*pi/180;                                         % [r
 %% PLOT DETAILS
 settings.plots = true;
 
-%% Control
 run('configControl.m');

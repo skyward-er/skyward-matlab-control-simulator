@@ -87,6 +87,8 @@ dt = 1/settings.frequencies.controlFrequency;
 t0 = 0;
 t1 = t0 + dt;
 vz = 1;
+vx = 1;
+vy = 1;
 z = 1;
 flagStopIntegration = true;
 nmax = 10000;
@@ -101,8 +103,39 @@ n_old = 1;
 cpuTimes = zeros(nmax,1);
 iTimes = 0;
 
+
+
+%%%%%%%%%%%%%%%%%%%%% VARIABLES NEEDED FOR CONTROL %%%%%%%%%%%%%%%%%%%%%%%%
+
+% Define global variables
+global data_trajectories coeff_Cd 
+
+% Load coefficients for Cd
+data = load('coeffs.mat');
+coeff_Cd = data.coeffs;
+
+% Load the trajectories
+struct_trajectories = load('Trajectories');
+data_trajectories = struct_trajectories.trajectories_saving;
+
+% Define global variables
+global Kp Ki I alpha_degree_prec index_min_value iteration_flag chosen_trajectory saturation
+Kp = 77; % using Fdrag nel pid
+Ki = 5; % using Fdrag nel pid
+% Kp = 50; % using u nel pid
+% Ki = 37; % using u nel pid
+I = 0;
+alpha_degree_prec = 0;
+iteration_flag = 1;
+saturation = false;
+
 %% INIT SENSORS
 run('./Sensors/initSensors.m');
+
+index_plot = 1; % To plot
+
+fprintf('START:\n\n\n');
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 while flagStopIntegration || n_old < nmax
     tic 
@@ -180,17 +213,18 @@ while flagStopIntegration || n_old < nmax
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     if flagAeroBrakes
+            
          [xs,ys,zs]=testSensorPosition.sens(xpos,ypos,z,0);
          [vxs,vys,vzs]=testSensorVelocity.sens(vx,vy,vz,0);
          alpha_degree = controlAlgorithm(zs, vz, sqrt(vxs^2+vys^2+vzs^2) ,settings);
-         
-         % PLOT SERVO CONTROL ANGLE
-         figure(10);
-         plot(t0, alpha_degree,'*'),grid on;
-         hold on;
-         xlabel('Time [s]'); ylabel('Control Angle [deg]')
-        
+         %alpha_degree = controlAlgorithm(z, vz, normV ,settings); 
          x = get_extension_from_angle(alpha_degree);
+         
+         % Save the values to plot them
+         plot_Vz_real(index_plot) = vz;
+         plot_z_real(index_plot) = z;
+         plot_control_variable(index_plot) = alpha_degree;
+         index_plot = index_plot + 1;
     else 
         x = 0;
     end    
@@ -198,18 +232,21 @@ while flagStopIntegration || n_old < nmax
     % vertical velocity and position
     if flagAscent || (not(flagAscent) && settings.ballisticFligth)
         Q = Yf(end, 10:13);
-        vels = quatrotate(quatconj(Q), Yf(end, 4:6));
-        vz = - vels(3);
-        vx = vels(1); % Needed for the control algorithm. Ask if it is right
-        vy = vels(2);
+        vels = quatrotate(quatconj(Q), Yf(end, 4:6)); 
+        vz = - vels(3);   % down
+        vxxx = vels(2);   % north
+        vyyy = vels(1);   % east
     else
-        vz = -Yf(end, 6);
-        vx = Yf(end, 4);  % Needed for the control algorithm. Ask if it is right
-        vy = Yf(end, 5);
+        vz = -Yf(end, 6);  
+        vx = Yf(end, 4); 
+        vy = Yf(end, 5); 
     end
     z = -Yf(end, 3);
     xpos = Yf(end, 1);
     ypos = Yf(end, 2);
+    xxx = Yf(end, 2);
+    yyy = Yf(end, 1);
+    
 
     
     if lastFlagAscent && not(flagAscent)
@@ -252,8 +289,47 @@ Yf = Yf_tot(1:n_old, :);
 Tf = Tf_tot(1:n_old, :);
 flagMatr = flagMatr(1:n_old, :);
 
-%% RETRIVE PARAMETERS FROM THE ODE
+
+%% RETRIVE PARAMETERS FROM THE ODE (commentato senò non stampava grafici)
 if not(settings.electronics)
     dataBallisticFlight = RecallOdeFcn(@ascent, Tf(flagMatr(:, 2)), Yf(flagMatr(:, 2), :), settings, C, uw, vw, ww, uncert);
+
+    
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%% PLOT THE RESULTS
+
+% Obtain the control variable
+time = 0:dt:(length(plot_control_variable)-1)*dt;                 
+                     
+% Obtain the total altitude
+plot_z = -Yf(:,3);
+
+% Obtain the total vertical velocity
+nStates = length(Yf);
+plot_Vz = zeros(nStates, 1);
+for index = 1:nStates
+    Q = Yf(index,10:13);
+    vels = quatrotate(quatconj(Q), Yf(index,4:6));
+    plot_Vz(index) = - vels(3);
+end
+
+% Control variable: servo angle
+figure('Name','Servo angle after burning phase','NumberTitle','off');
+plot(time, plot_control_variable), grid on;
+axis([0,20, 0,60])
+xlabel('time [s]'), ylabel('Angle [deg]');
+
+% % Altitude real
+figure('Name','Altitude real vs setpoint after burning phase','NumberTitle','off');
+plot(time, plot_z_real,'DisplayName','real','LineWidth',0.8), grid on;
+axis([0,20, 0, 3100])
+xlabel('time [s]'), ylabel('z [m]');
+legend('Location','southeast')
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
 end
 

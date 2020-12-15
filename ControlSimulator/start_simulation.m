@@ -110,11 +110,7 @@ if settings.plots && not(settings.electronics)
     subplot(1, 2, 2)
     plot(Tf(flagMatr(:, 2)), abs_A/9.81), grid on;
     xlabel('time [s]'), ylabel('|A| [g]');
-    
-    % ALTITUDE
-    figure('Name', 'Altitude - ascent Phase', 'NumberTitle', 'off');
-    plot(Tf(flagMatr(:, 2)), za(flagMatr(:, 2))), title('Altitude vs time'), grid on;
-    xlabel('Time [s]'); ylabel('z [m]')
+       
 end
 
 clearvars -except Yf data_flight settings
