@@ -156,13 +156,13 @@ settings.ode.optionsasc1 = odeset('Events',@event_mach,'InitialStep',1);    % OD
 % select which model you want to use:
 
 %%%%% Input wind
-settings.wind.input = false;
+settings.wind.input = true;
 % Wind is generated for every altitude interpolating with the coefficient defined below
 
 settings.wind.input_ground = 7;                                             % wind magnitude at the ground [m/s]
-settings.wind.input_alt = [0 100 600 750 900 1500 2500];                    % altitude vector [m]
-settings.wind.input_mult = [0 0 10 15 20 30 30];                            % percentage of increasing magnitude at each altitude
-settings.wind.input_azimut = [30 30 30 30 30 30 30];                        % wind azimut angle at each altitude (toward wind incoming direction) [deg]
+settings.wind.input_alt = [0 100 600 750 900 1500 2500 3000 3500];          % altitude vector [m]
+settings.wind.input_mult = [0 0 10 15 20 30 30 30 30];                      % percentage of increasing magnitude at each altitude
+settings.wind.input_azimut = [30 30 30 30 30 30 30 30 30];                  % wind azimut angle at each altitude (toward wind incoming direction) [deg]
 
 settings.wind.input_uncertainty = [1, 1];
 % settings.wind.input_uncertainty = [a,b];      wind uncertanties:
