@@ -32,11 +32,11 @@
 
 using namespace std;
 
-static constexpr int INDEX_FUN              = 0;
-static constexpr int INDEX_OPEN_PORT        = 1;
-static constexpr int INDEX_OPEN_BAUD        = 2;
-static constexpr int INDEX_TRANSFER_NUMREAD = 1;
-static constexpr int INDEX_TRANSFER_WRITE   = 1;
+static constexpr int INDEX_FUN         = 0;
+static constexpr int INDEX_OPEN_PORT   = 1;
+static constexpr int INDEX_OPEN_BAUD   = 2;
+static constexpr int INDEX_READ_PARAM  = 1;
+static constexpr int INDEX_WRITE_PARAM = 1;
 
 static serialib serial;
 static bool opened;
@@ -46,26 +46,30 @@ static bool opened;
  *
  * 1st parameter takes the action to execute:
  * - serialbridge("Open", string_serialPort, uint_baudrate):
- *   - **"Open"**: specifies we want to open the serial port
+ *   - "Open": specifies we want to open the serial port
  *   - string_serialPort: is the serial port we want to open (eg: "COM6")
  *   - uint_baudrate: is the baudrate of the port (eg: 256000)
  * - serialbridge("Write", singleArray_Data):
- *   - **"Write"**: specifies that we want to write to the serial port
+ *   - "Write": specifies that we want to write to the serial port
  *   - singleArray_Data: is the array of singles we want to write on serial
  * (eg:[1 2.2 3.33])
  * - singleArray_Data = serialbridge("Read", uint_nData);
- *   - **"Read"**: specifies that we want to read from the serial port
+ *   - "Read": specifies that we want to read from the serial port
  *   - uint_nData: How many floats to read from serial (eg: 1)
  *   - singleArray_Data: array of floats read from the serial (eg: actuatorData)
  * - serialbridge("Close", string_serialPort, uint_baudrate):
- *   - **"Close"**: specifies we want to close the serial port
+ *   - "Close": specifies we want to close the serial port
  *
  * eg, in Matlab:
  * serialbridge("Open", "COM6", 256000); % Opens the serial port
+ *
  * serialbridge("Write", [1 2 3 4]);     % Sends the array "[1 2 3 4]" to the
- * serial device data = serialbridge("Read", 2);       % Receives 2 floats and
- * stores them in the variable "data" serialbridge("Close");                %
- * Closes the serial port
+ * serial device
+ *
+ * data = serialbridge("Read", 2);       % Receives 2 floats and stores them in
+ * the variable "data"
+ *
+ * serialbridge("Close");                % Closes the serial port
  */
 class MexFunction : public matlab::mex::Function
 {
@@ -168,12 +172,12 @@ public:
             error("Serial port is not open!");
         }
 
-        size_t numout = inputs[INDEX_TRANSFER_WRITE].getNumberOfElements();
+        size_t numout = inputs[INDEX_WRITE_PARAM].getNumberOfElements();
 
         float *dataout = new float[numout];
         for (int i = 0; i < numout; i++)
         {
-            dataout[i] = inputs[INDEX_TRANSFER_WRITE][i];
+            dataout[i] = inputs[INDEX_WRITE_PARAM][i];
         }
 
         serial.writeBytes(dataout, sizeof(float) * numout);
@@ -194,7 +198,7 @@ public:
             error("Serial port is not open!");
         }
 
-        size_t numin    = inputs[INDEX_TRANSFER_NUMREAD][0];
+        size_t numin    = inputs[INDEX_READ_PARAM][0];
         uint8_t *datain = new uint8_t[sizeof(float) * numin];
         size_t numbytes = 0;
 
@@ -238,8 +242,9 @@ public:
                              {factory.createScalar(str.c_str())}));
     }
 
-    /** 
-     * @brief Checks if the function invoked on matlab exists and if the parameters passed are right
+    /**
+     * @brief Checks if the function invoked on matlab exists and if the
+     * parameters passed are right
      */
     void checkArguments(matlab::mex::ArgumentList outputs,
                         matlab::mex::ArgumentList inputs)
@@ -284,11 +289,11 @@ public:
             {
                 error("Must specify only number of floats to receive");
             }
-            if (!(inputs[INDEX_TRANSFER_NUMREAD].getType() ==
+            if (!(inputs[INDEX_READ_PARAM].getType() ==
                       matlab::data::ArrayType::DOUBLE ||
-                  inputs[INDEX_TRANSFER_NUMREAD].getType() ==
+                  inputs[INDEX_READ_PARAM].getType() ==
                       matlab::data::ArrayType::INT32) ||
-                inputs[INDEX_TRANSFER_NUMREAD].getNumberOfElements() != 1)
+                inputs[INDEX_READ_PARAM].getNumberOfElements() != 1)
             {
                 error(
                     "Input 1 Must specify number of float to receive! (scalar "
@@ -301,9 +306,9 @@ public:
             {
                 error("Must specify only array of float to transfer");
             }
-            if (inputs[INDEX_TRANSFER_WRITE].getType() !=
+            if (inputs[INDEX_WRITE_PARAM].getType() !=
                     matlab::data::ArrayType::DOUBLE ||
-                inputs[INDEX_TRANSFER_WRITE].getNumberOfElements() == 0)
+                inputs[INDEX_WRITE_PARAM].getNumberOfElements() == 0)
             {
                 error("Input 2 Must provide output array! (double array)");
             }
