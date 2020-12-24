@@ -83,7 +83,7 @@ magneticFieldApprox = @(zSlm) XYZ0 + (XYZh-XYZ0)./hmax.*zSlm;
 
 %% INTEGRATION
 % setting initial condition before control phase
-dt = 1/settings.frequencies.controlFrequency;
+dt = 1/settings.frequencies.controlFrequency
 t0 = 0;
 t1 = t0 + dt;
 vz = 1;
@@ -220,6 +220,7 @@ while flagStopIntegration || n_old < nmax
          % Save the values to plot them
          plot_Vz_real(index_plot) = vz;
          plot_z_real(index_plot) = z;
+         plot_normV(index_plot) = normV;
          plot_Vz_setpoint(index_plot) = Vz_setpoint;
          plot_z_setpoint(index_plot) = z_setpoint;
          plot_control_variable(index_plot) = alpha_degree;
@@ -383,6 +384,11 @@ xlabel('time [s]'), ylabel('Vz [m/s]');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+% Save to csv
+in = [plot_z_real',plot_Vz_real',plot_normV' ];
+out = [plot_delta_S', plot_control_variable'];
+csvwrite('Input.txt',in)
+csvwrite('Output.txt',out)
 
 
 end
