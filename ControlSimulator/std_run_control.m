@@ -385,10 +385,12 @@ xlabel('time [s]'), ylabel('Vz [m/s]');
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Save to csv
-in = [plot_z_real',plot_Vz_real',plot_normV' ];
-out = [plot_delta_S', plot_control_variable'];
-csvwrite('Input.txt',in)
-csvwrite('Output.txt',out)
+% in = [plot_z_real',plot_Vz_real',plot_normV' ];
+% out = [plot_delta_S', plot_control_variable'];
+% setpoint = [plot_z_setpoint',plot_Vz_setpoint'];
+% U = [plot_pid'];
+% csvwrite('setpoint.txt',setpoint)
+% csvwrite('U.txt',U)
 
 
 end
