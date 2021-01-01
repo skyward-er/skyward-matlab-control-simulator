@@ -384,13 +384,18 @@ xlabel('time [s]'), ylabel('Vz [m/s]');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% Save to csv
+% % Save to csv
 % in = [plot_z_real',plot_Vz_real',plot_normV' ];
 % out = [plot_delta_S', plot_control_variable'];
 % setpoint = [plot_z_setpoint',plot_Vz_setpoint'];
 % U = [plot_pid'];
 % csvwrite('setpoint.txt',setpoint)
 % csvwrite('U.txt',U)
+
+altitude_velocity = struct('Z_ref',plot_z_setpoint','V_ref',plot_Vz_setpoint', 'Z_real',plot_z_real','V_real',plot_Vz_real','normV',plot_normV');
+control_inputs = struct('U',plot_pid','delta_S',plot_delta_S', 'Angle',plot_control_variable');
+save('altitude_velocity.mat','altitude_velocity');
+save('control_inputs.mat','control_inputs');
 
 
 end
