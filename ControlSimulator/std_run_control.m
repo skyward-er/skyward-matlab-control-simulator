@@ -37,8 +37,7 @@ Q0 = angle2quat(settings.PHI, settings.OMEGA, 0*pi/180, 'ZYX')';
 X0 = [0 0 0]';
 V0 = [0 0 0]';
 W0 = [0 0 0]';
-theta0 = [0 0 0]';
-Y0 = [X0; V0; W0; Q0; settings.m0; settings.Ixxf; settings.Iyyf; settings.Izzf; theta0];
+Y0 = [X0; V0; W0; Q0; settings.Ixxf; settings.Iyyf; settings.Izzf];
 
 %% WIND GENERATION
 if settings.wind.input   % will be computed inside the integrations
@@ -94,7 +93,7 @@ mach = 0;
 x = 0;
 flagMatr = false(nmax, 6);
 flagAscent = false;
-Yf_tot = zeros(nmax, 20);
+Yf_tot = zeros(nmax, 16);
 Tf_tot = zeros(nmax, 1);
 C = zeros(nmax, 1);
 n_old = 1;
@@ -161,8 +160,8 @@ while flagStopIntegration || n_old < nmax
             Y0 = Y0(1:6);
             [Tf, Yd] = ode45(@descentParachute, [t0, t1], Y0, [], settings, uw, vw, ww, para, uncert);
             [nd, ~] = size(Yd);
-            Yf = [Yd, zeros(nd, 7), settings.m0*ones(nd, 1), settings.Ixxe*ones(nd, 1), ...
-                settings.Iyye*ones(nd, 1), settings.Iyye*ones(nd, 1), zeros(nd, 3)];
+            Yf = [Yd, zeros(nd, 7), settings.Ixxe*ones(nd, 1), ...
+                settings.Iyye*ones(nd, 1), settings.Iyye*ones(nd, 1)];
         end
     end
 
@@ -194,9 +193,7 @@ while flagStopIntegration || n_old < nmax
         vx = Yf(end, 4);  % Needed for the control algorithm. Ask if it is right
     end
     z = -Yf(end, 3);
-    
 
-    
     if lastFlagAscent && not(flagAscent)
         Y0 = [Yf(end, 1:3), vels, Yf(end, 7:end)];
     else
