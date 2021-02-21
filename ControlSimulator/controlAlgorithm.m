@@ -71,20 +71,20 @@ rho      = getRho(z);
 diameter = 0.15; 
 S0       = (pi*diameter^2)/4;   
 
-S       = S0 + delta_S_prec;
-Cd_fake = getDrag(V_mod,z,delta_S_prec, coeff_Cd); % Però questo non è Cd, perchè tiene conto anche di delta_S
-Cd      = (S0*Cd_fake)/S;
+S        = S0 + delta_S_prec;
+Cd_fake  = getDrag(V_mod,z,delta_S_prec, coeff_Cd); % Però questo non è Cd, perchè tiene conto anche di delta_S
+Cd       = (S0*Cd_fake)/S;
     
 %% LQR ALGORITHM
 
 % States: z,Vz,x,Vx
 
-Q = [0.9, 0,         0,           0;
-     0, 0.8,         0,           0;
-     0,   0, 0.0000001,           0;
-     0,   0,         0,   0.0000001];
+Q = [0.1,    0,          0,           0;
+       0,  0.095,        0,           0;
+       0,    0,    0.00001,           0;
+       0,    0,          0,      0.00001];
 
-R = 7500;
+R = 10200;
 
 % Linearized the system around the current state
 A = [1,                                                                                        T, 0,                                                                                        0;
@@ -127,8 +127,9 @@ elseif ( U > Umax)
     U = Umax; % fully open                       
 end
 
-delta_S      = U;
-delta_S_prec = U
+filter_coeff = 0.9;
+delta_S = filter_coeff*U + (1-filter_coeff)*delta_S_prec
+% delta_S_prec = delta_S;
 
 %% TRANSFORMATION FROM delta_S to SERVOMOTOR ANGLE DEGREES
 
@@ -136,15 +137,7 @@ delta_S_prec = U
 a = -9.43386/1000;
 b = 19.86779/1000;
 
-alpha_rad = (-b + sqrt(b^2 + 4*a*delta_S)) / (2*a);
-
-% Alpha saturation (con lqr non serve più forse)
-% if (alpha_rad < 0)
-%     alpha_rad = 0;
-% elseif (alpha_rad > 0.89)
-%     alpha_rad = 0.89;
-% end
-
+alpha_rad    = (-b + sqrt(b^2 + 4*a*delta_S)) / (2*a);
 alpha_degree = (alpha_rad*180)/pi;
 
 %% LIMIT THE RATE OF THE CONTROL VARIABLE
@@ -160,7 +153,10 @@ elseif (rate < rate_limiter_min)
     alpha_degree = sample_time*rate_limiter_min + alpha_degree_prec;
 end
 
-alpha_degree = round(alpha_degree);
+alpha_degree      = round(alpha_degree);
 alpha_degree_prec = alpha_degree;
+
+alpha_rad    = (alpha_degree*pi)/180;
+delta_S_prec = a * alpha_rad^2 + b * alpha_rad
 
 end
