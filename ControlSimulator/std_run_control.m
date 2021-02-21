@@ -113,19 +113,13 @@ data = load('coeffs.mat');
 coeff_Cd = data.coeffs;
 
 % Load the trajectories
-struct_trajectories = load('Trajectories');
+struct_trajectories = load('Trajectories_FULL');
 data_trajectories = struct_trajectories.trajectories_saving;
 
 % Define global variables
-global Kp Ki I alpha_degree_prec index_min_value iteration_flag chosen_trajectory saturation
-Kp = 77; % using Fdrag nel pid
-Ki = 5; % using Fdrag nel pid
-% Kp = 50; % using u nel pid
-% Ki = 37; % using u nel pid
-I = 0;
+global alpha_degree_prec index_min_value iteration_flag chosen_trajectory
 alpha_degree_prec = 0;
 iteration_flag = 1;
-saturation = false;
 
 index_plot = 1; % To plot
 
@@ -213,8 +207,7 @@ while flagStopIntegration || n_old < nmax
 %          xxx
 %          vxxx
          tempo = index_plot*0.1 - 0.1;
-         [alpha_degree, Vz_setpoint, z_setpoint, pid,U_linear, Cdd, delta_S] = controlAlgorithm(z, vz, normV, dt);
-%         [alpha_degree, Vz_setpoint, z_setpoint, pid,U_linear, Cdd, delta_S] = controlAlgorithmLinearized(z, vz, normV, dt);
+         [alpha_degree, Vz_setpoint, z_setpoint, Cdd, delta_S] = controlAlgorithm(z, vz, x, Vx, normV, dt);
          x = get_extension_from_angle(alpha_degree);
          
          % Save the values to plot them
@@ -225,8 +218,6 @@ while flagStopIntegration || n_old < nmax
          plot_z_setpoint(index_plot) = z_setpoint;
          plot_control_variable(index_plot) = alpha_degree;
          plot_Cd(index_plot) = Cdd;
-         plot_pid(index_plot) = pid;
-         plot_U_linear(index_plot) = U_linear;
          plot_delta_S(index_plot) = delta_S;
          index_plot = index_plot + 1;
     else 
@@ -322,15 +313,6 @@ plot(time, plot_control_variable), grid on;
 axis([0,20, 0,60])
 xlabel('time [s]'), ylabel('Angle [deg]');
 
-% Control variable: pid vs linearization
-figure('Name','Linearization of the control variable','NumberTitle','off');
-plot(time, plot_U_linear, 'DisplayName','Linearized','LineWidth',0.8), grid on;
-hold on
-plot(time, plot_pid, 'DisplayName','PID','LineWidth',0.8), grid on;
-xlabel('time [s]'), ylabel('U [N]');
-hold off
-legend('Location','northeast')
-
 % delta_S
 figure('Name','Delta_S','NumberTitle','off');
 plot(time, plot_delta_S), grid on;
@@ -392,10 +374,10 @@ xlabel('time [s]'), ylabel('Vz [m/s]');
 % csvwrite('setpoint.txt',setpoint)
 % csvwrite('U.txt',U)
 
-altitude_velocity = struct('Z_ref',plot_z_setpoint','V_ref',plot_Vz_setpoint', 'Z_real',plot_z_real','V_real',plot_Vz_real','normV',plot_normV');
-control_inputs = struct('U',plot_pid','delta_S',plot_delta_S', 'Angle',plot_control_variable');
-save('altitude_velocity.mat','altitude_velocity');
-save('control_inputs.mat','control_inputs');
+% altitude_velocity = struct('Z_ref',plot_z_setpoint','V_ref',plot_Vz_setpoint', 'Z_real',plot_z_real','V_real',plot_Vz_real','normV',plot_normV');
+% control_inputs = struct('U',plot_pid','delta_S',plot_delta_S', 'Angle',plot_control_variable');
+% save('altitude_velocity.mat','altitude_velocity');
+% save('control_inputs.mat','control_inputs');
 
 
 end

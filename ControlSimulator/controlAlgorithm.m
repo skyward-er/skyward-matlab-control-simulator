@@ -1,4 +1,4 @@
-function [alpha_degree, Vz_setpoint, z_setpoint, pid, U_linear, Cd, delta_S] = controlAlgorithm(z,Vz,V_mod,sample_time)
+function [alpha_degree, Vz_setpoint, z_setpoint, Cd, delta_S] = controlAlgorithm(z,Vz,x,Vx,V_mod,sample_time)
 
 % Define global variables
 global data_trajectories coeff_Cd 
@@ -15,7 +15,7 @@ if iteration_flag == 1 % Choose the nearest trajectory ( only at the first itera
        
         % Select a z trajectory and a Vz trajectory (to speed up select only the first values, not ALL)
         z_ref  = data_trajectories(ind).Z_ref(1:50); 
-        Vz_ref = data_trajectories(ind).V_ref(1:50); 
+        Vz_ref = data_trajectories(ind).VZ_ref(1:50); 
         distances_from_current_state = (z_ref-z).^2 + (Vz_ref-Vz).^2; 
 
         % Find the nearest point to the current trajectory
@@ -34,14 +34,18 @@ if iteration_flag == 1 % Choose the nearest trajectory ( only at the first itera
     
     % I select the reference altitude and the reference vertical velocity
     z_setpoint  =  data_trajectories(chosen_trajectory).Z_ref(index_min_value);
-    Vz_setpoint =  data_trajectories(chosen_trajectory).V_ref(index_min_value);
+    Vz_setpoint =  data_trajectories(chosen_trajectory).VZ_ref(index_min_value);
+    x_setpoint  =  data_trajectories(chosen_trajectory).X_ref(index_min_value);
+    Vx_setpoint =  data_trajectories(chosen_trajectory).VX_ref(index_min_value);
 
 else  % For the following iterations keep tracking the chosen trajectory
 
     % Select the z trajectory and the Vz trajectory 
     % To speed up the research, I reduce the vector at each iteration (add if-else for problem in index limits)
     z_ref  = data_trajectories(chosen_trajectory).Z_ref(index_min_value-1:end);  
-    Vz_ref = data_trajectories(chosen_trajectory).V_ref(index_min_value-1:end);  
+    Vz_ref = data_trajectories(chosen_trajectory).VZ_ref(index_min_value-1:end);  
+    x_ref  = data_trajectories(chosen_trajectory).X_ref(index_min_value-1:end);  
+    Vx_ref = data_trajectories(chosen_trajectory).VX_ref(index_min_value-1:end);  
 
     % 1) Find the value of the altitude in z_reference nearer to z_misured 
     [~, index_min_value] = min( abs(z_ref - z) );
@@ -50,31 +54,65 @@ else  % For the following iterations keep tracking the chosen trajectory
 %     distances_from_current_state = (z_ref-z).^2 + (Vz_ref-Vz).^2; 
 %     [~, index_min_value] = min( distances_from_current_state );
 
-    z_setpoint  =  z_ref(index_min_value);
+    z_setpoint  = z_ref(index_min_value);
     Vz_setpoint = Vz_ref(index_min_value);
-
-    % % Interpolation ? Risultato buono
-    % if (z_setpoint <= z  &&  index_min_value+1 < length(z_ref))
-    % x_axis = [z_ref(index_min_value), z_ref(index_min_value+1)];
-    % y_axis = [Vz_ref(index_min_value), Vz_ref(index_min_value+1)];
-    % z_setpoint  = z;
-    % Vz_setpoint = interp1(x_axis,y_axis,z);
-    % end
-
-    % % Ha senso inseguire il riferimento k=2 steps dopo? Risultato non buono
-    % if (z_setpoint <= z  &&  index_min_value+2 < length(z_ref))
-    % z_setpoint = z_ref(index_min_value+2);
-    % Vz_setpoint = Vz_ref(index_min_value+2);
-    % end
-
-    % Scorro ogni valore array in successione senza logica ? Risultato medio
-    % index_min_value = index_min_value +1;
-    % z_setpoint = z_ref(index_min_value);
-    % Vz_setpoint = Vz_ref(index_min_value);
+    x_setpoint  = x_ref(index_min_value);
+    Vx_setpoint = Vx_ref(index_min_value);
 
 end  
 
-%% PID ALGORITHM
+%% LQR ALGORITHM
+
+% States: z,Vz,x,Vx
+
+Q= [2 0 0 0;
+    0 0.1 0 0;
+    0 0 2 0;
+    0 0 0 0.1];
+
+R=0.00001;
+
+A = []
+
+B = []
+
+
+x_measured = [z, Vz, x, Vx]';
+x_reference =  [z_setpoint, Vz_setpoint, x_setpoint, Vx_setpoint]';
+x_error = x_measured - x_reference);
+
+
+P = Q; % Initial guess for P    
+maxiter = 100;
+eps = 0.01;
+
+for i=1:maxiter
+    Pn = A' * P * A - A' * P * B * inv(R + B' * P * B) * B' * P * A + Q;
+%     if (max(max((abs(Pn - P))))) < eps % Continue to compute P until the actual and previous solution are almost equal
+%         break
+%     end
+    P = Pn;
+end
+
+K = inv(B' * P * B + R) * B' * P * A;
+
+U = -K*x_error
+
+% Control variable limits
+Umin = 0;     
+Umax = 0.01;
+
+if ( U < Umin)  
+    U = Umin; % fully close                                      
+elseif ( U > Umax) 
+    U = Umax; % fully open                       
+end
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% PID
 
 % If e>0 the rocket is too fast. I slow it down with Fx>0 --> open aerobrakes
 % If e<0 the rocket is too slow. I speed it up with Fx<0 --> close aerobrakes
@@ -132,6 +170,11 @@ pid = U;
 U_linear = 0.5*ro*S0*Cd_available(index_minimum)*Vz*V_mod;
 Cd = Cd_available(index_minimum);
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+
 %% TRANSFORMATION FROM delta_S to SERVOMOTOR ANGLE DEGREES
 
 % delta_S [m^2] = (-9.43386 * alpha^2 + 19.86779 * alpha) * 10^(-3). Alpha belongs to [0 ; 0.89 rad]
@@ -141,11 +184,11 @@ b = 19.86779/1000;
 alpha_rad = (-b + sqrt(b^2 + 4*a*delta_S)) / (2*a);
 
 % Alpha saturation ( possibili problemi per azione integrale ? )
-if (alpha_rad < 0)
-    alpha_rad = 0;
-elseif (alpha_rad > 0.89)
-    alpha_rad = 0.89;
-end
+% if (alpha_rad < 0)
+%     alpha_rad = 0;
+% elseif (alpha_rad > 0.89)
+%     alpha_rad = 0.89;
+% end
 
 alpha_degree = (alpha_rad*180)/pi;
 
