@@ -2,7 +2,7 @@ function [alpha_degree, Vz_setpoint, z_setpoint, Cd, delta_S] = controlAlgorithm
 
 % Define global variables
 global data_trajectories coeff_Cd 
-global Kp Ki I alpha_degree_prec index_min_value iteration_flag chosen_trajectory saturation
+global delta_S_prec alpha_degree_prec index_min_value iteration_flag chosen_trajectory 
 
 %% TRAJECTORY SELECTION and REFERENCES COMPUTATION
 
@@ -61,30 +61,50 @@ else  % For the following iterations keep tracking the chosen trajectory
 
 end  
 
+
+%% PARAMETERS
+
+T        = sample_time;
+m        = 22;
+g        = 9.81;
+rho      = getRho(z);
+diameter = 0.15; 
+S0       = (pi*diameter^2)/4;   
+
+S       = S0 + delta_S_prec;
+Cd_fake = getDrag(V_mod,z,delta_S_prec, coeff_Cd); % Però questo non è Cd, perchè tiene conto anche di delta_S
+Cd      = (S0*Cd_fake)/S;
+    
 %% LQR ALGORITHM
 
 % States: z,Vz,x,Vx
 
-Q= [2 0 0 0;
-    0 0.1 0 0;
-    0 0 2 0;
-    0 0 0 0.1];
+Q = [0.9, 0,         0,           0;
+     0, 0.8,         0,           0;
+     0,   0, 0.0000001,           0;
+     0,   0,         0,   0.0000001];
 
-R=0.00001;
+R = 7500;
 
-A = []
+% Linearized the system around the current state
+A = [1,                                                                                        T, 0,                                                                                        0;
+     0, 1 - T*((Cd*S*rho*(Vx^2 + Vz^2)^(1/2))/(2*m) + (Cd*S*Vz^2*rho)/(2*m*(Vx^2 + Vz^2)^(1/2))), 0,                                            -(Cd*S*T*Vx*Vz*rho)/(2*m*(Vx^2 + Vz^2)^(1/2));
+     0,                                                                                        0, 1,                                                                                        T;
+     0,                                            -(Cd*S*T*Vx*Vz*rho)/(2*m*(Vx^2 + Vz^2)^(1/2)), 0, 1 - (Cd*S*T*Vx^2*rho)/(2*m*(Vx^2 + Vz^2)^(1/2)) - (Cd*S*T*rho*(Vx^2 + Vz^2)^(1/2))/(2*m)];
+ 
+B = [                                        0;
+      -(Cd*T*Vz*rho*(Vx^2 + Vz^2)^(1/2))/(2*m);
+                                             0;
+       -(Cd*T*Vx*rho*(Vx^2 + Vz^2)^(1/2))/(2*m)];
 
-B = []
+x_measured  = [z, Vz, x, Vx]';
+x_reference = [z_setpoint, Vz_setpoint, x_setpoint, Vx_setpoint]';
+x_error     = x_measured - x_reference;
 
-
-x_measured = [z, Vz, x, Vx]';
-x_reference =  [z_setpoint, Vz_setpoint, x_setpoint, Vx_setpoint]';
-x_error = x_measured - x_reference);
-
-
-P = Q; % Initial guess for P    
+% Solve Riccati equation
+P       = Q;   % Initial guess for P    
 maxiter = 100;
-eps = 0.01;
+eps     = 0.01;
 
 for i=1:maxiter
     Pn = A' * P * A - A' * P * B * inv(R + B' * P * B) * B' * P * A + Q;
@@ -95,7 +115,6 @@ for i=1:maxiter
 end
 
 K = inv(B' * P * B + R) * B' * P * A;
-
 U = -K*x_error
 
 % Control variable limits
@@ -108,72 +127,8 @@ elseif ( U > Umax)
     U = Umax; % fully open                       
 end
 
-
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% PID
-
-% If e>0 the rocket is too fast. I slow it down with Fx>0 --> open aerobrakes
-% If e<0 the rocket is too slow. I speed it up with Fx<0 --> close aerobrakes
-
-% Parameters
-m = 22;
-g = 9.81;
-ro = getRho(z);
-diameter = 0.15; 
-S0 = (pi*diameter^2)/4;   % Calcolata a ogni loop, definirla globale
-
-% Control variable limits
-Umin = 0;     
-Umax = 0.5*ro*S0*1*Vz*V_mod; % Cd limit check
-
-% PID
-error = (Vz - Vz_setpoint); % > 0 (in teoria)
-
-P = Kp*error;
-if saturation == false
-    I = I + Ki*error;
-end
-
-U = P + I;
-    
-if ( U < Umin)  
-    U = Umin; % fully close
-    saturation = true;                                         
-elseif ( U > Umax) 
-    U = Umax; % fully open
-    saturation = true;                          
-else
-    saturation = false;
-end
-
-%% TRANSFORMATION FROM U to delta_S
-
-% Possible range of values for the control variable
-delta_S_available = [0.0:0.001/2:0.01]'; 
-
-% Get the Cd for each possible aerobrake surface
-Cd_available = 1:length(delta_S_available);
-for ind = 1:length(delta_S_available)
-    Cd_available(ind) = getDrag(V_mod,z,delta_S_available(ind), coeff_Cd);
-end
-Cd_available = Cd_available';
-
-% For all possible delta_S compute Fdrag
-% Then choose the delta_S which gives an Fdrag which has the minimum error if compared with F_drag_pid
-[~, index_minimum] = min( abs(U - 0.5*ro*S0*Cd_available*Vz*V_mod) );
-delta_S = delta_S_available(index_minimum); 
-
-% Just for plotting
-pid = U;
-U_linear = 0.5*ro*S0*Cd_available(index_minimum)*Vz*V_mod;
-Cd = Cd_available(index_minimum);
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
-
+delta_S      = U;
+delta_S_prec = U
 
 %% TRANSFORMATION FROM delta_S to SERVOMOTOR ANGLE DEGREES
 
@@ -183,7 +138,7 @@ b = 19.86779/1000;
 
 alpha_rad = (-b + sqrt(b^2 + 4*a*delta_S)) / (2*a);
 
-% Alpha saturation ( possibili problemi per azione integrale ? )
+% Alpha saturation (con lqr non serve più forse)
 % if (alpha_rad < 0)
 %     alpha_rad = 0;
 % elseif (alpha_rad > 0.89)

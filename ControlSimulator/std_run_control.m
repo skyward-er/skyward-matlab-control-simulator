@@ -117,9 +117,10 @@ struct_trajectories = load('Trajectories_FULL');
 data_trajectories = struct_trajectories.trajectories_saving;
 
 % Define global variables
-global alpha_degree_prec index_min_value iteration_flag chosen_trajectory
+global delta_S_prec alpha_degree_prec index_min_value iteration_flag chosen_trajectory
 alpha_degree_prec = 0;
-iteration_flag = 1;
+iteration_flag    = 1;
+delta_S_prec      = 0;
 
 index_plot = 1; % To plot
 
@@ -206,8 +207,9 @@ while flagStopIntegration || n_old < nmax
 %          vyyy
 %          xxx
 %          vxxx
-         tempo = index_plot*0.1 - 0.1;
-         [alpha_degree, Vz_setpoint, z_setpoint, Cdd, delta_S] = controlAlgorithm(z, vz, x, Vx, normV, dt);
+%          tempo = index_plot*0.1 - 0.1;
+         
+         [alpha_degree, Vz_setpoint, z_setpoint, Cdd, delta_S] = controlAlgorithm(z, vz, xxx, vxxx, normV, dt);
          x = get_extension_from_angle(alpha_degree);
          
          % Save the values to plot them
