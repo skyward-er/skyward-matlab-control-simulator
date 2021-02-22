@@ -81,6 +81,7 @@ hmax = 6000;
 magneticFieldApprox = @(zSlm) XYZ0 + (XYZh-XYZ0)./hmax.*zSlm;
 %% SENSORS DEFINITION
 addpath('../sensors');
+addpath('../sensors/data/MS580301BA01');
 initSensors;
 %% INTEGRATION
 % setting initial condition before control phase
