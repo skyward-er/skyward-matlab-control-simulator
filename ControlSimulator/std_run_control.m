@@ -79,7 +79,9 @@ hmax = 6000;
 [XYZh] = wrldmagm(hmax, settings.lat0, settings.lon0, dy, '2020');
 
 magneticFieldApprox = @(zSlm) XYZ0 + (XYZh-XYZ0)./hmax.*zSlm;
-
+%% SENSORS DEFINITION
+addpath('../sensors');
+initSensors;
 %% INTEGRATION
 % setting initial condition before control phase
 dt = 1/settings.frequencies.controlFrequency;
@@ -95,10 +97,14 @@ flagMatr = false(nmax, 6);
 flagAscent = false;
 Yf_tot = zeros(nmax, 16);
 Tf_tot = zeros(nmax, 1);
+p_tot  = zeros(nmax, 1);
 C = zeros(nmax, 1);
 n_old = 1;
+np_old = 1;
+na_old = 1;
 cpuTimes = zeros(nmax,1);
 iTimes = 0;
+g = 9.81;
 
 while flagStopIntegration || n_old < nmax
     tic 
@@ -166,11 +172,29 @@ while flagStopIntegration || n_old < nmax
     end
 
     [sensorData] = manageSignalFrequencies(magneticFieldApprox, flagAscent, settings, Yf, Tf, x, uw, vw, ww, uncert);
+    [~, ~, p, ~]  = atmosisa(-Yf(:,3)) ; 
     
     if settings.dataNoise
-        Yf = acquisitionSystem(Yf);    
+        for ii=1:length(sensorData.barometer.time)
+                pn(ii,1) = MS580301BA01.sens(sensorData.barometer.measures(ii)/100,...
+                                           sensorData.barometer.temperature(ii) - 273.15);  
+        end 
+        pn_tot(np_old:np_old + length(pn) - 1,1) = pn(1:end,1)';
+        np_old = np_old + length(pn);
+        
+        for ii=1:length(sensorData.accelerometer.time)
+                [accelx(ii,1),accely(ii,1),accelz(ii,1)] = ACCEL_LSM9DS1.sens(...
+                                                 sensorData.accelerometer.measures(ii,1)/g,...
+                                                 sensorData.accelerometer.measures(ii,2)/g,...
+                                                 sensorData.accelerometer.measures(ii,3)/g,...
+                                                 14.8500);  
+        end 
+        accel_tot(na_old:na_old + length(accelx) - 1,:) =[accelx, accely, accelz] ;
+        na_old = na_old + length(accelx);
     end
   
+
+    
     %%%%%%% kalmann filter %%%%%%%%
     % kalman(p, acc_body, ang_vel, q, [u, v, w]ned, [x, y, z]ned )
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -212,7 +236,8 @@ while flagStopIntegration || n_old < nmax
     % assemble total state
     [n, ~] = size(Yf);
     Yf_tot(n_old:n_old+n-1, :) = Yf(1:end, :);
-    Tf_tot(n_old:n_old+n-1) = Tf(1:end, 1);
+    Tf_tot(n_old:n_old+n-1,1) = Tf(1:end, 1);
+    p_tot(n_old:n_old+n-1,1) = p(1:end, 1);
     C(n_old:n_old+n-1) = x;
     
     n_old = n_old + n -1;
@@ -232,6 +257,11 @@ cpuTimes = cpuTimes(1:iTimes);
 %% ASSEMBLE TOTAL FLIGHT STATE
 Yf = Yf_tot(1:n_old, :);
 Tf = Tf_tot(1:n_old, :);
+p = p_tot(1:n_old, :);
+fbaro = settings.frequencies.barometerFrequency;
+faccel = settings.frequencies.accelerometerFrequency;
+tp = Tf(1):1/fbaro:Tf(end);
+ta = Tf(1):1/faccel:Tf(end);
 flagMatr = flagMatr(1:n_old, :);
 
 %% RETRIVE PARAMETERS FROM THE ODE
@@ -239,3 +269,19 @@ if not(settings.electronics)
     dataBallisticFlight = RecallOdeFcn(@ascent, Tf(flagMatr(:, 2)), Yf(flagMatr(:, 2), :), settings, C, uw, vw, ww, uncert);
 end
 
+figure 
+subplot(2,1,1)
+plot (tp,pn_tot'), grid on;
+xlabel('time [s]'), ylabel('|P| [mBar]');
+subplot(2,1,2)
+plot (Tf,p_tot'/100), grid on;
+
+figure 
+subplot(3,1,1)
+plot (ta,accel_tot(:,1)'), grid on;
+subplot(3,1,2)
+plot (ta,accel_tot(:,2)'), grid on;
+subplot(3,1,3)
+plot (ta,accel_tot(:,3)'), grid on;
+xlabel('time [s]'), ylabel('|Acc| [mg]');
+end

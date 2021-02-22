@@ -14,7 +14,7 @@ Release date: 16/04/2016
 settings.electronics = false;
 settings.ascentOnly = false;
 settings.ballisticFligth = false;
-settings.dataNoise = false;
+settings.dataNoise = true;
 
 %% LAUNCH SETUP
 % launchpad for Pont De Sor

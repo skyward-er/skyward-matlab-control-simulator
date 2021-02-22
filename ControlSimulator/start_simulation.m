@@ -93,6 +93,7 @@ end
 
 if settings.plots && not(settings.electronics)
     
+    
     % AERO FORCES
     figure('Name', 'Forces - ascent Phase', 'NumberTitle', 'off');
     plot(Tf(flagMatr(:, 2)), data_flight.forces.AeroDyn_Forces(:, 1)),grid on;

@@ -246,5 +246,6 @@ else
     z = -Y(end, 3);
 end
 
-[~, ~, P, ~] = atmosisa(z);
+[Temp, ~, P, ~] = atmosisa(z);
 sensorData.barometer.measures = P;
+sensorData.barometer.temperature = Temp;
