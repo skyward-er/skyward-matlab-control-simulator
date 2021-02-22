@@ -185,13 +185,28 @@ while flagStopIntegration || n_old < nmax
         
         for ii=1:length(sensorData.accelerometer.time)
                 [accelx(ii,1),accely(ii,1),accelz(ii,1)] = ACCEL_LSM9DS1.sens(...
-                                                 sensorData.accelerometer.measures(ii,1)/g,...
-                                                 sensorData.accelerometer.measures(ii,2)/g,...
-                                                 sensorData.accelerometer.measures(ii,3)/g,...
+                                                 sensorData.accelerometer.measures(ii,1)*1000/g,...
+                                                 sensorData.accelerometer.measures(ii,2)*1000/g,...
+                                                 sensorData.accelerometer.measures(ii,3)*1000/g,...
                                                  14.8500);  
+                 [gyrox(ii,1),gyroy(ii,1),gyroz(ii,1)] = GYRO_LSM9DS1.sens(...
+                                                 sensorData.gyro.measures(ii,1)*1000*360/2/pi,...
+                                                 sensorData.gyro.measures(ii,2)*1000*360/2/pi,...
+                                                 sensorData.gyro.measures(ii,3)*1000*360/2/pi,...
+                                                 14.8500);  
+%                  [magx(ii,1),magy(ii,1),magz(ii,1)] = MAGN_LSM9DS1.sens(...
+%                                                  sensorData.magnetometer.measures(ii,1)*0.01,...
+%                                                  sensorData.magnetometer.measures(ii,2)*0.01,...
+%                                                  sensorData.magnetometer.measures(ii,3)*0.01,...
+%                                                  14.8500);  
+                                            
         end 
         accel_tot(na_old:na_old + length(accelx) - 1,:) =[accelx, accely, accelz] ;
+        gyro_tot(na_old:na_old + length(gyrox) - 1,:) =[gyrox, gyroy, gyroz] ;
+%        mag_tot(na_old:na_old + length(magx) - 1,:) =[magx, magy, magz] ;
         na_old = na_old + length(accelx);
+        
+
     end
   
 
@@ -279,10 +294,28 @@ plot (Tf,p_tot'/100), grid on;
 
 figure 
 subplot(3,1,1)
-plot (ta,accel_tot(:,1)'), grid on;
+plot (ta,accel_tot(:,1)/1000'), grid on;
 subplot(3,1,2)
-plot (ta,accel_tot(:,2)'), grid on;
+plot (ta,accel_tot(:,2)/1000'), grid on;
 subplot(3,1,3)
-plot (ta,accel_tot(:,3)'), grid on;
+plot (ta,accel_tot(:,3)/1000'), grid on;
 xlabel('time [s]'), ylabel('|Acc| [mg]');
+
+figure 
+subplot(3,1,1)
+plot (ta,gyro_tot(:,1)/1000'), grid on;
+subplot(3,1,2)
+plot (ta,gyro_tot(:,2)/1000'), grid on;
+subplot(3,1,3)
+plot (ta,gyro_tot(:,3)/1000'), grid on;
+xlabel('time [s]'), ylabel('|Ang vel| [°/s]');
+
+figure 
+subplot(3,1,1)
+plot (ta,mag_tot(:,1)/1000'), grid on;
+subplot(3,1,2)
+plot (ta,mag_tot(:,2)/1000'), grid on;
+subplot(3,1,3)
+plot (ta,mag_tot(:,3)/1000'), grid on;
+xlabel('time [s]'), ylabel('|Ang vel| [°/s]');
 end
