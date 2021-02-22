@@ -176,53 +176,65 @@ while flagStopIntegration || n_old < nmax
     [sensorData] = manageSignalFrequencies(magneticFieldApprox, flagAscent, settings, Yf, Tf, x, uw, vw, ww, uncert);
     [~, ~, p, ~]  = atmosisa(-Yf(:,3)) ; 
     
+    
+ 
     if settings.dataNoise
         
+    pn      = zeros(1,length(sensorData.barometer.time));
+    accel   = zeros(length(sensorData.accelerometer.time),3);
+    gyro    = zeros(length(sensorData.gyro.time),3);
+    mag     = zeros(length(sensorData.magnetometer.time),3);
+    gps     = zeros(length(sensorData.gps.time),3);
+    gpsv    = zeros(length(sensorData.gps.time),3);
+        
+        % Baro Acquisition loop
         for ii=1:length(sensorData.barometer.time)
                 pn(ii,1) = MS580301BA01.sens(sensorData.barometer.measures(ii)/100,...
                                            sensorData.barometer.temperature(ii) - 273.15);  
         end 
-        pn_tot(np_old:np_old + length(pn) - 1,1) = pn(1:end,1)';
-        np_old = np_old + length(pn);
+        pn_tot(np_old:np_old + size(pn,1) - 1,1) = pn(1:end,1)';
+        np_old = np_old + size(pn,1);
         
+        % IMU Acquisition loop
         for ii=1:length(sensorData.accelerometer.time)
-                [accelx(ii,1),accely(ii,1),accelz(ii,1)] = ACCEL_LSM9DS1.sens(...
+                [accel(ii,1),accel(ii,2),accel(ii,3)] = ACCEL_LSM9DS1.sens(...
                                                  sensorData.accelerometer.measures(ii,1)*1000/g,...
                                                  sensorData.accelerometer.measures(ii,2)*1000/g,...
                                                  sensorData.accelerometer.measures(ii,3)*1000/g,...
                                                  14.8500);  
-                 [gyrox(ii,1),gyroy(ii,1),gyroz(ii,1)] = GYRO_LSM9DS1.sens(...
+                 [gyro(ii,1),gyro(ii,2),gyro(ii,3)]   = GYRO_LSM9DS1.sens(...
                                                  sensorData.gyro.measures(ii,1)*1000*360/2/pi,...
                                                  sensorData.gyro.measures(ii,2)*1000*360/2/pi,...
                                                  sensorData.gyro.measures(ii,3)*1000*360/2/pi,...
                                                  14.8500);  
-                 [magx(ii,1),magy(ii,1),magz(ii,1)] = MAGN_LSM9DS1.sens(...
+                 [mag(ii,1),mag(ii,2),mag(ii,3)]      = MAGN_LSM9DS1.sens(...
                                                  sensorData.magnetometer.measure(ii,1)*0.01,...
                                                  sensorData.magnetometer.measure(ii,2)*0.01,...
                                                  sensorData.magnetometer.measure(ii,3)*0.01,...
                                                  14.8500);  
                                             
         end 
-        accel_tot(na_old:na_old + length(accelx) - 1,:) =[accelx, accely, accelz] ;
-        gyro_tot(na_old:na_old + length(gyrox) - 1,:) =[gyrox, gyroy, gyroz] ;
-        mag_tot(na_old:na_old + length(magx) - 1,:) =[magx, magy, magz] ;
-        na_old = na_old + length(accelx);
+        accel_tot(na_old:na_old + size(accel,1) - 1,:) = accel(1:end,:) ;
+        gyro_tot(na_old:na_old + size(gyro,1) - 1,:)   = gyro(1:end,:) ;
+        mag_tot(na_old:na_old + size(mag,1) - 1,:)     = mag(1:end,:) ;
+        na_old = na_old + size(accel,1);
         
+        % GPS Acquisition loop
         for ii=1:length(sensorData.gps.time)
-            [gpsx(ii,1),gpsy(ii,1),gpsz(ii,1)] = GPS_NEOM9N.sens(...
+            [gps(ii,1),gps(ii,2),gps(ii,3)]   =  GPS_NEOM9N.sens(...
                                                  sensorData.gps.positionMeasures(ii,1),...
                                                  sensorData.gps.positionMeasures(ii,2),...
                                                  sensorData.gps.positionMeasures(ii,3),...
                                                  14.8500);  
-            [gpsvx(ii,1),gpsvy(ii,1),gpsvz(ii,1)] = GPS_NEOM9N.sens(...
+            [gpsv(ii,1),gpsv(ii,2),gpsv(ii,3)] = GPS_NEOM9N.sens(...
                                                  sensorData.gps.velocityMeasures(ii,1),...
                                                  sensorData.gps.velocityMeasures(ii,2),...
                                                  sensorData.gps.velocityMeasures(ii,3),...
                                                  14.8500);  
         end
-        gps_tot(ngps_old:ngps_old + length(gpsx) - 1,:) =[gpsx, gpsy, gpsz] ;
-        gpsv_tot(ngps_old:ngps_old + length(gpsvx) - 1,:) =[gpsvx, gpsvy, gpsvz] ;
-        ngps_old = ngps_old + length(gpsx);
+        gps_tot(ngps_old:ngps_old + size(gps,1) - 1,:)   =  gps(1:end,:) ;
+        gpsv_tot(ngps_old:ngps_old + size(gpsv,1) - 1,:) =  gpsv(1:end,:) ;
+        ngps_old = ngps_old + size(gps,1);
 
     end
   
@@ -290,11 +302,7 @@ cpuTimes = cpuTimes(1:iTimes);
 %% ASSEMBLE TOTAL FLIGHT STATE
 Yf = Yf_tot(1:n_old, :);
 Tf = Tf_tot(1:n_old, :);
-p = p_tot(1:n_old, :);
-fbaro = settings.frequencies.barometerFrequency;
-faccel = settings.frequencies.accelerometerFrequency;
-tp = Tf(1):1/fbaro:Tf(end);
-ta = Tf(1):1/faccel:Tf(end);
+
 flagMatr = flagMatr(1:n_old, :);
 
 %% RETRIVE PARAMETERS FROM THE ODE
@@ -302,37 +310,44 @@ if not(settings.electronics)
     dataBallisticFlight = RecallOdeFcn(@ascent, Tf(flagMatr(:, 2)), Yf(flagMatr(:, 2), :), settings, C, uw, vw, ww, uncert);
 end
 
+% FIGURE: Barometer reads 
+fbaro = settings.frequencies.barometerFrequency;
+tp = Tf(1):1/fbaro:Tf(end);
 figure 
-subplot(2,1,1)
-plot (tp,pn_tot'), grid on;
-xlabel('time [s]'), ylabel('|P| [mBar]');
-subplot(2,1,2)
-plot (Tf,p_tot'/100), grid on;
-
+subplot(2,1,1);plot(tp,pn_tot');grid on;xlabel('time [s]');ylabel('|P| [mBar]');
+subplot(2,1,2);plot(Tf,p_tot'/100);grid on;xlabel('time [s]');ylabel('|P| [mBar]');
+title('Barometer reads');
+% FIGURE: Accelerometer reads
+faccel = settings.frequencies.accelerometerFrequency;
+ta = Tf(1):1/faccel:Tf(end);
 figure 
-subplot(3,1,1)
-plot (ta,accel_tot(:,1)/1000'), grid on;
-subplot(3,1,2)
-plot (ta,accel_tot(:,2)/1000'), grid on;
-subplot(3,1,3)
-plot (ta,accel_tot(:,3)/1000'), grid on;
-xlabel('time [s]'), ylabel('|Acc| [mg]');
-
+subplot(3,1,1);plot(ta,accel_tot(:,1)/1000');grid on;xlabel('time [s]');ylabel('|Acc x| [mg]');
+subplot(3,1,2);plot(ta,accel_tot(:,2)/1000');grid on;xlabel('time [s]');ylabel('|Acc y| [mg]');
+subplot(3,1,3);plot(ta,accel_tot(:,3)/1000');grid on;xlabel('time [s]');ylabel('|Acc z| [mg]');
+title('Accelerometer reads');
+% FIGURE: Gyroscope reads
 figure 
-subplot(3,1,1)
-plot (ta,gyro_tot(:,1)/1000'), grid on;
-subplot(3,1,2)
-plot (ta,gyro_tot(:,2)/1000'), grid on;
-subplot(3,1,3)
-plot (ta,gyro_tot(:,3)/1000'), grid on;
-xlabel('time [s]'), ylabel('|Ang vel| [°/s]');
-
+subplot(3,1,1);plot(ta,gyro_tot(:,1)/1000');grid on;xlabel('time [s]');ylabel('|Ang vel x| [°/s]');
+subplot(3,1,2);plot(ta,gyro_tot(:,2)/1000');grid on;xlabel('time [s]');ylabel('|Ang vel y| [°/s]');
+subplot(3,1,3);plot(ta,gyro_tot(:,3)/1000');grid on;xlabel('time [s]');ylabel('|Ang vel z| [°/s]');
+title('Gyroscope reads');
+% FIGURE: Magnetometer reads
 figure 
-subplot(3,1,1)
-plot (ta,mag_tot(:,1)/1000'), grid on;
-subplot(3,1,2)
-plot (ta,mag_tot(:,2)/1000'), grid on;
-subplot(3,1,3)
-plot (ta,mag_tot(:,3)/1000'), grid on;
-xlabel('time [s]'), ylabel('|Mag field| [gauss]');
+subplot(3,1,1);plot(ta,mag_tot(:,1)/1000');grid on;xlabel('time [s]');ylabel('|Mag field x| [gauss]');
+subplot(3,1,2);plot(ta,mag_tot(:,2)/1000');grid on;xlabel('time [s]');ylabel('|Mag field y| [gauss]');
+subplot(3,1,3);plot(ta,mag_tot(:,3)/1000');grid on;xlabel('time [s]');ylabel('|Mag field z| [gauss]');
+title('Magnetometer reads');
+% FIGURE: Gps reads
+fgps = settings.frequencies.gpsFrequency;
+tgps = Tf(1):1/fgps:Tf(end);
+figure 
+subplot(3,1,1);plot(tgps,gps_tot(:,1)');grid on;xlabel('time [s]');ylabel('|Position N| [m]');
+subplot(3,1,2);plot(tgps,gps_tot(:,2)');grid on;xlabel('time [s]');ylabel('|Position E| [m]');
+subplot(3,1,3);plot(tgps,gps_tot(:,3)');grid on;xlabel('time [s]');ylabel('|Position D| [m]');
+title('GPS position reads');
+figure 
+subplot(3,1,1);plot(tgps,gpsv_tot(:,1)');grid on;xlabel('time [s]');ylabel('|Velocity N| [m/s]');
+subplot(3,1,2);plot(tgps,gpsv_tot(:,2)');grid on;xlabel('time [s]');ylabel('|Velocity E| [m/s]');
+subplot(3,1,3);plot(tgps,gpsv_tot(:,3)');grid on;xlabel('time [s]');ylabel('|Velocity D| [m/s]');
+title('GPS velocity reads');
 end
