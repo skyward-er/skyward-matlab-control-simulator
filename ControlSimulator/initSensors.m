@@ -1,15 +1,16 @@
 % Initialize all sensors
 
-% initial barometer sensor MS580301BA01
-ep_p_0=csvread('./sensors-simulator/data/MS580301BA01/ep_p_0.csv');
-ep_p_25=csvread('./sensors-simulator//data/MS580301BA01/ep_p_25.csv');
-ep_p_85=csvread('./sensors-simulator//data/MS580301BA01/ep_p_85.csv');
-ep_p_neg40=csvread('./sensors-simulator//data/MS580301BA01/ep_p_-40.csv');
 
-p=[ep_p_0(:,1);ep_p_25(:,1);ep_p_85(:,1);ep_p_neg40(:,1)]; % presure in mbar
+% initial barometer sensor MS580301BA01
+ep_p_0=csvread('skyward-matlab-control-simulator/sensors/data/MS580301BA01/ep_p_0.csv');
+ep_p_25=csvread('skyward-matlab-control-simulator/sensors/data/MS580301BA01/ep_p_25.csv');
+ep_p_85=csvread('skyward-matlab-control-simulator/sensors/data/MS580301BA01/ep_p_85.csv');
+ep_p_neg40=csvread('skyward-matlab-control-simulator/sensors/data/MS580301BA01/ep_p_-40.csv');
+
+p_table=[ep_p_0(:,1);ep_p_25(:,1);ep_p_85(:,1);ep_p_neg40(:,1)]; % presure in mbar
 ep=[ep_p_0(:,2);ep_p_25(:,2);ep_p_85(:,2);ep_p_neg40(:,2)]; % error presure in mbar
 T=[0*ones(size(ep_p_0(:,1)));25*ones(size(ep_p_25(:,1)));85*ones(size(ep_p_85(:,1)));-40*ones(size(ep_p_neg40(:,1)));];
-ep_data=[p,T,ep];
+ep_data=[p_table,T,ep];
 
 MS580301BA01=Sensor(); % presure in mbar, temp should be in C°
 MS580301BA01.maxMeasurementRange=1100; % 1100, 1300 in mbar
@@ -35,11 +36,11 @@ GYRO_LSM9DS1=Sensor3D(); % angular rate in mdps
 GYRO_LSM9DS1.maxMeasurementRange=2000e3; % 245e3, 500e3, 2000e3 in mdps
 GYRO_LSM9DS1.minMeasurementRange=-2000e3; % -245e3, -500e3, -2000e3 in mdps
 GYRO_LSM9DS1.resolution=70; % 8.75, 17.5, 70 in mdps
-GYRO_LSM9DS1.noiseVariance=20000; % guess in mdps
+GYRO_LSM9DS1.noiseVariance=100; % guess in mdps
 GYRO_LSM9DS1.offsetX=0; % +-30e3 in mdps
 GYRO_LSM9DS1.offsetY=0; % +-30e3 in mdps
 GYRO_LSM9DS1.offsetZ=0; % +-30e3 in mdps
-GYRO_LSM9DS1.walkDiffusionCoef=2000; % guess
+GYRO_LSM9DS1.walkDiffusionCoef=1; % guess
 GYRO_LSM9DS1.dt=0.01; % sampling time
 GYRO_LSM9DS1.transMatrix=diag([1 1 1]); % axis transformation
 
@@ -57,7 +58,7 @@ MAGN_LSM9DS1.dt=0.01; % sampling time
 MAGN_LSM9DS1.transMatrix=diag([1 1 1]); % axis transformation
 
 % initial GPS sensor from NEO-M9N
-GPS_NEOM9N=GPS(); % lon, in degree lat in deree, alt in m
+GPS_NEOM9N=Sensor3D(); % lon, in degree lat in deree, alt in m
 GPS_NEOM9N.noiseVariance=4; % in m
 GPS_NEOM9N.transMatrix=diag([1 1 1]); % axis transformation
 
