@@ -23,7 +23,7 @@ lpin = 1.150;                                                              %[m] 
 settings.lrampa = 5.9 - lpin;                                              %[m] LaunchPad route (total available route)
 settings.lat0 = 39.201778;                                                 % Launchpad latitude
 settings.lon0 = -8.138368;                                                 % Launchpad longitude
-settings.launchDate = [2021, 10, 15];                                       % [YYYY, mm, dd] date of launch
+settings.launchDate = [2021, 10, 15];                                      % [YYYY, mm, dd] date of launch
 
 settings.g0 = gravitywgs84(settings.z0, settings.lat0);                    % Gravity costant at launch latitude and altitude
 
