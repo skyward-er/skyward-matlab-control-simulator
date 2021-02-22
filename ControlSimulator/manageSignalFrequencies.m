@@ -129,7 +129,6 @@ if freq.magnetometerFrequency > freq.controlFrequency
         sensorData.magnetometer.measure = quatrotate(Q, magnFieldInertial);
     else
         sensorData.magnetometer.measure = repmat(magneticFieldApprox(0)', N, 1);
-        a = sensorData.magnetometer.measure
     end
 else
     z = -Y(end, 3);
