@@ -77,7 +77,6 @@ x_c(1,:)    = x_prev;                 %Allocation of the initial value
 P_c         = zeros(10,10,length(t_v)); %Pre-allocation of the covariance matrix
 P_c(:,:,1)  = P_prev;
 index_GPS=1;
-index_pitot=1;
 index_bar=1;
 index_mag=1;
 for i=2:length(t_v)
@@ -92,7 +91,7 @@ for i=2:length(t_v)
      end
     
     if t_eval(i)>=t_baro(index_bar) %Comparison to see the there's a new measurement
-       [x_c(i,:),P_c(:,:,i),~]     = correctionBarometer(x_c(i,:),P_c(:,:,i),h_sam(index_bar),sigma_h);
+       [x_c(i,:),P_c(:,:,i),~]     = correctionBarometer(x_c(i,:),P_c(:,:,i),baro(index_bar),sigma_baro);
         index_bar   =  index_bar + 1;     
     end
      
