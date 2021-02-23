@@ -73,10 +73,13 @@ else
 end
 
 %% MAGNETIC FIELD MODEL
-dy = decyear(settings.launchDate);
-hmax = 6000;
-[XYZ0] = wrldmagm(0, settings.lat0, settings.lon0, dy, '2020');
-[XYZh] = wrldmagm(hmax, settings.lat0, settings.lon0, dy, '2020');
+% dy = decyear(settings.launchDate);
+% hmax = 6000;
+% [XYZ0] = wrldmagm(0, settings.lat0, settings.lon0, dy, '2020');
+% [XYZh] = wrldmagm(hmax, settings.lat0, settings.lon0, dy, '2020');
+
+%Use this next line if your MATLAB version is previous to 2020
+load('magn_field.mat')
 
 magneticFieldApprox = @(zSlm) XYZ0 + (XYZh-XYZ0)./hmax.*zSlm;
 %% SENSORS DEFINITION
