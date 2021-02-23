@@ -21,11 +21,11 @@ function [x_c,P_c]=run_kalman(x_prev,P_prev,t_v,a_v,w_v,t_baro,baro,sigma_baro,.
 %
 %         -a_v:     ACCELERATION VECTOR MEASURED DURING THE INTEGRATED PERIOD.
 %                   SINCE IT ALSO RUNS AT 100 HZ AND THE INTEGRATION PERIOD 
-%                   SPANS 0.1 SECONDS, THIS VECTOR HAS SIZE 10x1. m/s^2
+%                   SPANS 0.1 SECONDS, THIS VECTOR HAS SIZE 10x3. m/s^2
 %
 %         -w_v:     ANGULAR VELOCITY VECTOR MEASURED DURING THE INTEGRATED 
 %                   PERIOD. SINCE IT ALSO RUNS AT 100 HZ AND THE INTEGRATION 
-%                   PERIOD SPANS 0.1 SECONDS, THIS VECTOR HAS SIZE 10x1.
+%                   PERIOD SPANS 0.1 SECONDS, THIS VECTOR HAS SIZE 10x3.
 %                   rad/s
 % 
 %         -t_baro:  VECTOR OF TIME INSTANTS AT WHICH THE BAROMETER TOOK 
@@ -85,6 +85,7 @@ for i=2:length(t_v)
     %Prediction part
     [x_c(i,:),P_c(:,:,i)] = kalmanFilterPrediction(x_c(i-1,:),dt_k,...
                             P_c(:,:,i-1),a_v(i-1,:),w_v(i-1,:),Q);
+    
     %Corrections
      if t_v(i)>=t_GPS(index_GPS)  %Comparison to see the there's a new measurement
        [x_c(i,:),P_c(:,:,i),~]     = correctionGPS(x_c(i,:),P_c(:,:,i),GPS(index_GPS,1),...
@@ -96,12 +97,12 @@ for i=2:length(t_v)
        [x_c(i,:),P_c(:,:,i),~]     = correctionBarometer(x_c(i,:),P_c(:,:,i),baro(index_bar),sigma_baro);
         index_bar   =  index_bar + 1;     
     end
-     
-    if t_v(i)>=t_mag(index_mag) %Comparison to see the there's a new measurement
-       [x_c(i,:),P_c(:,:,i),~]     = correctionMagnetometer(x_c(i,:),P_c(:,:,i),mag(index_mag,:),sigma_mag);
-       index_mag    =  index_mag + 1;  
-    end
-    
+%      
+%     if t_v(i)>=t_mag(index_mag) %Comparison to see the there's a new measurement
+%        [x_c(i,:),P_c(:,:,i),~]     = correctionMagnetometer(x_c(i,:),P_c(:,:,i),mag(index_mag,:),sigma_mag);
+%        index_mag    =  index_mag + 1;  
+%     end
+%     norm(x_c(i,7:10))
 end
 end
 

@@ -248,8 +248,8 @@ while flagStopIntegration || n_old < nmax
     end
   
     if iTimes==1
-        x_prev=[X0; V0; Q0];
-        P_prev=eye(10);
+        x_prev=[X0; V0; Q0(2:4); Q0(1)];
+        P_prev=0.01*eye(10);
     else
         x_prev=x_est_tot(end,:);
         P_prev=P_c(:,:,end);
@@ -258,7 +258,7 @@ while flagStopIntegration || n_old < nmax
     
     %%%%%%% kalmann filter %%%%%%%%
     [x_c,P_c]   =  run_kalman(x_prev,P_prev,sensorData.accelerometer.time,...
-                              accel,gyro,sensorData.barometer.time,h_baro,...
+                              accel,sensorData.gyro.measures,sensorData.barometer.time,h_baro,...
                               settings.sigma_baro,sensorData.magnetometer.time,mag,...
                               settings.sigma_mag,sensorData.gps.time,gps,...
                               settings.sigma_GPS,4,1,settings.Q);
@@ -400,21 +400,26 @@ subplot(3,1,3)
 plot(Tf,Yf(:,6))
 hold on
 plot(t_est_tot,x_est_tot(:,6))
+
 figure
 subplot(4,1,1)
 plot(Tf,Yf(:,10))
 hold on
-plot(t_est_tot,x_est_tot(:,7))
+plot(t_est_tot,x_est_tot(:,10))
+
 subplot(4,1,2)
 plot(Tf,Yf(:,11))
 hold on
-plot(t_est_tot,x_est_tot(:,8))
+plot(t_est_tot,x_est_tot(:,7))
 subplot(4,1,3)
 plot(Tf,Yf(:,12))
 hold on
-plot(t_est_tot,x_est_tot(:,9))
+plot(t_est_tot,x_est_tot(:,8))
 subplot(4,1,4)
 plot(Tf,Yf(:,13))
 hold on
-plot(t_est_tot,x_est_tot(:,10))
+plot(t_est_tot,x_est_tot(:,9))
 end
+
+
+

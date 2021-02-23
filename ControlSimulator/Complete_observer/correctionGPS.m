@@ -59,6 +59,7 @@ S              =   H*P_pred*H'+R;                    %Matrix necessary for the c
         K              =   P_pred*H'/S;              %Kalman correction factor
 
         x              =   x_pred + (K*e)';          %Corrector step of the state
+        
 
         P              =   (eye(10) - K*H)*P_pred;   %Corrector step of the state covariance
     else
