@@ -194,4 +194,4 @@ settings.wind.AzMax = (360)*pi/180;                                         % [r
 % 270 deg                       -> West
 
 %% PLOT DETAILS
-settings.plots = true;
+settings.plots = false;

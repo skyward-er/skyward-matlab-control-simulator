@@ -57,6 +57,7 @@ m_inertial  =   [1 0 0];           %Initial vector direction of the magnetic fie
 % f_sample_pitot=20;           %[Hz] Frequency of measurement of pitot tube 
 % 
 % f_sample_GPS=5;             %[Hz] Frequency of measurement of GPS
+
                                     
 sigma_mag   =   0.05;               % This is the variance of the direction 
                                     % of the magnetic field, not of the magnitude 
@@ -79,7 +80,7 @@ sigma_GPS   =   2;                  % Variance of position due to GPS. This
                                     % GPS_NEOM9N.noiseVariance from
                                     % initSensors.m
 
-global sigma_baro sigma_mag sigma_GPS
+
 %---------Estimation parameters-------------------
 
 dt_k        =   0.01;               %Time step for the estimation

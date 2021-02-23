@@ -1,6 +1,6 @@
 function [x_c,P_c]=run_kalman(x_prev,P_prev,t_v,a_v,w_v,t_baro,baro,sigma_baro,...
                               t_mag,mag,sigma_mag,...
-                              t_GPS,GPS,sigma_GPS,n_sats,fix)
+                              t_GPS,GPS,sigma_GPS,n_sats,fix,Q)
 %23/02/2021 ANY QUESTIONS CAN BE DIRECTED TO ALEJANDRO MONTERO FROM SKYWARD
 
 %-----------DESCRIPTION OF FUNCTION:------------------
@@ -61,8 +61,10 @@ function [x_c,P_c]=run_kalman(x_prev,P_prev,t_v,a_v,w_v,t_baro,baro,sigma_baro,.
 %
 %         -n_sats: NUMBER OF SATELLITES VAILABLE FOR THE GPS 1x1 [-]
 %       
-%         -fix: FIX OF THE GPS; BINARY VARIABLE TO DETERMINE WHETHER TO
-%               TRUST THE GPS OR NOT [-]
+%         -fix:     FIX OF THE GPS; BINARY VARIABLE TO DETERMINE WHETHER TO
+%                   TRUST THE GPS OR NOT [-]
+%
+%         -Q:       COVARIANCE MATRIX OF PROCESS NOISE. 10x10   
 %
 %       -OUTPUTS:
 %         -x_c: CORRECTED VECTOR OF STATES OF THE ROCKET. CONTAINS ALL THE
@@ -82,20 +84,20 @@ index_mag=1;
 for i=2:length(t_v)
     %Prediction part
     [x_c(i,:),P_c(:,:,i)] = kalmanFilterPrediction(x_c(i-1,:),dt_k,...
-                            P_c(:,:,i-1),a_v(i-1,:),w_v(i-1,:),Q0);
+                            P_c(:,:,i-1),a_v(i-1,:),w_v(i-1,:),Q);
     %Corrections
-     if t_eval(i)>=t_GPS(index_GPS)  %Comparison to see the there's a new measurement
+     if t_v(i)>=t_GPS(index_GPS)  %Comparison to see the there's a new measurement
        [x_c(i,:),P_c(:,:,i),~]     = correctionGPS(x_c(i,:),P_c(:,:,i),GPS(index_GPS,1),...
                             GPS(index_GPS,2),GPS(index_GPS,3),sigma_GPS,n_sats,fix);
         index_GPS   =  index_GPS + 1;
      end
     
-    if t_eval(i)>=t_baro(index_bar) %Comparison to see the there's a new measurement
+    if t_v(i)>=t_baro(index_bar) %Comparison to see the there's a new measurement
        [x_c(i,:),P_c(:,:,i),~]     = correctionBarometer(x_c(i,:),P_c(:,:,i),baro(index_bar),sigma_baro);
         index_bar   =  index_bar + 1;     
     end
      
-    if t_eval(i)>=t_mag(index_mag) %Comparison to see the there's a new measurement
+    if t_v(i)>=t_mag(index_mag) %Comparison to see the there's a new measurement
        [x_c(i,:),P_c(:,:,i),~]     = correctionMagnetometer(x_c(i,:),P_c(:,:,i),mag(index_mag,:),sigma_mag);
        index_mag    =  index_mag + 1;  
     end

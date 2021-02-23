@@ -107,6 +107,7 @@ n_old = 1;
 np_old = 1;
 na_old = 1;
 ngps_old = 1;
+n_est_old = 1;
 cpuTimes = zeros(nmax,1);
 iTimes = 0;
 g = 9.81;
@@ -219,6 +220,7 @@ while flagStopIntegration || n_old < nmax
                                                  14.8500);
                  accel(ii,:) = accel(ii,:)*g/1000;
                  gyro(ii,:)  = gyro(ii,:)*2*pi/360/1000;
+                 mag(ii,:)   = mag(ii,:)/norm(mag(ii,:));
                                             
         end 
         accel_tot(na_old:na_old + size(accel,1) - 1,:) = accel(1:end,:) ;
@@ -257,9 +259,12 @@ while flagStopIntegration || n_old < nmax
     %%%%%%% kalmann filter %%%%%%%%
     [x_c,P_c]   =  run_kalman(x_prev,P_prev,sensorData.accelerometer.time,...
                               accel,gyro,sensorData.barometer.time,h_baro,...
-                              sigma_baro,sensorData.magnetometer.time,mag,...
-                              sigma_mag,sensorData.gps.time,gps,sigma_GPS,4,1);
-     x_est_tot(n_est_old:n_est_old + size((x_c(1,:)-1)),:)  = x_c(1:end,:);                     
+                              settings.sigma_baro,sensorData.magnetometer.time,mag,...
+                              settings.sigma_mag,sensorData.gps.time,gps,...
+                              settings.sigma_GPS,4,1,settings.Q);
+     x_est_tot(n_est_old:n_est_old + size(x_c(:,1),1)-1,:)  = x_c(1:end,:);
+     t_est_tot(n_est_old:n_est_old + size(x_c(:,1),1)-1) = sensorData.accelerometer.time;              
+     n_est_old = n_est_old + size(x_c(1,:)); 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     if flagAeroBrakes
@@ -328,44 +333,88 @@ if not(settings.electronics)
     dataBallisticFlight = RecallOdeFcn(@ascent, Tf(flagMatr(:, 2)), Yf(flagMatr(:, 2), :), settings, C, uw, vw, ww, uncert);
 end
 
-% FIGURE: Barometer reads 
-fbaro = settings.frequencies.barometerFrequency;
-tp = Tf(1):1/fbaro:Tf(end);
-figure 
-subplot(2,1,1);plot(tp,pn_tot');grid on;xlabel('time [s]');ylabel('|P| [mBar]');
-subplot(2,1,2);plot(Tf,p_tot'/100);grid on;xlabel('time [s]');ylabel('|P| [mBar]');
-title('Barometer reads');
-% FIGURE: Accelerometer reads
-faccel = settings.frequencies.accelerometerFrequency;
-ta = Tf(1):1/faccel:Tf(end);
-figure 
-subplot(3,1,1);plot(ta,accel_tot(:,1)/1000');grid on;xlabel('time [s]');ylabel('|Acc x| [mg]');
-subplot(3,1,2);plot(ta,accel_tot(:,2)/1000');grid on;xlabel('time [s]');ylabel('|Acc y| [mg]');
-subplot(3,1,3);plot(ta,accel_tot(:,3)/1000');grid on;xlabel('time [s]');ylabel('|Acc z| [mg]');
-title('Accelerometer reads');
-% FIGURE: Gyroscope reads
-figure 
-subplot(3,1,1);plot(ta,gyro_tot(:,1)/1000');grid on;xlabel('time [s]');ylabel('|Ang vel x| [°/s]');
-subplot(3,1,2);plot(ta,gyro_tot(:,2)/1000');grid on;xlabel('time [s]');ylabel('|Ang vel y| [°/s]');
-subplot(3,1,3);plot(ta,gyro_tot(:,3)/1000');grid on;xlabel('time [s]');ylabel('|Ang vel z| [°/s]');
-title('Gyroscope reads');
-% FIGURE: Magnetometer reads
-figure 
-subplot(3,1,1);plot(ta,mag_tot(:,1)/1000');grid on;xlabel('time [s]');ylabel('|Mag field x| [gauss]');
-subplot(3,1,2);plot(ta,mag_tot(:,2)/1000');grid on;xlabel('time [s]');ylabel('|Mag field y| [gauss]');
-subplot(3,1,3);plot(ta,mag_tot(:,3)/1000');grid on;xlabel('time [s]');ylabel('|Mag field z| [gauss]');
-title('Magnetometer reads');
-% FIGURE: Gps reads
-fgps = settings.frequencies.gpsFrequency;
-tgps = Tf(1):1/fgps:Tf(end);
-figure 
-subplot(3,1,1);plot(tgps,gps_tot(:,1)');grid on;xlabel('time [s]');ylabel('|Position N| [m]');
-subplot(3,1,2);plot(tgps,gps_tot(:,2)');grid on;xlabel('time [s]');ylabel('|Position E| [m]');
-subplot(3,1,3);plot(tgps,gps_tot(:,3)');grid on;xlabel('time [s]');ylabel('|Position D| [m]');
-title('GPS position reads');
-figure 
-subplot(3,1,1);plot(tgps,gpsv_tot(:,1)');grid on;xlabel('time [s]');ylabel('|Velocity N| [m/s]');
-subplot(3,1,2);plot(tgps,gpsv_tot(:,2)');grid on;xlabel('time [s]');ylabel('|Velocity E| [m/s]');
-subplot(3,1,3);plot(tgps,gpsv_tot(:,3)');grid on;xlabel('time [s]');ylabel('|Velocity D| [m/s]');
-title('GPS velocity reads');
+% % FIGURE: Barometer reads 
+% fbaro = settings.frequencies.barometerFrequency;
+% tp = Tf(1):1/fbaro:Tf(end);
+% figure 
+% subplot(2,1,1);plot(tp,pn_tot');grid on;xlabel('time [s]');ylabel('|P| [mBar]');
+% subplot(2,1,2);plot(Tf,p_tot'/100);grid on;xlabel('time [s]');ylabel('|P| [mBar]');
+% title('Barometer reads');
+% % FIGURE: Accelerometer reads
+% faccel = settings.frequencies.accelerometerFrequency;
+% ta = Tf(1):1/faccel:Tf(end);
+% figure 
+% subplot(3,1,1);plot(ta,accel_tot(:,1)/1000');grid on;xlabel('time [s]');ylabel('|Acc x| [mg]');
+% subplot(3,1,2);plot(ta,accel_tot(:,2)/1000');grid on;xlabel('time [s]');ylabel('|Acc y| [mg]');
+% subplot(3,1,3);plot(ta,accel_tot(:,3)/1000');grid on;xlabel('time [s]');ylabel('|Acc z| [mg]');
+% title('Accelerometer reads');
+% % FIGURE: Gyroscope reads
+% figure 
+% subplot(3,1,1);plot(ta,gyro_tot(:,1)/1000');grid on;xlabel('time [s]');ylabel('|Ang vel x| [°/s]');
+% subplot(3,1,2);plot(ta,gyro_tot(:,2)/1000');grid on;xlabel('time [s]');ylabel('|Ang vel y| [°/s]');
+% subplot(3,1,3);plot(ta,gyro_tot(:,3)/1000');grid on;xlabel('time [s]');ylabel('|Ang vel z| [°/s]');
+% title('Gyroscope reads');
+% % FIGURE: Magnetometer reads
+% figure 
+% subplot(3,1,1);plot(ta,mag_tot(:,1)/1000');grid on;xlabel('time [s]');ylabel('|Mag field x| [gauss]');
+% subplot(3,1,2);plot(ta,mag_tot(:,2)/1000');grid on;xlabel('time [s]');ylabel('|Mag field y| [gauss]');
+% subplot(3,1,3);plot(ta,mag_tot(:,3)/1000');grid on;xlabel('time [s]');ylabel('|Mag field z| [gauss]');
+% title('Magnetometer reads');
+% % FIGURE: Gps reads
+% fgps = settings.frequencies.gpsFrequency;
+% tgps = Tf(1):1/fgps:Tf(end);
+% figure 
+% subplot(3,1,1);plot(tgps,gps_tot(:,1)');grid on;xlabel('time [s]');ylabel('|Position N| [m]');
+% subplot(3,1,2);plot(tgps,gps_tot(:,2)');grid on;xlabel('time [s]');ylabel('|Position E| [m]');
+% subplot(3,1,3);plot(tgps,gps_tot(:,3)');grid on;xlabel('time [s]');ylabel('|Position D| [m]');
+% title('GPS position reads');
+% figure 
+% subplot(3,1,1);plot(tgps,gpsv_tot(:,1)');grid on;xlabel('time [s]');ylabel('|Velocity N| [m/s]');
+% subplot(3,1,2);plot(tgps,gpsv_tot(:,2)');grid on;xlabel('time [s]');ylabel('|Velocity E| [m/s]');
+% subplot(3,1,3);plot(tgps,gpsv_tot(:,3)');grid on;xlabel('time [s]');ylabel('|Velocity D| [m/s]');
+% title('GPS velocity reads');
+%Estimation figures
+figure
+subplot(3,1,1)
+plot(Tf,Yf(:,1))
+hold on
+plot(t_est_tot,x_est_tot(:,1))
+subplot(3,1,2)
+plot(Tf,Yf(:,2))
+hold on
+plot(t_est_tot,x_est_tot(:,2))
+subplot(3,1,3)
+plot(Tf,Yf(:,3))
+hold on
+plot(t_est_tot,-x_est_tot(:,3))
+figure
+subplot(3,1,1)
+plot(Tf,Yf(:,4))
+hold on
+plot(t_est_tot,x_est_tot(:,4))
+subplot(3,1,2)
+plot(Tf,Yf(:,5))
+hold on
+plot(t_est_tot,x_est_tot(:,5))
+subplot(3,1,3)
+plot(Tf,Yf(:,6))
+hold on
+plot(t_est_tot,x_est_tot(:,6))
+figure
+subplot(4,1,1)
+plot(Tf,Yf(:,10))
+hold on
+plot(t_est_tot,x_est_tot(:,7))
+subplot(4,1,2)
+plot(Tf,Yf(:,11))
+hold on
+plot(t_est_tot,x_est_tot(:,8))
+subplot(4,1,3)
+plot(Tf,Yf(:,12))
+hold on
+plot(t_est_tot,x_est_tot(:,9))
+subplot(4,1,4)
+plot(Tf,Yf(:,13))
+hold on
+plot(t_est_tot,x_est_tot(:,10))
 end
