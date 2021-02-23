@@ -184,6 +184,8 @@ while flagStopIntegration || n_old < nmax
     accel   = zeros(length(sensorData.accelerometer.time),3);
     gyro    = zeros(length(sensorData.gyro.time),3);
     mag     = zeros(length(sensorData.magnetometer.time),3);
+    mag_msa = zeros(length(sensorData.magnetometer.time),3);
+    mag_mod = zeros(length(sensorData.magnetometer.time),1);
     gps     = zeros(length(sensorData.gps.time),3);
     gpsv    = zeros(length(sensorData.gps.time),3);
         
@@ -212,11 +214,18 @@ while flagStopIntegration || n_old < nmax
                                                  sensorData.magnetometer.measure(ii,2)*0.01,...
                                                  sensorData.magnetometer.measure(ii,3)*0.01,...
                                                  14.8500);  
+                 mag_msa(ii,:)      =          [ sensorData.magnetometer.measure(ii,1)*0.01,...
+                                                 sensorData.magnetometer.measure(ii,2)*0.01,...
+                                                 sensorData.magnetometer.measure(ii,3)*0.01];     
+                
+                 mag_mod(ii,1) =sqrt(mag_msa(ii,1)^2 + mag_msa(ii,2)^2 + mag_msa(ii,3)^2);                      
                                             
         end 
         accel_tot(na_old:na_old + size(accel,1) - 1,:) = accel(1:end,:) ;
         gyro_tot(na_old:na_old + size(gyro,1) - 1,:)   = gyro(1:end,:) ;
         mag_tot(na_old:na_old + size(mag,1) - 1,:)     = mag(1:end,:) ;
+        mag_msa_tot(na_old:na_old + size(mag,1) - 1,:)     = mag_msa(1:end,:) ;
+        mag_mod_tot(na_old:na_old + size(mag,1) - 1,1)     = mag_mod(1:end,:) ;
         na_old = na_old + size(accel,1);
         
         % GPS Acquisition loop
@@ -336,7 +345,15 @@ figure
 subplot(3,1,1);plot(ta,mag_tot(:,1)/1000');grid on;xlabel('time [s]');ylabel('|Mag field x| [gauss]');
 subplot(3,1,2);plot(ta,mag_tot(:,2)/1000');grid on;xlabel('time [s]');ylabel('|Mag field y| [gauss]');
 subplot(3,1,3);plot(ta,mag_tot(:,3)/1000');grid on;xlabel('time [s]');ylabel('|Mag field z| [gauss]');
-title('Magnetometer reads');
+title('Magnetometer reads')
+figure 
+subplot(3,1,1);plot(ta,mag_msa_tot(:,1)/1000');grid on;xlabel('time [s]');ylabel('|Mag field x| [gauss]');
+subplot(3,1,2);plot(ta,mag_msa_tot(:,2)/1000');grid on;xlabel('time [s]');ylabel('|Mag field y| [gauss]');
+subplot(3,1,3);plot(ta,mag_msa_tot(:,3)/1000');grid on;xlabel('time [s]');ylabel('|Mag field z| [gauss]');
+title('Magnetometer msa interpolation')
+figure
+plot(ta,mag_mod_tot/1000');grid on;xlabel('time [s]');ylabel('|Mag field| [gauss]');
+title('Magnetometer modulus')
 % FIGURE: Gps reads
 fgps = settings.frequencies.gpsFrequency;
 tgps = Tf(1):1/fgps:Tf(end);
@@ -350,4 +367,5 @@ subplot(3,1,1);plot(tgps,gpsv_tot(:,1)');grid on;xlabel('time [s]');ylabel('|Vel
 subplot(3,1,2);plot(tgps,gpsv_tot(:,2)');grid on;xlabel('time [s]');ylabel('|Velocity E| [m/s]');
 subplot(3,1,3);plot(tgps,gpsv_tot(:,3)');grid on;xlabel('time [s]');ylabel('|Velocity D| [m/s]');
 title('GPS velocity reads');
+
 end
