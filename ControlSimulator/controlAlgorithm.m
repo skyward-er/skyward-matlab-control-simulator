@@ -1,4 +1,4 @@
-function [alpha_degree, Vz_setpoint, z_setpoint, Cd, delta_S] = controlAlgorithm(z,Vz,x,Vx,V_mod,sample_time)
+function [alpha_degree, delta_S, Vz_setpoint, z_setpoint, Vx_setpoint, x_setpoint, Cd] = controlAlgorithm(z,Vz,x,Vx,V_mod,sample_time)
 
 % Define global variables
 global data_trajectories coeff_Cd 
@@ -79,12 +79,12 @@ Cd       = (S0*Cd_fake)/S;
 
 % States: z,Vz,x,Vx
 
-Q = [0.1,    0,          0,           0;
-       0,  0.095,        0,           0;
-       0,    0,    0.00001,           0;
-       0,    0,          0,      0.00001];
-
-R = 10200;
+Q = [0.7,    0,            0,           0;
+       0,    1,            0,           0;
+       0,    0,   0.00000001,           0;
+       0,    0,            0,    0.000001];
+   
+R = 65000; 
 
 % Linearized the system around the current state
 A = [1,                                                                                        T, 0,                                                                                        0;
@@ -99,7 +99,7 @@ B = [                                        0;
 
 x_measured  = [z, Vz, x, Vx]';
 x_reference = [z_setpoint, Vz_setpoint, x_setpoint, Vx_setpoint]';
-x_error     = x_measured - x_reference;
+x_error     = x_measured - x_reference
 
 % Solve Riccati equation
 P       = Q;   % Initial guess for P    
@@ -117,6 +117,15 @@ end
 K = inv(B' * P * B + R) * B' * P * A;
 U = -K*x_error
 
+% Debug
+J_z  = Q(1,1)*x_error(1)^2
+J_Vz = Q(2,2)*x_error(2)^2
+J_x  = Q(3,3)*x_error(3)^2
+J_Vx = Q(4,4)*x_error(4)^2
+
+J_Q = x_error'*Q*x_error
+J_R = U'*R*U
+
 % Control variable limits
 Umin = 0;     
 Umax = 0.01;
@@ -128,7 +137,7 @@ elseif ( U > Umax)
 end
 
 filter_coeff = 0.9;
-delta_S = filter_coeff*U + (1-filter_coeff)*delta_S_prec
+delta_S = filter_coeff*U + (1-filter_coeff)*delta_S_prec;
 % delta_S_prec = delta_S;
 
 %% TRANSFORMATION FROM delta_S to SERVOMOTOR ANGLE DEGREES
@@ -157,6 +166,6 @@ alpha_degree      = round(alpha_degree);
 alpha_degree_prec = alpha_degree;
 
 alpha_rad    = (alpha_degree*pi)/180;
-delta_S_prec = a * alpha_rad^2 + b * alpha_rad
+delta_S_prec = a * alpha_rad^2 + b * alpha_rad;
 
 end

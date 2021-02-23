@@ -203,24 +203,27 @@ while flagStopIntegration || n_old < nmax
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     if flagAeroBrakes
-%          yyy
-%          vyyy
-%          xxx
-%          vxxx
-%          tempo = index_plot*0.1 - 0.1;
-         
-         [alpha_degree, Vz_setpoint, z_setpoint, Cdd, delta_S] = controlAlgorithm(z, vz, xxx, vxxx, normV, dt);
+
+         % tempo = index_plot*0.1 - 0.1;
+         fprintf('\nCONTROL:\n');
+         [alpha_degree, delta_S, Vz_setpoint, z_setpoint, Vx_setpoint, x_setpoint, Cdd] = controlAlgorithm(z, vz, xxx, vxxx, normV, dt);
          x = get_extension_from_angle(alpha_degree);
          
          % Save the values to plot them
          plot_Vz_real(index_plot) = vz;
          plot_z_real(index_plot) = z;
+         plot_Vx_real(index_plot) = vxxx;
+         plot_x_real(index_plot) = xxx;
+         plot_Vy_real(index_plot) = vyyy;
+         plot_y_real(index_plot) = yyy;
          plot_normV(index_plot) = normV;
          plot_Vz_setpoint(index_plot) = Vz_setpoint;
          plot_z_setpoint(index_plot) = z_setpoint;
+         plot_Vx_setpoint(index_plot) = Vx_setpoint;
+         plot_x_setpoint(index_plot) = x_setpoint;
          plot_control_variable(index_plot) = alpha_degree;
-         plot_Cd(index_plot) = Cdd;
          plot_delta_S(index_plot) = delta_S;
+         plot_Cd(index_plot) = Cdd;
          index_plot = index_plot + 1;
     else 
         x = 0;
@@ -315,15 +318,15 @@ plot(time, plot_control_variable), grid on;
 axis([0,20, 0,60])
 xlabel('time [s]'), ylabel('Angle [deg]');
 
-% delta_S
-figure('Name','Delta_S','NumberTitle','off');
-plot(time, plot_delta_S), grid on;
-xlabel('time [s]'), ylabel('A [m^2]');
+% % delta_S
+% figure('Name','Delta_S','NumberTitle','off');
+% plot(time, plot_delta_S), grid on;
+% xlabel('time [s]'), ylabel('A [m^2]');
 
-% Cd
-figure('Name','Cd','NumberTitle','off');
-plot(time, plot_Cd), grid on;
-xlabel('time [s]'), ylabel('Cd []');
+% % Cd
+% figure('Name','Cd','NumberTitle','off');
+% plot(time, plot_Cd), grid on;
+% xlabel('time [s]'), ylabel('Cd []');
 
 % Altitude real vs setpoint
 figure('Name','Altitude real vs setpoint after burning phase','NumberTitle','off');
@@ -355,16 +358,56 @@ xlabel('z [m]'), ylabel('Vz [m/s]');
 hold off
 legend
 
+% X_displacement real vs setpoint
+figure('Name','X_displacement real vs setpoint after burning phase','NumberTitle','off');
+plot(time, plot_x_real,'DisplayName','real','LineWidth',0.8), grid on;
+hold on
+plot(time, plot_x_setpoint,'DisplayName','setpoint','LineWidth',0.8), grid on;
+% axis([0,20, 0, 3100])
+xlabel('time [s]'), ylabel('x [m]');
+hold off
+legend('Location','southeast')
+
+% X_axis velocity real vs setpoint
+figure('Name','X_axis velocity real vs setpoint after burning phase','NumberTitle','off');
+plot(time, plot_Vx_real,'DisplayName','real','LineWidth',0.8), grid on;
+hold on
+plot(time, plot_Vx_setpoint, 'DisplayName','setpoint', 'LineWidth',0.8), grid on;
+% axis([0,20, -50,300])
+xlabel('time [s]'), ylabel('Vx [m/s]');
+hold off
+legend
+
+% Y_displacement real vs setpoint
+figure('Name','Y_displacement real vs setpoint after burning phase','NumberTitle','off');
+plot(time, plot_y_real,'DisplayName','real','LineWidth',0.8), grid on;
+hold on
+% plot(time, plot_y_setpoint,'DisplayName','setpoint','LineWidth',0.8), grid on;
+% axis([0,20, 0, 3100])
+xlabel('time [s]'), ylabel('y [m]');
+hold off
+legend('Location','southeast')
+
+% Y_axis velocity real vs setpoint
+figure('Name','Y_axis velocity real vs setpoint after burning phase','NumberTitle','off');
+plot(time, plot_Vy_real,'DisplayName','real','LineWidth',0.8), grid on;
+hold on
+% plot(time, plot_Vy_setpoint, 'DisplayName','setpoint', 'LineWidth',0.8), grid on;
+% axis([0,20, -50,300])
+xlabel('time [s]'), ylabel('Vy [m/s]');
+hold off
+legend
+
 % Total altitude
 figure('Name','Time, Altitude','NumberTitle','off');
 plot(Tf, plot_z), grid on;
 axis([0,50, 0, 3100])
 xlabel('time [s]'), ylabel('z [m]');
 
-% Total vertical velocity
-figure('Name','Time, Vertical Velocity','NumberTitle','off');
-plot(Tf, plot_Vz), grid on;
-xlabel('time [s]'), ylabel('Vz [m/s]');
+% % Total vertical velocity
+% figure('Name','Time, Vertical Velocity','NumberTitle','off');
+% plot(Tf, plot_Vz), grid on;
+% xlabel('time [s]'), ylabel('Vz [m/s]');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
