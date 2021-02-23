@@ -46,9 +46,9 @@ m_inertial  =   [1 0 0];           %Initial vector direction of the magnetic fie
 
 % f_sample1   =   100;                %[Hz] Frequency of the measurement of the IMU
 
-sigma_w     =   0.05;               % Variance of the angular velocity
-
-sigma_a     =   0.3;               % Variance of the linear acceleration
+% sigma_w     =   0.05;               % Variance of the angular velocity
+% 
+% sigma_a     =   0.3;               % Variance of the linear acceleration
  
 % f_sample_mag=20;             %[Hz] Frequency of measurement of magnetometer 
 % 
@@ -79,7 +79,7 @@ sigma_GPS   =   2;                  % Variance of position due to GPS. This
                                     % GPS_NEOM9N.noiseVariance from
                                     % initSensors.m
 
-
+global sigma_baro sigma_mag sigma_GPS
 %---------Estimation parameters-------------------
 
 dt_k        =   0.01;               %Time step for the estimation
