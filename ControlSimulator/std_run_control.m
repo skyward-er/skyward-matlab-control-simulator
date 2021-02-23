@@ -181,6 +181,7 @@ while flagStopIntegration || n_old < nmax
     if settings.dataNoise
         
     pn      = zeros(1,length(sensorData.barometer.time));
+    h       = pn;
     accel   = zeros(length(sensorData.accelerometer.time),3);
     gyro    = zeros(length(sensorData.gyro.time),3);
     mag     = zeros(length(sensorData.magnetometer.time),3);
@@ -191,6 +192,7 @@ while flagStopIntegration || n_old < nmax
         for ii=1:length(sensorData.barometer.time)
                 pn(ii,1) = MS580301BA01.sens(sensorData.barometer.measures(ii)/100,...
                                            sensorData.barometer.temperature(ii) - 273.15);  
+                h_baro(ii)    = atmospalt(pn(ii)*100);
         end 
         pn_tot(np_old:np_old + size(pn,1) - 1,1) = pn(1:end,1)';
         np_old = np_old + size(pn,1);
@@ -211,7 +213,9 @@ while flagStopIntegration || n_old < nmax
                                                  sensorData.magnetometer.measure(ii,1)*0.01,...
                                                  sensorData.magnetometer.measure(ii,2)*0.01,...
                                                  sensorData.magnetometer.measure(ii,3)*0.01,...
-                                                 14.8500);  
+                                                 14.8500);
+                 accel(ii,:) = accel(ii,:)*g/1000;
+                 gyro(ii,:)  = gyro(ii,:)*2*pi/360/1000;
                                             
         end 
         accel_tot(na_old:na_old + size(accel,1) - 1,:) = accel(1:end,:) ;
@@ -238,10 +242,21 @@ while flagStopIntegration || n_old < nmax
 
     end
   
+    if iTimes==1
+        x_prev=[X0; V0; Q0];
+        P_prev=eye(10);
+    else
+        x_prev=x_est_tot(end,:);
+        P_prev=P_c(:,:,end);
+    end
 
     
     %%%%%%% kalmann filter %%%%%%%%
-    % kalman(p, acc_body, ang_vel, q, [u, v, w]ned, [x, y, z]ned )
+    [x_c,P_c]   =  run_kalman(x_prev,P_prev,sensorData.accelerometer.time,...
+                              accel,gyro,sensorData.barometer.time,h_baro,...
+                              sigma_baro,sensorData.magnetometer.time,mag,...
+                              sigma_mag,sensorData.gps.time,gps,sigma_GPS,4,1);
+     x_est_tot(n_est_old:n_est_old + size((x_c(1,:)-1)),:)  = x_c(1:end,:);                     
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     if flagAeroBrakes

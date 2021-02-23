@@ -58,19 +58,33 @@ sigma_a     =   0.3;               % Variance of the linear acceleration
 % 
 % f_sample_GPS=5;             %[Hz] Frequency of measurement of GPS
                                     
-sigma_mag   =   0.05;               %Variance of the magnetometer                                    
+sigma_mag   =   0.05;               % This is the variance of the direction 
+                                    % of the magnetic field, not of the magnitude 
+                                    % itself, so the variance used in the 
+                                    % initSensors file is not valid. Since 
+                                    % the transition from modulus to direction 
+                                    % is non-linear, and the sigmas are only 
+                                    % weighting parameters, i think this can 
+                                    % be used as a parameter for the kalman                                    
                                     
-sigma_h     =   4;                  % Variance of the altitude measurement with barometer
+sigma_baro     =   4;               % Variance of the altitude measurement 
+                                    % with barometer
+                                    % Since the avilable sigma is on
+                                    % pressure measurements and the
+                                    % tranformation is also non-linear,
+                                    % this is also set as parameter
 
-sigma_GPS   =   0.5;              %Variance of position due to GPS
+sigma_GPS   =   2;                  % Variance of position due to GPS. This 
+                                    % should be the same number as the sqrt of 
+                                    % GPS_NEOM9N.noiseVariance from
+                                    % initSensors.m
 
-sigma_pitot =   0.5;              %Variance of position due to pitot
 
 %---------Estimation parameters-------------------
 
 dt_k        =   0.01;               %Time step for the estimation
 
-Q0          =   100*...
+Q          =   100*...
                 [1     0     0      0      0      0      0      0      0     0;   %Initial value for the covariance
                  0     1     0      0      0      0      0      0      0     0;    %matrix of the noise in the dynamics
                  0     0     1      0      0      0      0      0      0     0;
