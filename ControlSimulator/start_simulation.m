@@ -113,6 +113,21 @@ if settings.plots && not(settings.electronics)
     subplot(1, 2, 2)
     plot(Tf(flagMatr(:, 2)), abs_A/9.81), grid on;
     xlabel('time [s]'), ylabel('|A| [g]');
+    
+    % ANGULAR VELOCITIES
+    
+    figure('Name', 'Angular Velocities - ascent Phase', 'NumberTitle', 'off');
+    subplot(3, 1, 1)
+    plot(Tf(flagMatr(:, 2)), Yf(flagMatr(:, 2), 7)*180/pi), grid on;
+    xlabel('time [s]'), ylabel('p [deg/s]');
+    
+    subplot(3, 1, 2)
+    plot(Tf(flagMatr(:, 2)), Yf(flagMatr(:, 2), 8)*180/pi), grid on;
+    xlabel('time [s]'), ylabel('p [deg/s]');
+        
+    subplot(3, 1, 3)
+    plot(Tf(flagMatr(:, 2)), Yf(flagMatr(:, 2), 9)*180/pi), grid on;
+    xlabel('time [s]'), ylabel('p [deg/s]');
        
 end
 
