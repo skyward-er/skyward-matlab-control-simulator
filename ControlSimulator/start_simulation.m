@@ -27,7 +27,8 @@ run('param.m');                     %Runs the initialization of the
 settings.sigma_baro = sigma_baro;
 settings.sigma_mag  = sigma_mag;
 settings.sigma_GPS  = sigma_GPS;
-settings.Q          = Q;
+settings.QLinear    = QLinear;
+settings.Qq         = Qq;
 %% START THE CHOSEN SIMULATION
 % T = vector of time used by ODE, [s] also for Tf Ta
 % Y = State = ( x y z | u v w | p q r | q0 q1 q2 q3 | thetax thetay thetaz | ) also for Ya,Yf corresponding to T
