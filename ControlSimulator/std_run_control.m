@@ -177,6 +177,34 @@ while flagStopIntegration || n_old < nmax
         end
     end
 
+    
+    %rotation of velocity to inertial axis
+    A=zeros(3,3,size(Yf,1));
+    v_NED=zeros(size(Yf,1),3);
+    
+     for ii=1:size(Yf,1)
+         
+         q               = [Yf(ii,11:13),Yf(ii,10)];              %composition of the quaternion in the form [q,q0]
+
+         v_b             = Yf(ii,4:6)';                           %Velocity in body axis (column vector)
+         
+         q_mat           =  [0        -q(3)     q(2);         %Matrix needed for the
+                            q(3)    0         -q(1);         %definition of rotation
+                            -q(2)  q(1)      0     ;];        %matrix
+                   
+         A(:,:,ii)       =   (q(4)^2-q(1:3)*q(1:3)')*eye(3) + 2*q(1:3)'*q(1:3)...
+                              - 2*q(4)*q_mat;             %Rotation matrix to
+                                                            %body axis from inertial
+                                                            
+         v_NED(ii,:)     = (A(:,:,ii)'*v_b)';               %Matrix with the velocity components in NED;
+                                                            %each column is
+                                                            %a vecloty
+                                                            %component
+         
+     end
+     
+     
+    %
     [sensorData] = manageSignalFrequencies(magneticFieldApprox, flagAscent, settings, Yf, Tf, x, uw, vw, ww, uncert);
     [~, ~, p, ~]  = atmosisa(-Yf(:,3)) ; 
     
@@ -308,6 +336,8 @@ while flagStopIntegration || n_old < nmax
     p_tot(n_old:n_old+n-1,1) = p(1:end, 1);
     C(n_old:n_old+n-1) = x;
     
+    v_NED_tot(n_old:n_old+n-1,:) = v_NED;
+    
     n_old = n_old + n -1;
    
     cpuTimes(iTimes) = toc;
@@ -389,15 +419,15 @@ hold on
 plot(t_est_tot,-x_est_tot(:,3))
 figure
 subplot(3,1,1)
-plot(Tf,Yf(:,4))
+plot(Tf,v_NED_tot(:,1))
 hold on
 plot(t_est_tot,x_est_tot(:,4))
 subplot(3,1,2)
-plot(Tf,Yf(:,5))
+plot(Tf,v_NED_tot(:,2))
 hold on
 plot(t_est_tot,x_est_tot(:,5))
 subplot(3,1,3)
-plot(Tf,Yf(:,6))
+plot(Tf,v_NED_tot(:,3))
 hold on
 plot(t_est_tot,x_est_tot(:,6))
 

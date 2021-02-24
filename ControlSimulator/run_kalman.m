@@ -98,10 +98,10 @@ for i=2:length(t_v)
         index_bar   =  index_bar + 1;     
     end
 %      
-%     if t_v(i)>=t_mag(index_mag) %Comparison to see the there's a new measurement
-%        [x_c(i,:),P_c(:,:,i),~]     = correctionMagnetometer(x_c(i,:),P_c(:,:,i),mag(index_mag,:),sigma_mag);
-%        index_mag    =  index_mag + 1;  
-%     end
+    if t_v(i)>=t_mag(index_mag) %Comparison to see the there's a new measurement
+       [x_c(i,:),P_c(:,:,i),~]     = correctionMagnetometer(x_c(i,:),P_c(:,:,i),mag(index_mag,:),sigma_mag);
+       index_mag    =  index_mag + 1;  
+    end
 %     norm(x_c(i,7:10))
 end
 end
