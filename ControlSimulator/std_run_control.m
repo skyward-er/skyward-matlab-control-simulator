@@ -289,7 +289,7 @@ while flagStopIntegration || n_old < nmax
                               accel,sensorData.gyro.measures,sensorData.barometer.time,h_baro,...
                               settings.sigma_baro,sensorData.magnetometer.time,mag,...
                               settings.sigma_mag,sensorData.gps.time,gps,...
-                              settings.sigma_GPS,4,1,settings.QLinear,settings.Qq);
+                              gpsv,settings.sigma_GPS,4,1,settings.QLinear,settings.Qq);
      x_est_tot(n_est_old:n_est_old + size(x_c(:,1),1)-1,:)  = x_c(1:end,:);
      t_est_tot(n_est_old:n_est_old + size(x_c(:,1),1)-1) = sensorData.accelerometer.time;              
      n_est_old = n_est_old + size(x_c(1,:)); 
@@ -429,7 +429,7 @@ plot(t_est_tot,x_est_tot(:,5))
 subplot(3,1,3)
 plot(Tf,v_NED_tot(:,3))
 hold on
-plot(t_est_tot,x_est_tot(:,6))
+plot(t_est_tot,-x_est_tot(:,6))
 
 figure
 subplot(4,1,1)

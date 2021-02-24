@@ -1,6 +1,6 @@
 function [x_c,P_c]=run_kalman(x_prev,P_prev,t_v,a_v,w_v,t_baro,baro,sigma_baro,...
                               t_mag,mag,sigma_mag,...
-                              t_GPS,GPS,sigma_GPS,n_sats,fix,QLinear,Qq)
+                              t_GPS,GPS,vGPS,sigma_GPS,n_sats,fix,QLinear,Qq)
 %23/02/2021 ANY QUESTIONS CAN BE DIRECTED TO ALEJANDRO MONTERO FROM SKYWARD
 
 %-----------DESCRIPTION OF FUNCTION:------------------
@@ -54,7 +54,10 @@ function [x_c,P_c]=run_kalman(x_prev,P_prev,t_v,a_v,w_v,t_baro,baro,sigma_baro,.
 %                   SAMPLES INSIDE THE 0.1 INTEGRATION PERIOD. SINCE IT RUNS
 %                   AT 10 HZ, THIS IS A 1x1 VECTOR. s
 %
-%         -GPS:     CORRESPONDING POSITION MEASUREMENTS FROM THE PITOT.
+%         -GPS:     CORRESPONDING POSITION MEASUREMENTS FROM THE GPS.
+%                   1x3 m
+%
+%         -vGPS:    CORRESPONDING VELOCITY MEASUREMENTS FROM THE GPS.
 %                   1x3 m
 %
 %         -sigma_GPS:   STANDARD DEVIATION OF THE GPS (SQRT OF
@@ -99,8 +102,8 @@ for i=2:length(t_v)
                                 w_v(i-1,:),dt_k,Qq);                   
 %     %Corrections
      if t_v(i)>=t_GPS(index_GPS)  %Comparison to see the there's a new measurement
-       [x_lin(i,:),P_lin(:,:,i),~]     = correctionGPS(x_lin(i,:),P_lin(:,:,i),GPS(index_GPS,1),...
-                            GPS(index_GPS,2),GPS(index_GPS,3),sigma_GPS,n_sats,fix);
+       [x_lin(i,:),P_lin(:,:,i),~]     = correctionGPS2(x_lin(i,:),P_lin(:,:,i),GPS(index_GPS,1),...
+                            GPS(index_GPS,2),GPS(index_GPS,3),vGPS(index_GPS,:),sigma_GPS,n_sats,fix);
         index_GPS   =  index_GPS + 1;
      end
     
@@ -110,10 +113,9 @@ for i=2:length(t_v)
     end
 % %      
 %     if t_v(i)>=t_mag(index_mag) %Comparison to see the there's a new measurement
-%        [x_c(i,:),P_c(:,:,i),~]     = correctionMagnetometer(x_c(i,:),P_c(:,:,i),mag(index_mag,:),sigma_mag);
+%        [xq(i,:),P_q(:,:,i),~,~]    = correctorQuat(xq(i,:),P_q(:,:,i),mag(index_mag,:),sigma_mag);
 %        index_mag    =  index_mag + 1;  
 %     end
-% %     norm(x_c(i,7:10))
     x_c(i,:)=[x_lin(i,:),xq(i,:)];
     P_c(1:6,1:6,i)=P_lin(:,:,i);
     P_c(7:12,7:12,i)=P_q(:,:,i);
