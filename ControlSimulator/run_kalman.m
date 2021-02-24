@@ -99,7 +99,7 @@ for i=2:length(t_v)
                                 P_lin(:,:,i-1),a_v(i-1,:),xq(i-1,1:4),QLinear);
     
     [xq(i,:),P_q(:,:,i)]       = predictorQuat(xq(i-1,:),P_q(:,:,i-1),...
-                                w_v(i-1,:),dt_k,Qq);                   
+                                [w_v(i-1,1),w_v(i-1,2),w_v(i-1,3)],dt_k,Qq);                   
 %     %Corrections
      if t_v(i)>=t_GPS(index_GPS)  %Comparison to see the there's a new measurement
        [x_lin(i,:),P_lin(:,:,i),~]     = correctionGPS2(x_lin(i,:),P_lin(:,:,i),GPS(index_GPS,1),...
