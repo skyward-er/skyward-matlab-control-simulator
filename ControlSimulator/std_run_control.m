@@ -183,6 +183,7 @@ while flagStopIntegration || n_old < nmax
     pn      = zeros(1,length(sensorData.barometer.time));
     accel   = zeros(length(sensorData.accelerometer.time),3);
     gyro    = zeros(length(sensorData.gyro.time),3);
+    w       = zeros(length(sensorData.gyro.time),3);
     mag     = zeros(length(sensorData.magnetometer.time),3);
     mag_msa = zeros(length(sensorData.magnetometer.time),3);
     mag_mod = zeros(length(sensorData.magnetometer.time),1);
@@ -208,7 +209,7 @@ while flagStopIntegration || n_old < nmax
                                                  sensorData.gyro.measures(ii,1)*1000*360/2/pi,...
                                                  sensorData.gyro.measures(ii,2)*1000*360/2/pi,...
                                                  sensorData.gyro.measures(ii,3)*1000*360/2/pi,...
-                                                 14.8500);  
+                                                 14.8500);
                  [mag(ii,1),mag(ii,2),mag(ii,3)]      = MAGN_LSM9DS1.sens(...
                                                  sensorData.magnetometer.measure(ii,1)*0.01,...
                                                  sensorData.magnetometer.measure(ii,2)*0.01,...
@@ -217,15 +218,17 @@ while flagStopIntegration || n_old < nmax
                  mag_msa(ii,:)      =          [ sensorData.magnetometer.measure(ii,1)*0.01,...
                                                  sensorData.magnetometer.measure(ii,2)*0.01,...
                                                  sensorData.magnetometer.measure(ii,3)*0.01];     
-                
-                 mag_mod(ii,1) =sqrt(mag_msa(ii,1)^2 + mag_msa(ii,2)^2 + mag_msa(ii,3)^2);                      
+
+                 w(ii,:) =[sensorData.gyro.measures(ii,1)*1000*360/2/pi,sensorData.gyro.measures(ii,2)*1000*360/2/pi,sensorData.gyro.measures(ii,3)*1000*360/2/pi];
+                 mag_mod(ii,1) =sqrt(mag_msa(ii,1)^2 + mag_msa(ii,2)^2 + mag_msa(ii,3)^2);
                                             
         end 
         accel_tot(na_old:na_old + size(accel,1) - 1,:) = accel(1:end,:) ;
         gyro_tot(na_old:na_old + size(gyro,1) - 1,:)   = gyro(1:end,:) ;
+        w_tot(na_old:na_old + size(w,1) - 1,:)         = w(1:end,:) ;
         mag_tot(na_old:na_old + size(mag,1) - 1,:)     = mag(1:end,:) ;
-        mag_msa_tot(na_old:na_old + size(mag,1) - 1,:)     = mag_msa(1:end,:) ;
-        mag_mod_tot(na_old:na_old + size(mag,1) - 1,1)     = mag_mod(1:end,:) ;
+        mag_msa_tot(na_old:na_old + size(mag,1) - 1,:) = mag_msa(1:end,:) ;
+        mag_mod_tot(na_old:na_old + size(mag,1) - 1,1) = mag_mod(1:end,:) ;
         na_old = na_old + size(accel,1);
         
         % GPS Acquisition loop
@@ -339,6 +342,11 @@ figure
 subplot(3,1,1);plot(ta,gyro_tot(:,1)/1000');grid on;xlabel('time [s]');ylabel('|Ang vel x| [°/s]');
 subplot(3,1,2);plot(ta,gyro_tot(:,2)/1000');grid on;xlabel('time [s]');ylabel('|Ang vel y| [°/s]');
 subplot(3,1,3);plot(ta,gyro_tot(:,3)/1000');grid on;xlabel('time [s]');ylabel('|Ang vel z| [°/s]');
+title('Gyroscope reads');
+figure 
+subplot(3,1,1);plot(ta,w_tot(:,1)/1000');grid on;xlabel('time [s]');ylabel('|Ang vel x| [°/s]');
+subplot(3,1,2);plot(ta,w_tot(:,2)/1000');grid on;xlabel('time [s]');ylabel('|Ang vel y| [°/s]');
+subplot(3,1,3);plot(ta,w_tot(:,3)/1000');grid on;xlabel('time [s]');ylabel('|Ang vel z| [°/s]');
 title('Gyroscope reads');
 % FIGURE: Magnetometer reads
 figure 
