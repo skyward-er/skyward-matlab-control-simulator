@@ -56,7 +56,7 @@ x             =   x_prev + dt*x_dot; %The following estimated state is
                                         %FORWARD EULER SIMPLE PROPAGATION
 
 %-------------------- Jacobianv -----------------------------------------------
-F              =   sparse(10,10);                %Pre-allocation of gradient 
+F              =   sparse(6,6);                %Pre-allocation of gradient 
                                                 %of the derivative of the state
                                                 
 F(1,4)         =   1;                          

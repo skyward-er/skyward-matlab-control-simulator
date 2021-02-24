@@ -8,11 +8,12 @@ function [x_c,P_c]=run_kalman(x_prev,P_prev,t_v,a_v,w_v,t_baro,baro,sigma_baro,.
 % sensors outputs from the previous integration and estimates the current
 % vector of state of the rocket (x_c) and its covariance matrix (P_c)
 %     -INPUTS: 
-%         -x_prev:  1x10 VECTOR OF PREVIOUS VALUES --> 3 FIRST STATES
+%         -x_prev:  1x13 VECTOR OF PREVIOUS VALUES --> 3 FIRST STATES
 %                   ARE X , Y AND H, THE FOLLOWING THREE ARE VX, VY AND VZ
-%                   AND THE LAST 4 ARE THE QUATERNION COMPONENTS (q;q0)
+%                   THE NEXT 4 ARE THE QUATERNION COMPONENTS (q;q0) AND THE
+%                   LAST THREE THE BIASES
 %
-%         -P_prev:  10x10 MATRIX OF PREVIOUS COVARIANCE OF STATE
+%         -P_prev:  13x13 MATRIX OF PREVIOUS COVARIANCE OF STATE
 %
 %         -t_v:     TIME VECTOR OF THE PREVIOUSLY INTEGRATED INSTANTS. SPANS 
 %                   0.1 SECONDS AND SHOULD HAVE A TIME STEP OF 0.01 SINCE 
@@ -68,47 +69,54 @@ function [x_c,P_c]=run_kalman(x_prev,P_prev,t_v,a_v,w_v,t_baro,baro,sigma_baro,.
 %
 %       -OUTPUTS:
 %         -x_c: CORRECTED VECTOR OF STATES OF THE ROCKET. CONTAINS ALL THE
-%               ESTIMATIONS FOR EACH TIME INSTANT IN t_v --> 10x10
+%               ESTIMATIONS FOR EACH TIME INSTANT IN t_v --> 10x13
 %
 %         -P_c: CORRECTED COVARIANCE MATRIX FOR EACH OF THE ESTIMATION TIME
-%               INSTANTS. 10x10x10
+%               INSTANTS. 12x12x10
 % -----------------------------------------------------------------------
 dt_k        = t_v(1)-t_v(2); %Time step of the kalman
 x_lin       = zeros(length(t_v),6); %Pre-allocation of corrected estimation
-q           = zeros(length(t_v),4); %Pre-allocation of quaternions
+xq          = zeros(length(t_v),7); %Pre-allocation of quaternions and biases
+x_c         = zeros(length(t_v),13);
 x_lin(1,:)  = x_prev(1:6);                 %Allocation of the initial value
-q(1,:)      = x_prev(7:10);
+xq(1,:)     = x_prev(7:13);
+x_c(1,:)    = [x_lin(1,:),xq(1,:)];
+P_c         = zeros(12,12,length(t_v));
 P_lin       = zeros(6,6,length(t_v)); %Pre-allocation of the covariance matrix
-P_q         = zeros(4,4,length(t_v));
+P_q         = zeros(6,6,length(t_v));
 P_lin(:,:,1)= P_prev(1:6,1:6);
-P_q(:,:,1)= P_prev(7:10,7:10);
+P_q(:,:,1)  = P_prev(7:12,7:12);
+P_c(:,:,1)  = P_prev;
 index_GPS=1;
 index_bar=1;
 index_mag=1;
 for i=2:length(t_v)
     %Prediction part
     [x_lin(i,:),P_lin(:,:,i)] = predictorLinear(x_lin(i-1,:),dt_k,...
-                                P_lin(:,:,i-1),a_v(i-1,:),q(i-1,:),QLinear);
+                                P_lin(:,:,i-1),a_v(i-1,:),xq(i-1,1:4),QLinear);
     
-    [q(i,:),P_q(:,:,i)]       = predictorQuat(q(i-1,:),P_q(:,:,i-1),...
+    [xq(i,:),P_q(:,:,i)]       = predictorQuat(xq(i-1,:),P_q(:,:,i-1),...
                                 w_v(i-1,:),dt_k,Qq);                   
 %     %Corrections
-%      if t_v(i)>=t_GPS(index_GPS)  %Comparison to see the there's a new measurement
-%        [x_c(i,:),P_c(:,:,i),~]     = correctionGPS(x_c(i,:),P_c(:,:,i),GPS(index_GPS,1),...
-%                             GPS(index_GPS,2),GPS(index_GPS,3),sigma_GPS,n_sats,fix);
-%         index_GPS   =  index_GPS + 1;
-%      end
-%     
-%     if t_v(i)>=t_baro(index_bar) %Comparison to see the there's a new measurement
-%        [x_c(i,:),P_c(:,:,i),~]     = correctionBarometer(x_c(i,:),P_c(:,:,i),baro(index_bar),sigma_baro);
-%         index_bar   =  index_bar + 1;     
-%     end
+     if t_v(i)>=t_GPS(index_GPS)  %Comparison to see the there's a new measurement
+       [x_lin(i,:),P_lin(:,:,i),~]     = correctionGPS(x_lin(i,:),P_lin(:,:,i),GPS(index_GPS,1),...
+                            GPS(index_GPS,2),GPS(index_GPS,3),sigma_GPS,n_sats,fix);
+        index_GPS   =  index_GPS + 1;
+     end
+    
+    if t_v(i)>=t_baro(index_bar) %Comparison to see the there's a new measurement
+       [x_lin(i,:),P_lin(:,:,i),~]     = correctionBarometer(x_lin(i,:),P_lin(:,:,i),baro(index_bar),sigma_baro);
+        index_bar   =  index_bar + 1;     
+    end
 % %      
 %     if t_v(i)>=t_mag(index_mag) %Comparison to see the there's a new measurement
 %        [x_c(i,:),P_c(:,:,i),~]     = correctionMagnetometer(x_c(i,:),P_c(:,:,i),mag(index_mag,:),sigma_mag);
 %        index_mag    =  index_mag + 1;  
 %     end
 % %     norm(x_c(i,7:10))
+    x_c(i,:)=[x_lin(i,:),xq(i,:)];
+    P_c(1:6,1:6,i)=P_lin(:,:,i);
+    P_c(7:12,7:12,i)=P_q(:,:,i);
 end
 end
 

@@ -10,7 +10,7 @@ function [x_pred,P_pred]=predictorQuat(x,P,w,dt,Q)
 %                               w is process noise --> Q IS ITS COVARIANCE
 %       -INPUTS:
 %           -x:         1x7 VECTOR OF PREVIOUS VALUES --> 4 FIRST STATES
-%                       ARE QUATERNION AND THE FOLLOWING THREE ARE BISES
+%                       ARE QUATERNION AND THE FOLLOWING THREE ARE BIASES
 %           -P:         6x6 MATRIX OF PREVIOUS COVARIANCE OF STATE
 %                       ONLY 6 BECAUSE OF THE SIMPLIFICATION IN THE ERROR
 %                       QUATERNION

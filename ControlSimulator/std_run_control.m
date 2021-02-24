@@ -276,8 +276,8 @@ while flagStopIntegration || n_old < nmax
     end
   
     if iTimes==1
-        x_prev=[X0; V0; Q0(2:4); Q0(1)];
-        P_prev=0.01*eye(10);
+        x_prev=[X0; V0; Q0(2:4); Q0(1);0;0;0];
+        P_prev=0.01*eye(12);
     else
         x_prev=x_est_tot(end,:);
         P_prev=P_c(:,:,end);

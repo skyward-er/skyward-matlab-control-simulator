@@ -79,6 +79,23 @@ sigma_GPS   =   2;                  % Variance of position due to GPS. This
                                     % should be the same number as the sqrt of 
                                     % GPS_NEOM9N.noiseVariance from
                                     % initSensors.m
+                                    
+f_sample1   =   100;                %[Hz] Frequency of the measurement of the IMU
+
+Dt_gyro     = 1/f_sample1;
+
+sigma_w     =   100*(1000*pi/180)^2;   % Variance of the angular velocity;
+                                       % This must be the number in line 39
+                                       % of initSensors GYRO_LSM9DS1.noiseVariance
+                                       % multiplied by (1000*pi/180)^2
+                                    
+sigma_mag   =   1e-3;               %Variance of the magnetometer                                    
+                                    
+sigma_beta  =   1e-4;               %Variance of the bias
+      
+sigma_g   = sqrt(sigma_w^2/Dt_gyro+sigma_beta^2*Dt_gyro/12);
+
+
 
 
 %---------Estimation parameters-------------------
@@ -93,11 +110,12 @@ QLinear     =   100*...
                  0     0     0      0      0.1    0;
                  0     0     0      0      0      0.1];
              
- Qq         = 100*[0.1    0      0     0;              %Noise covariance matrix 
-                   0      0.1    0     0;               %for the quaternion dynamics
-                   0      0      0.1   0;
-                   0      0      0     0.1];
-                    
+
+% EXPRESSION OF Q OBTAINED FROM ''OPTIMAL ESTIMATION OF DYNAMIC SYSTEMS'', 
+% CRASSIDIS AND JUNKINS (pg. 459) 
+
+Qq = [(sigma_w^2*dt_k+(1/3)*sigma_beta^2*dt_k^3)*eye(3)     0.5*sigma_beta^2*dt_k^2*eye(3);
+        0.5*sigma_beta^2*dt_k^2*eye(3)                sigma_beta^2*dt_k*eye(3)];
 
                   
                   
