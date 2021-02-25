@@ -100,7 +100,7 @@ for i=2:length(t_v)
     
     [xq(i,:),P_q(:,:,i)]       = predictorQuat(xq(i-1,:),P_q(:,:,i-1),...
                                 [w_v(i-1,1),w_v(i-1,2),w_v(i-1,3)],dt_k,Qq);                   
-%    Corrections
+    %Corrections
      if t_v(i)>=t_GPS(index_GPS)  %Comparison to see the there's a new measurement
        [x_lin(i,:),P_lin(:,:,i),~]     = correctionGPS2(x_lin(i,:),P_lin(:,:,i),GPS(index_GPS,1),...
                             GPS(index_GPS,2),GPS(index_GPS,3),vGPS(index_GPS,:),sigma_GPS,n_sats,fix);
@@ -112,10 +112,10 @@ for i=2:length(t_v)
         index_bar   =  index_bar + 1;     
    end
      
-%     if t_v(i)>=t_mag(index_mag) %Comparison to see the there's a new measurement
-%        [xq(i,:),P_q(:,:,i),~,~]    = correctorQuat(xq(i,:),P_q(:,:,i),mag(index_mag,:),sigma_mag);
-%        index_mag    =  index_mag + 1;  
-%     end
+    if t_v(i)>=t_mag(index_mag) %Comparison to see the there's a new measurement
+       [xq(i,:),P_q(:,:,i),~,~]    = correctorQuat(xq(i,:),P_q(:,:,i),mag(index_mag,:),sigma_mag);
+       index_mag    =  index_mag + 1;  
+    end
     x_c(i,:)=[x_lin(i,:),xq(i,:)];
     P_c(1:6,1:6,i)=P_lin(:,:,i);
     P_c(7:12,7:12,i)=P_q(:,:,i);

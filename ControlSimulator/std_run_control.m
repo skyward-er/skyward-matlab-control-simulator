@@ -224,7 +224,7 @@ while flagStopIntegration || n_old < nmax
         for ii=1:length(sensorData.barometer.time)
                 pn(ii,1) = MS580301BA01.sens(sensorData.barometer.measures(ii)/100,...
                                            sensorData.barometer.temperature(ii) - 273.15);  
-                h_baro(ii)    = atmospalt(pn(ii)*100);
+                h_baro(ii)    = -atmospalt(pn(ii)*100);
         end 
         pn_tot(np_old:np_old + size(pn,1) - 1,1) = pn(1:end,1)';
         np_old = np_old + size(pn,1);
@@ -263,12 +263,12 @@ while flagStopIntegration || n_old < nmax
             [gps(ii,1),gps(ii,2),gps(ii,3)]   =  GPS_NEOM9N.sens(...
                                                  sensorData.gps.positionMeasures(ii,1),...
                                                  sensorData.gps.positionMeasures(ii,2),...
-                                                 sensorData.gps.positionMeasures(ii,3),...
+                                               - sensorData.gps.positionMeasures(ii,3),...
                                                  14.8500);  
             [gpsv(ii,1),gpsv(ii,2),gpsv(ii,3)] = GPS_NEOM9N.sens(...
                                                  sensorData.gps.velocityMeasures(ii,1),...
                                                  sensorData.gps.velocityMeasures(ii,2),...
-                                                 sensorData.gps.velocityMeasures(ii,3),...
+                                               - sensorData.gps.velocityMeasures(ii,3),...
                                                  14.8500);  
         end
         gps_tot(ngps_old:ngps_old + size(gps,1) - 1,:)   =  gps(1:end,:) ;
@@ -392,10 +392,11 @@ end
 % subplot(3,1,2);plot(ta,mag_tot(:,2)/1000');grid on;xlabel('time [s]');ylabel('|Mag field y| [gauss]');
 % subplot(3,1,3);plot(ta,mag_tot(:,3)/1000');grid on;xlabel('time [s]');ylabel('|Mag field z| [gauss]');
 % title('Magnetometer reads');
-% % FIGURE: Gps reads
+% FIGURE: Gps reads
 % fgps = settings.frequencies.gpsFrequency;
 % tgps = Tf(1):1/fgps:Tf(end);
 % figure 
+% 
 % subplot(3,1,1);plot(tgps,gps_tot(:,1)');grid on;xlabel('time [s]');ylabel('|Position N| [m]');
 % subplot(3,1,2);plot(tgps,gps_tot(:,2)');grid on;xlabel('time [s]');ylabel('|Position E| [m]');
 % subplot(3,1,3);plot(tgps,gps_tot(:,3)');grid on;xlabel('time [s]');ylabel('|Position D| [m]');
@@ -416,7 +417,7 @@ plot(Tf,Yf(:,2))
 hold on
 plot(t_est_tot,x_est_tot(:,2))
 subplot(3,1,3)
-plot(Tf,Yf(:,3))
+plot(Tf,-Yf(:,3))
 hold on
 plot(t_est_tot,-x_est_tot(:,3))
 figure
@@ -429,7 +430,7 @@ plot(Tf,v_NED_tot(:,2))
 hold on
 plot(t_est_tot,x_est_tot(:,5))
 subplot(3,1,3)
-plot(Tf,v_NED_tot(:,3))
+plot(Tf,-v_NED_tot(:,3))
 hold on
 plot(t_est_tot,-x_est_tot(:,6))
 

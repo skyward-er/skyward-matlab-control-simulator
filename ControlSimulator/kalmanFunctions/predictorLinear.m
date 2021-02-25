@@ -43,7 +43,7 @@ a             =   (A'*ab')';                    %Rotation of the acceleration
                                                 %to use the inertial equations of motion                                                
 
                
-x_dot(1:6)    =   [x_prev(4)  x_prev(5)  x_prev(6)   a+[0,0,9.81]];   %The derivatives 
+x_dot(1:6)    =   [x_prev(4)  x_prev(5)  x_prev(6)   a];            %The derivatives 
                                                                     %of the position are the velocities of the previous 
                                                                     %instant and the derivatives of the
                                                                     %velocities are the acceleration
