@@ -21,6 +21,7 @@ function [x_c,P_c,e,z]=correctorQuat(x_pred,P_pred,mag_sam,sigma_mag)
 %---------------------------------------------------------------------------
 % Computation of the covariance matrix of the noise
 R       =  sigma_mag^2*eye(3);
+mag_sam = mag_sam/norm(mag_sam);
 
 %--------------------------------------------------------------------------
 % Computation of the output equation and innovation term of the filter

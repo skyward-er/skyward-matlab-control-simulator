@@ -179,9 +179,9 @@ while flagStopIntegration || n_old < nmax
 
     
     %rotation of velocity to inertial axis
-    A=zeros(3,3,size(Yf,1));
-    v_NED=zeros(size(Yf,1),3);
-    
+    A = zeros(3,3,size(Yf,1));
+    v_NED = zeros(size(Yf,1),3);
+    mag_T = zeros(size(Yf,1),3);
      for ii=1:size(Yf,1)
          
          q               = [Yf(ii,11:13),Yf(ii,10)];              %composition of the quaternion in the form [q,q0]
@@ -200,15 +200,15 @@ while flagStopIntegration || n_old < nmax
                                                             %each column is
                                                             %a vecloty
                                                             %component
-         
+         mag_T(ii,:) =  A(:,:,ii)*[1;0;0];
      end
-     
-     
+   
+
     %
     [sensorData] = manageSignalFrequencies(magneticFieldApprox, flagAscent, settings, Yf, Tf, x, uw, vw, ww, uncert);
     [~, ~, p, ~]  = atmosisa(-Yf(:,3)) ; 
     
-    
+    mag_true(na_old:na_old + 10 - 1,:) = interp1(Tf,mag_T,sensorData.magnetometer.time');
  
     if settings.dataNoise
         
@@ -242,9 +242,9 @@ while flagStopIntegration || n_old < nmax
                                                  sensorData.gyro.measures(ii,3)*1000*360/2/pi,...
                                                  14.8500);  
                  [mag(ii,1),mag(ii,2),mag(ii,3)]      = MAGN_LSM9DS1.sens(...
-                                                 sensorData.magnetometer.measure(ii,1)*0.01,...
-                                                 sensorData.magnetometer.measure(ii,2)*0.01,...
-                                                 sensorData.magnetometer.measure(ii,3)*0.01,...
+                                                 mag_T(ii,1)*0.5*1000,...
+                                                 mag_T(ii,2)*0.5*1000,...
+                                                 mag_T(ii,3)*0.5*1000,...
                                                  14.8500);
                  accel(ii,:) = accel(ii,:)*g/1000;
                  gyro(ii,:)  = gyro(ii,:)*2*pi/360/1000;
@@ -255,6 +255,7 @@ while flagStopIntegration || n_old < nmax
         accel_tot(na_old:na_old + size(accel,1) - 1,:) = accel(1:end,:) ;
         gyro_tot(na_old:na_old + size(gyro,1) - 1,:)   = gyro(1:end,:) ;
         mag_tot(na_old:na_old + size(mag,1) - 1,:)     = mag(1:end,:) ;
+        mag_tot_true(na_old:na_old + size(mag_true,1) - 1,:)     = mag_true(1:end,:) ;
         na_old = na_old + size(accel,1);
         
 
@@ -364,7 +365,7 @@ flagMatr = flagMatr(1:n_old, :);
 if not(settings.electronics)
     dataBallisticFlight = RecallOdeFcn(@ascent, Tf(flagMatr(:, 2)), Yf(flagMatr(:, 2), :), settings, C, uw, vw, ww, uncert);
 end
-
+if true && not(settings.electronics)
 % % FIGURE: Barometer reads 
 % fbaro = settings.frequencies.barometerFrequency;
 % tp = Tf(1):1/fbaro:Tf(end);
@@ -372,26 +373,31 @@ end
 % subplot(2,1,1);plot(tp,pn_tot');grid on;xlabel('time [s]');ylabel('|P| [mBar]');
 % subplot(2,1,2);plot(Tf,p_tot'/100);grid on;xlabel('time [s]');ylabel('|P| [mBar]');
 % title('Barometer reads');
-% % FIGURE: Accelerometer reads
-% faccel = settings.frequencies.accelerometerFrequency;
-% ta = Tf(1):1/faccel:Tf(end);
-% figure 
-% subplot(3,1,1);plot(ta,accel_tot(:,1)/1000');grid on;xlabel('time [s]');ylabel('|Acc x| [mg]');
-% subplot(3,1,2);plot(ta,accel_tot(:,2)/1000');grid on;xlabel('time [s]');ylabel('|Acc y| [mg]');
-% subplot(3,1,3);plot(ta,accel_tot(:,3)/1000');grid on;xlabel('time [s]');ylabel('|Acc z| [mg]');
-% title('Accelerometer reads');
-% % FIGURE: Gyroscope reads
-% figure 
-% subplot(3,1,1);plot(ta,gyro_tot(:,1)/1000');grid on;xlabel('time [s]');ylabel('|Ang vel x| [°/s]');
-% subplot(3,1,2);plot(ta,gyro_tot(:,2)/1000');grid on;xlabel('time [s]');ylabel('|Ang vel y| [°/s]');
-% subplot(3,1,3);plot(ta,gyro_tot(:,3)/1000');grid on;xlabel('time [s]');ylabel('|Ang vel z| [°/s]');
-% title('Gyroscope reads');
-% % FIGURE: Magnetometer reads
-% figure 
-% subplot(3,1,1);plot(ta,mag_tot(:,1)/1000');grid on;xlabel('time [s]');ylabel('|Mag field x| [gauss]');
-% subplot(3,1,2);plot(ta,mag_tot(:,2)/1000');grid on;xlabel('time [s]');ylabel('|Mag field y| [gauss]');
-% subplot(3,1,3);plot(ta,mag_tot(:,3)/1000');grid on;xlabel('time [s]');ylabel('|Mag field z| [gauss]');
-% title('Magnetometer reads');
+% FIGURE: Accelerometer reads
+faccel = settings.frequencies.accelerometerFrequency;
+ta = Tf(1):1/faccel:Tf(end);
+figure 
+subplot(3,1,1);plot(ta,accel_tot(:,1)/1000');grid on;xlabel('time [s]');ylabel('|Acc x| [mg]');
+subplot(3,1,2);plot(ta,accel_tot(:,2)/1000');grid on;xlabel('time [s]');ylabel('|Acc y| [mg]');
+subplot(3,1,3);plot(ta,accel_tot(:,3)/1000');grid on;xlabel('time [s]');ylabel('|Acc z| [mg]');
+title('Accelerometer reads');
+% FIGURE: Gyroscope reads
+figure 
+subplot(3,1,1);plot(ta,gyro_tot(:,1)/1000');grid on;xlabel('time [s]');ylabel('|Ang vel x| [°/s]');
+subplot(3,1,2);plot(ta,gyro_tot(:,2)/1000');grid on;xlabel('time [s]');ylabel('|Ang vel y| [°/s]');
+subplot(3,1,3);plot(ta,gyro_tot(:,3)/1000');grid on;xlabel('time [s]');ylabel('|Ang vel z| [°/s]');
+title('Gyroscope reads');
+% FIGURE: Magnetometer reads
+figure 
+subplot(3,1,1);plot(ta,mag_tot(:,1)');grid on;xlabel('time [s]');ylabel('|Mag field x| [gauss]');
+subplot(3,1,2);plot(ta,mag_tot(:,2)');grid on;xlabel('time [s]');ylabel('|Mag field y| [gauss]');
+subplot(3,1,3);plot(ta,mag_tot(:,3)');grid on;xlabel('time [s]');ylabel('|Mag field z| [gauss]');
+title('Magnetometer reads');
+figure 
+subplot(3,1,1);plot(ta,mag_tot_true(1:16820,1)');grid on;xlabel('time [s]');ylabel('|Mag field x| [gauss]');
+subplot(3,1,2);plot(ta,mag_tot_true(1:16820,2)');grid on;xlabel('time [s]');ylabel('|Mag field y| [gauss]');
+subplot(3,1,3);plot(ta,mag_tot_true(1:16820,3)');grid on;xlabel('time [s]');ylabel('|Mag field z| [gauss]');
+title('Magnetometer reads');
 % FIGURE: Gps reads
 % fgps = settings.frequencies.gpsFrequency;
 % tgps = Tf(1):1/fgps:Tf(end);
@@ -452,6 +458,7 @@ subplot(4,1,4)
 plot(Tf,Yf(:,13))
 hold on
 plot(t_est_tot,x_est_tot(:,9))
+end
 end
 
 

@@ -59,7 +59,7 @@ m_inertial  =   [1 0 0];           %Initial vector direction of the magnetic fie
 % f_sample_GPS=5;             %[Hz] Frequency of measurement of GPS
 
                                     
-sigma_mag   =   0.05;               % This is the variance of the direction 
+sigma_mag   =   0.5;                % This is the variance of the direction 
                                     % of the magnetic field, not of the magnitude 
                                     % itself, so the variance used in the 
                                     % initSensors file is not valid. Since 
@@ -89,9 +89,9 @@ sigma_w     =   100*(1000*pi/180)^2;   % Variance of the angular velocity;
                                        % of initSensors GYRO_LSM9DS1.noiseVariance
                                        % multiplied by (1000*pi/180)^2
                                     
-sigma_mag   =   1e-3;               %Variance of the magnetometer                                    
+sigma_mag   =   1;               %Variance of the magnetometer                                    
                                     
-sigma_beta  =   1e-4;               %Variance of the bias
+sigma_beta  =   1e-2;               %Variance of the bias
       
 sigma_g   = sqrt(sigma_w^2/Dt_gyro+sigma_beta^2*Dt_gyro/12);
 
