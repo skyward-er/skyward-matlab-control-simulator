@@ -249,6 +249,7 @@ while flagStopIntegration || n_old < nmax
                  accel(ii,:) = accel(ii,:)*g/1000;
                  gyro(ii,:)  = gyro(ii,:)*2*pi/360/1000;
                  mag(ii,:)   = mag(ii,:)/norm(mag(ii,:));
+
                                             
         end 
         accel_tot(na_old:na_old + size(accel,1) - 1,:) = accel(1:end,:) ;
@@ -256,6 +257,7 @@ while flagStopIntegration || n_old < nmax
         mag_tot(na_old:na_old + size(mag,1) - 1,:)     = mag(1:end,:) ;
         na_old = na_old + size(accel,1);
         
+
         % GPS Acquisition loop
         for ii=1:length(sensorData.gps.time)
             [gps(ii,1),gps(ii,2),gps(ii,3)]   =  GPS_NEOM9N.sens(...

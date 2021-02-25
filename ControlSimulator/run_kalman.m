@@ -77,7 +77,7 @@ function [x_c,P_c]=run_kalman(x_prev,P_prev,t_v,a_v,w_v,t_baro,baro,sigma_baro,.
 %         -P_c: CORRECTED COVARIANCE MATRIX FOR EACH OF THE ESTIMATION TIME
 %               INSTANTS. 12x12x10
 % -----------------------------------------------------------------------
-dt_k        = t_v(1)-t_v(2); %Time step of the kalman
+dt_k        = t_v(2)-t_v(1); %Time step of the kalman
 x_lin       = zeros(length(t_v),6); %Pre-allocation of corrected estimation
 xq          = zeros(length(t_v),7); %Pre-allocation of quaternions and biases
 x_c         = zeros(length(t_v),13);
@@ -100,7 +100,7 @@ for i=2:length(t_v)
     
     [xq(i,:),P_q(:,:,i)]       = predictorQuat(xq(i-1,:),P_q(:,:,i-1),...
                                 [w_v(i-1,1),w_v(i-1,2),w_v(i-1,3)],dt_k,Qq);                   
-%     %Corrections
+%    Corrections
      if t_v(i)>=t_GPS(index_GPS)  %Comparison to see the there's a new measurement
        [x_lin(i,:),P_lin(:,:,i),~]     = correctionGPS2(x_lin(i,:),P_lin(:,:,i),GPS(index_GPS,1),...
                             GPS(index_GPS,2),GPS(index_GPS,3),vGPS(index_GPS,:),sigma_GPS,n_sats,fix);
@@ -110,8 +110,8 @@ for i=2:length(t_v)
     if t_v(i)>=t_baro(index_bar) %Comparison to see the there's a new measurement
        [x_lin(i,:),P_lin(:,:,i),~]     = correctionBarometer(x_lin(i,:),P_lin(:,:,i),baro(index_bar),sigma_baro);
         index_bar   =  index_bar + 1;     
-    end
-% %      
+   end
+     
 %     if t_v(i)>=t_mag(index_mag) %Comparison to see the there's a new measurement
 %        [xq(i,:),P_q(:,:,i),~,~]    = correctorQuat(xq(i,:),P_q(:,:,i),mag(index_mag,:),sigma_mag);
 %        index_mag    =  index_mag + 1;  

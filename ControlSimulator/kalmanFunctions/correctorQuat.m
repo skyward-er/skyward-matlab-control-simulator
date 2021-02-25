@@ -44,7 +44,9 @@ K       = P_pred*H'/S;
 %------------------------------------------------------------------------
 % Correction
 % Innovation computation
-e       = mag_sam' - z;     %Difference between measured (mag_sam) and 
+% mag_sam
+% z
+e       = mag_sam' - z;      %Difference between measured (mag_sam) and 
                             %estimated (z) magnetic vectors
 % Error correction computation (delta_x)
 delta_x = (K*e)';
@@ -52,24 +54,50 @@ delta_x = (K*e)';
 % Since the definition of the quaternions is [q_vec;q4] but the function
 % quatmultiply uses [q1;q_vec], it is necessary to assemble q2 changing the
 % order of the components
-q2      = [x_pred(4),x_pred(1:3)];
+% q2      = [x_pred(4),x_pred(1:3)];
 
 % Assembly of the error quaternion from Euler angles alpha --> delta_x(1:3)
-r       = [sqrt(1-0.25*delta_x(1:3)*delta_x(1:3)'), 0.5*delta_x(1:3)];
+r       = [0.5*delta_x(1:3), sqrt(1-0.25*delta_x(1:3)*delta_x(1:3)')];
 
-u       = quatmultiply(r,q2);              %The correction of the quaternion
+u       = quatProd(r',x_pred(1:4)')';              %The correction of the quaternion
                                            %is done through a multiplication 
                                            %(from which the multiplicative 
                                            %filter gets its name)
                                            
 % Re-assembly of the previously used notation
-aux     = u(1);
-u(1:3)  = u(2:4);
-u(4)    = aux;
+% aux     = u(1);
+% u(1:3)  = u(2:4);
+% u(4)    = aux;
 % Assigment of the new quaternion to the state vector
 x_c(1:4)= u/norm(u);                       %Re-normalisation of the quaternion 
                                            %to avoid issues
 x_c(5:7)= x_pred(5:7)+delta_x(4:6);        %Correction of the bias only with a sum
 
 P_c     = (eye(6) - K*H)*P_pred*(eye(6) - K*H)'+ K*R*K';           %Correction of the covariance matrix
+end
+
+function quat = quatProd( quat1, quat2 )
+%	Calculates the Hemiltonian product between two quaternions
+%
+%   quat = quatProd( quat1, quat2 )
+%
+%   This function compute the hamiltonian product between two quaternions
+%   written as 4-by-1 vectors with the scalar component as the fourth
+%   element of the vector.
+%
+%   References:
+%	[1] Markley, F. Landis. "Attitude error representations for Kalman filtering." 
+%       Journal of guidance control and dynamics 26.2 (2003): 311-317.
+
+qv1 = quat1(1:3);
+qs1 = quat1(4);
+
+qv2 = quat2(1:3);
+qs2 = quat2(4);
+
+quat = [qs1 * qv2 + qs2 * qv1 - cross( qv1, qv2 ) ;
+              qs1 * qs2 - dot( qv1, qv2 )        ];
+
+quat = quat / norm(quat);
+          
 end
