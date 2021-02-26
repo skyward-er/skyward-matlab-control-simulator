@@ -1,4 +1,4 @@
-function [x_c,P_c,e,z]=correctorQuat(x_pred,P_pred,mag_sam,sigma_mag)
+function [x_c,P_c,e,z]=correctorQuat(x_pred,P_pred,mag_sam,sigma_mag,mag_NED)
 %15/12/2020  ANY QUESTIONS CAN BE DIRECTED TO ALEJANDRO MONTERO FROM SKYWARD
 
 %-----------DESCRIPTION OF FUNCTION:------------------
@@ -29,7 +29,7 @@ A       = [x_pred(1)^2 - x_pred(2)^2 - x_pred(3)^2 + x_pred(4)^2,               
                  2*(x_pred(1)*x_pred(2) - x_pred(3)*x_pred(4)),      -x_pred(1)^2 + x_pred(2)^2 - x_pred(3)^2 + x_pred(4)^2,                2*(x_pred(2)*x_pred(3) + x_pred(1)*x_pred(4)) ;
                  2*(x_pred(1)*x_pred(3) + x_pred(2)*x_pred(4)),               2*(x_pred(2)*x_pred(3) - x_pred(1)*x_pred(4)),       -x_pred(1)^2 - x_pred(2)^2 + x_pred(3)^2 + x_pred(4)^2];
 
-z       = A*[1;0;0];       %Magnetic vector in the body axis (estimated)
+z       = A*mag_NED;       %Magnetic vector in the body axis (estimated)
 
 z_mat   = [ 0      -z(3)   z(2);
            z(3)     0     -z(1);

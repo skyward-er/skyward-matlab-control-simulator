@@ -102,13 +102,13 @@ sigma_g   = sqrt(sigma_w^2/Dt_gyro+sigma_beta^2*Dt_gyro/12);
 
 dt_k        =   0.01;               %Time step for the estimation
 
-QLinear     =   0.01*...
+QLinear     =   100*...
                 [1     0     0      0      0      0;   %Noise covariance matrix
                  0     1     0      0      0      0;    %for the linear dynamics
                  0     0     1      0      0      0;
-                 0     0     0      10     0      0;
-                 0     0     0      0      10     0;
-                 0     0     0      0      0      10];
+                 0     0     0      1000   0      0;
+                 0     0     0      0      1000   0;
+                 0     0     0      0      0      1000];
              
 
 % EXPRESSION OF Q OBTAINED FROM ''OPTIMAL ESTIMATION OF DYNAMIC SYSTEMS'', 

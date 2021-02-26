@@ -1,5 +1,5 @@
 function [x_c,P_c]=run_kalman(x_prev,P_prev,t_v,a_v,w_v,t_baro,baro,sigma_baro,...
-                              t_mag,mag,sigma_mag,...
+                              t_mag,mag,sigma_mag,mag_NED,...
                               t_GPS,GPS,vGPS,sigma_GPS,n_sats,fix,QLinear,Qq)
 %23/02/2021 ANY QUESTIONS CAN BE DIRECTED TO ALEJANDRO MONTERO FROM SKYWARD
 
@@ -113,7 +113,7 @@ for i=2:length(t_v)
    end
      
     if t_v(i)>=t_mag(index_mag) %Comparison to see the there's a new measurement
-       [xq(i,:),P_q(:,:,i),~,~]    = correctorQuat(xq(i,:),P_q(:,:,i),mag(index_mag,:),sigma_mag);
+       [xq(i,:),P_q(:,:,i),~,~]    = correctorQuat(xq(i,:),P_q(:,:,i),mag(index_mag,:),sigma_mag,mag_NED);
        index_mag    =  index_mag + 1;  
     end
     x_c(i,:)=[x_lin(i,:),xq(i,:)];
