@@ -73,11 +73,12 @@ else
 end
 
 %% MAGNETIC FIELD MODEL
-hmax = 6000;
-dy = decyear(settings.launchDate);
-% [XYZ0,H0,~,I0,F0] = wrldmagm(0, settings.lat0, settings.lon0, dy, '2020');
+% hmax = 6000;
+% dy = decyear(settings.launchDate);
+% [XYZ0,H0,D0,I0,F0] = wrldmagm(0, settings.lat0, settings.lon0, dy, '2020');
 % [XYZh] = wrldmagm(hmax, settings.lat0, settings.lon0, dy, '2020');
 % fprintf('Horizontal intensity in nT: %g [nT] \n', H0)
+% fprintf('Declination in degrees: %g [°] \n', D0)
 % fprintf('Inclination in degrees: %g [°] \n', I0)
 % fprintf('Total intensity in nT: %g [nT] \n', F0)
     
