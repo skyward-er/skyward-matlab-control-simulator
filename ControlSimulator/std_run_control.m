@@ -75,14 +75,14 @@ end
 %% MAGNETIC FIELD MODEL
 hmax = 6000;
 dy = decyear(settings.launchDate);
-[XYZ0,H0,~,I0,F0] = wrldmagm(0, settings.lat0, settings.lon0, dy, '2020');
-[XYZh] = wrldmagm(hmax, settings.lat0, settings.lon0, dy, '2020');
-fprintf('Horizontal intensity in nT: %g [nT] \n', H0)
-fprintf('Inclination in degrees: %g [°] \n', I0)
-fprintf('Total intensity in nT: %g [nT] \n', F0)
+% [XYZ0,H0,~,I0,F0] = wrldmagm(0, settings.lat0, settings.lon0, dy, '2020');
+% [XYZh] = wrldmagm(hmax, settings.lat0, settings.lon0, dy, '2020');
+% fprintf('Horizontal intensity in nT: %g [nT] \n', H0)
+% fprintf('Inclination in degrees: %g [°] \n', I0)
+% fprintf('Total intensity in nT: %g [nT] \n', F0)
     
 % %Use this next line if your MATLAB version is previous to 2020
-% load('magn_field.mat');
+load('magn_field.mat');
 
 magneticFieldApprox = @(zSlm) XYZ0 + (XYZh-XYZ0)./hmax.*zSlm;
 
@@ -287,7 +287,7 @@ while flagStopIntegration || n_old < nmax
     %%%%%%% kalmann filter %%%%%%%%
     [x_c,P_c]   =  run_kalman(x_prev,P_prev,...
                               sensorData.accelerometer.time, accel,...
-                              sensorData.gyro.measures,...
+                              gyro,...
                               sensorData.barometer.time, h_baro, settings.sigma_baro,...
                               sensorData.magnetometer.time, mag,settings.sigma_mag, XYZ0*0.01,...
                               sensorData.gps.time, gps,gpsv, settings.sigma_GPS,...

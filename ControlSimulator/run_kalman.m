@@ -50,6 +50,8 @@ function [x_c,P_c]=run_kalman(x_prev,P_prev,t_v,a_v,w_v,t_baro,baro,sigma_baro,.
 %         -sigma_mag:   STANDARD DEVIATION OF THE MAGNETOMETER (SQRT OF
 %                       VARIANCE) 1x1
 %
+%         -mag_NED:     INERTIAL DIRECTION OF THE MAGNETIC FIELD. 3x1
+%
 %         -t_GPS:   VECTOR OF TIME INSTANTS AT WHICH THE GPS TOOK 
 %                   SAMPLES INSIDE THE 0.1 INTEGRATION PERIOD. SINCE IT RUNS
 %                   AT 10 HZ, THIS IS A 1x1 VECTOR. s
