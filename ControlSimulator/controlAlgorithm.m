@@ -79,12 +79,26 @@ Cd       = (S0*Cd_fake)/S;
 
 % States: z,Vz,x,Vx
 
+%% Original matrix
 Q = [0.7,    0,            0,           0;
        0,    1,            0,           0;
        0,    0,   0.00000001,           0;
        0,    0,            0,    0.000001];
    
 R = 65000; 
+
+%% Test
+% S_max_squared = 0.01^2;
+% 
+% Q = [0.7,    0,            0,           0;
+%        0,    5,            0,           0;
+%        0,    0,       0.00005,            0;
+%        0,    0,            0,      0.0001];
+%    
+% R = 0.6/S_max_squared; 
+
+
+
 
 % Linearized the system around the current state
 A = [1,                                                                                        T, 0,                                                                                        0;
@@ -99,7 +113,7 @@ B = [                                        0;
 
 x_measured  = [z, Vz, x, Vx]';
 x_reference = [z_setpoint, Vz_setpoint, x_setpoint, Vx_setpoint]';
-x_error     = x_measured - x_reference
+x_error     =  x_measured - x_reference
 
 % Solve Riccati equation
 P       = Q;   % Initial guess for P    
@@ -108,9 +122,9 @@ eps     = 0.01;
 
 for i=1:maxiter
     Pn = A' * P * A - A' * P * B * inv(R + B' * P * B) * B' * P * A + Q;
-%     if (max(max((abs(Pn - P))))) < eps % Continue to compute P until the actual and previous solution are almost equal
-%         break
-%     end
+    if (max(max((abs(Pn - P))))) < eps % Continue to compute P until the actual and previous solution are almost equal
+        break
+    end
     P = Pn;
 end
 
@@ -138,7 +152,6 @@ end
 
 filter_coeff = 0.9;
 delta_S = filter_coeff*U + (1-filter_coeff)*delta_S_prec;
-% delta_S_prec = delta_S;
 
 %% TRANSFORMATION FROM delta_S to SERVOMOTOR ANGLE DEGREES
 
