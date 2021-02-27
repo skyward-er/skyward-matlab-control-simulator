@@ -73,7 +73,7 @@ else
 end
 
 %% MAGNETIC FIELD MODEL
-% hmax = 6000;
+hmax = 6000;
 % dy = decyear(settings.launchDate);
 % [XYZ0,H0,D0,I0,F0] = wrldmagm(0, settings.lat0, settings.lon0, dy, '2020');
 % [XYZh] = wrldmagm(hmax, settings.lat0, settings.lon0, dy, '2020');
