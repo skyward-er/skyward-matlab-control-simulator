@@ -359,7 +359,7 @@ while flagStopIntegration || n_old < nmax
 
          [alpha_degree, Vz_setpoint, z_setpoint, pid,U_linear, Cdd, delta_S] = controlAlgorithm(-x_c(end,3), -x_c(end,6), sqrt(x_c(end,4)^2+x_c(end,5)^2+x_c(end,6)^2), dt); %z, vz, normV, dt
          %[alpha_degree, Vz_setpoint, z_setpoint, pid,U_linear, Cdd, delta_S] = controlAlgorithm(z, vz, normV, dt); %z, vz, normV, dt
-%         [alpha_degree, Vz_setpoint, z_setpoint, pid,U_linear, Cdd, delta_S] = controlAlgorithmLinearized(z, vz, normV, dt);
+         %[alpha_degree, Vz_setpoint, z_setpoint, pid,U_linear, Cdd, delta_S] = controlAlgorithmLinearized(z, vz, normV, dt);
          x = get_extension_from_angle(alpha_degree);
          
          % Save the values to plot them
