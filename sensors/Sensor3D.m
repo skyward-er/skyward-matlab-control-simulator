@@ -1,7 +1,13 @@
 classdef Sensor3D < Sensor
+    
+    % Author: Jan Hammelman
+    % Skyward Experimental Rocketry | ELC-SCS Dept | electronics@skywarder.eu
+    % email: jan.hammelmann@skywarder.eu,alessandro.delduca@skywarder.eu
+    % Release date: 01/03/2021
+    
     %SENSOR_3D For all 3D sensors
     %   Extends Sensor with methods, which work with 3D sensors
-    
+
     properties (Access='public')
         offsetX; % offset in x direction
         offsetY; % offset in y direction

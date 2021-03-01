@@ -1,5 +1,9 @@
-% Initialize all sensors
-
+    % Initialize all sensors
+    
+% Author: Jan Hammelman
+% Skyward Experimental Rocketry | ELC-SCS Dept | electronics@skywarder.eu
+% email: jan.hammelmann@skywarder.eu,alessandro.delduca@skywarder.eu
+% Release date: 01/03/2021
 
 % initial barometer sensor MS580301BA01
 ep_p_0=csvread('skyward-matlab-control-simulator/sensors/data/MS580301BA01/ep_p_0.csv');
