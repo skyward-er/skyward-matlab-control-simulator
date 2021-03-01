@@ -1,4 +1,4 @@
-function [Yf, Tf, cpuTimes, flagMatr, dataBallisticFlight] = std_run_control(settings)
+function [Yf, Tf, t_ada, cpuTimes, flagMatr, dataBallisticFlight] = std_run_control(settings)
 %{
 
 STD_RUN_BALLISTIC - This function runs a standard ballistic (non-stochastic) simulation
@@ -74,13 +74,14 @@ end
 
 %% MAGNETIC FIELD MODEL
 hmax = 6000;
+% %Use this lines if your MATLAB version is up to 2020
 % dy = decyear(settings.launchDate);
 % [XYZ0,H0,D0,I0,F0] = wrldmagm(0, settings.lat0, settings.lon0, dy, '2020');
 % [XYZh] = wrldmagm(hmax, settings.lat0, settings.lon0, dy, '2020');
 % fprintf('Horizontal intensity in nT: %g [nT] \n', H0)
-% fprintf('Declination in degrees: %g [°] \n', D0)
-% fprintf('Inclination in degrees: %g [°] \n', I0)
-% fprintf('Total intensity in nT: %g [nT] \n', F0)
+% fprintf('Declination in degrees: %g [°]  \n', D0)
+% fprintf('Inclination in degrees: %g [°]  \n', I0)
+% fprintf('Total intensity in nT:  %g [nT] \n', F0)
     
 % %Use this next line if your MATLAB version is previous to 2020
 load('magn_field.mat');
@@ -108,14 +109,18 @@ Yf_tot = zeros(nmax, 16);
 Tf_tot = zeros(nmax, 1);
 p_tot  = zeros(nmax, 1);
 C = zeros(nmax, 1);
-n_old = 1;
-np_old = 1;
-na_old = 1;
-ngps_old = 1;
+n_old     = 1;
+np_old    = 1;
+na_old    = 1;
+ngps_old  = 1;
 n_est_old = 1;
+n_ada_old = 1;
 cpuTimes = zeros(nmax,1);
 iTimes = 0;
 g = 9.81;
+x_ada = settings.x_ada0;
+P_ada = settings.P_ada0;
+flagADA = false;
 
 while flagStopIntegration || n_old < nmax
     tic 
@@ -192,12 +197,12 @@ while flagStopIntegration || n_old < nmax
 
          v_b             = Yf(ii,4:6)';                     %Velocity in body axis (column vector)
          
-         q_mat           =  [0        -q(3)     q(2);       %Matrix needed for the
-                            q(3)    0         -q(1);        %definition of rotation
-                            -q(2)  q(1)      0     ;];      %matrix
+         q_mat           =  [0      -q(3)      q(2);        %Matrix needed for the
+                             q(3)    0        -q(1);        %definition of rotation
+                            -q(2)    q(1)      0   ;];      %matrix
                    
-         A(:,:,ii)       =   (q(4)^2-q(1:3)*q(1:3)')*eye(3) + 2*q(1:3)'*q(1:3)...
-                              - 2*q(4)*q_mat;               %Rotation matrix to
+         A(:,:,ii)       =   (q(4)^2-q(1:3)*q(1:3)')*eye(3) + 2*q(1:3)'*q(1:3) - 2*q(4)*q_mat;               
+                                                            %Rotation matrix to
                                                             %body axis from inertial
                                                             
          v_NED(ii,:)     = (A(:,:,ii)'*v_b)';               %Matrix with the velocity components in NED;
@@ -221,13 +226,13 @@ while flagStopIntegration || n_old < nmax
         
         % Baro Acquisition loop
         for ii=1:length(sensorData.barometer.time)
-                pn(ii,1) = MS580301BA01.sens(sensorData.barometer.measures(ii)/100,...
-                                           sensorData.barometer.temperature(ii) - 273.15);  
+                pn(ii)        = MS580301BA01.sens(sensorData.barometer.measures(ii)/100,...
+                                                  sensorData.barometer.temperature(ii) - 273.15);  
                 h_baro(ii)    = -atmospalt(pn(ii)*100,'None');
         end 
-        pn_tot(np_old:np_old + size(pn,1) - 1,1) = pn(1:end,1)';
-        hb_tot(np_old:np_old + size(pn,1) - 1,1) = h_baro(1:end,1)';
-        np_old = np_old + size(pn,1);
+        pn_tot(np_old:np_old + size(pn,2) - 1,1) = pn(1:end);
+        hb_tot(np_old:np_old + size(pn,2) - 1,1) = h_baro(1:end);
+        np_old = np_old + size(pn,2);
         
         % IMU Acquisition loop
         for ii=1:length(sensorData.accelerometer.time)
@@ -277,22 +282,36 @@ while flagStopIntegration || n_old < nmax
     end
   
     if iTimes==1
-        x_prev=[X0; V0; Q0(2:4); Q0(1);0;0;0];
-        P_prev=0.01*eye(12);
+        x_prev    =  [X0; V0; Q0(2:4); Q0(1);0;0;0];
+        P_prev    =   0.01*eye(12);
+        ada_prev  =   settings.x_ada0;
+        Pada_prev =   settings.P_ada0;
     else
-        x_prev=x_est_tot(end,:);
-        P_prev=P_c(:,:,end);
+        x_prev    =   x_est_tot(end,:);
+        P_prev    =   P_c(:,:,end);
+        ada_prev  =   x_ada_tot(end,:);
+        Pada_prev =   P_ada(:,:,end);
     end
-
+    
+    %%%%%%%%%%%%% ADA %%%%%%%%%%%%%
+    if flagADA == false
+    [x_ada, P_ada, flagADA, t_ada]   =  run_ADA(ada_prev, Pada_prev, h_baro, sensorData.barometer.time, settings.Q_ada, settings.N_ada);
+    end
+     x_ada_tot(n_ada_old:n_ada_old + size(x_ada(:,1),1)-1,:)  = x_ada(1:end,:);
+     t_ada_tot(n_ada_old:n_ada_old + size(x_ada(:,1),1)-1)    = sensorData.barometer.time;              
+     n_ada_old = n_ada_old + size(x_ada(1,:)); 
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     %%%%%%% kalmann filter %%%%%%%%
+    n_satellite = 4;
+    flagGPS_fix = true;
     [x_c,P_c]   =  run_kalman(x_prev,P_prev,...
                               sensorData.accelerometer.time, accel,...
                               gyro,...
                               sensorData.barometer.time, h_baro, settings.sigma_baro,...
                               sensorData.magnetometer.time, mag,settings.sigma_mag, XYZ0*0.01,...
                               sensorData.gps.time, gps,gpsv, settings.sigma_GPS,...
-                              4,1,settings.QLinear,settings.Qq);
+                              n_satellite,flagGPS_fix,settings.QLinear,settings.Qq);
      x_est_tot(n_est_old:n_est_old + size(x_c(:,1),1)-1,:)  = x_c(1:end,:);
      t_est_tot(n_est_old:n_est_old + size(x_c(:,1),1)-1) = sensorData.accelerometer.time;              
      n_est_old = n_est_old + size(x_c(1,:)); 
@@ -360,7 +379,6 @@ Yf = Yf_tot(1:n_old, :);
 Tf = Tf_tot(1:n_old, :);
 
 flagMatr = flagMatr(1:n_old, :);
-
 %% RETRIVE PARAMETERS FROM THE ODE
 if not(settings.electronics)
     dataBallisticFlight = RecallOdeFcn(@ascent, Tf(flagMatr(:, 2)), Yf(flagMatr(:, 2), :), settings, C, uw, vw, ww, uncert);
@@ -376,6 +394,13 @@ title('Barometer pressure reads');
 subplot(2,1,2);plot(tp,-hb_tot',Tf,-Yf(:,3));grid on;xlabel('time [s]');ylabel('|h| [m]');
 legend('Altitude','Ground-truth','location','northeast');
 title('Barometer altitude reads');
+figure 
+subplot(3,1,1);plot(t_ada_tot, x_ada_tot(:,1));grid on;xlabel('time [s]');ylabel('|P| [mBar]');
+title('ADA pressure estimation');
+subplot(3,1,2);plot(t_ada_tot,x_ada_tot(:,2));grid on;xlabel('time [s]');ylabel('|P_dot| [mBar/s]');
+title('ADA velocity estimation');
+subplot(3,1,3);plot(t_ada_tot,x_ada_tot(:,3));grid on;xlabel('time [s]');ylabel('|P_dot^2| [mBar/s^2]');
+title('ADA acceleration estimation');
 %% FIGURE: Accelerometer reads
 faccel = settings.frequencies.accelerometerFrequency;
 ta = Tf(1):1/faccel:Tf(end);
