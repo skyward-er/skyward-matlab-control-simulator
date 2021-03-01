@@ -72,6 +72,9 @@ else
     uncert = [0,0];
 end
 
+%% KALMAN PATH 
+addpath('../kalman');
+
 %% MAGNETIC FIELD MODEL
 hmax = 6000;
 % %Use this lines if your MATLAB version is up to 2020
@@ -92,8 +95,6 @@ magneticFieldApprox = @(zSlm) XYZ0 + (XYZh-XYZ0)./hmax.*zSlm;
 addpath('../sensors');
 addpath('../sensors/data/MS580301BA01');
 initSensors;
-%% KALMAN PATH 
-addpath('../kalman');
 %% INTEGRATION
 % setting initial condition before control phase
 dt = 1/settings.frequencies.controlFrequency;
