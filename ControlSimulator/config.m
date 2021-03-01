@@ -132,7 +132,7 @@ settings.QLinear    =        100*...
                                   0     0     0      0      1000   0;
                                   0     0     0      0      0      1000];
 settings.dt_k       =   0.01;                                               % [s]       kalman time step
-settings.sigma_w    =   100*(1000*pi/180)^2;                                % [mdps^2]  estimated gyroscope variance;
+settings.sigma_w    =   10*(1000*pi/180)^2;                                 % [mdps^2]  estimated gyroscope variance;
 settings.sigma_beta =   1e-2;                                               % [mdps^2]  estimated gyroscope bias variance;
 settings.Qq         =  [(settings.sigma_w^2*settings.dt_k+(1/3)*settings.sigma_beta^2*settings.dt_k^3)*eye(3)     0.5*settings.sigma_beta^2*settings.dt_k^2*eye(3);
                                 0.5*settings.sigma_beta^2*settings.dt_k^2*eye(3)                settings.sigma_beta^2*settings.dt_k*eye(3)];

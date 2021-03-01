@@ -298,7 +298,7 @@ while flagStopIntegration || n_old < nmax
     
     %%%%%%%%%%%%% ADA %%%%%%%%%%%%%
     if flagADA == false
-    [x_ada, P_ada, flagADA, t_ada]   =  run_ADA(ada_prev, Pada_prev, h_baro, sensorData.barometer.time, settings.Q_ada, settings.N_ada);
+    [x_ada, P_ada, flagADA, t_ada]   =  run_ADA(ada_prev, Pada_prev, - h_baro, sensorData.barometer.time, settings.Q_ada, settings.N_ada);
     end
      x_ada_tot(n_ada_old:n_ada_old + size(x_ada(:,1),1)-1,:)  = x_ada(1:end,:);
      t_ada_tot(n_ada_old:n_ada_old + size(x_ada(:,1),1)-1)    = sensorData.barometer.time;              
