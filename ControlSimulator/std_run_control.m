@@ -416,11 +416,11 @@ title('ADA acceleration estimation');
 faccel = settings.frequencies.accelerometerFrequency;
 ta = Tf(1):1/faccel:Tf(end);
 figure 
-subplot(3,1,1);plot(ta,accel_tot(:,1)/1000');grid on;xlabel('time [s]');ylabel('|ax| [g]');
+subplot(3,1,1);plot(ta,accel_tot(:,1)/g');grid on;xlabel('time [s]');ylabel('|ax| [g]');
 title('Accelerometer reads along x');
-subplot(3,1,2);plot(ta,accel_tot(:,2)/1000');grid on;xlabel('time [s]');ylabel('|ay| [g]');
+subplot(3,1,2);plot(ta,accel_tot(:,2)/g');grid on;xlabel('time [s]');ylabel('|ay| [g]');
 title('Accelerometer reads along y');
-subplot(3,1,3);plot(ta,accel_tot(:,3)/1000');grid on;xlabel('time [s]');ylabel('|az| [g]');
+subplot(3,1,3);plot(ta,accel_tot(:,3)/g');grid on;xlabel('time [s]');ylabel('|az| [g]');
 title('Accelerometer reads along z');
 %% FIGURE: Gyroscope reads
 figure 
