@@ -72,6 +72,8 @@ else
     uncert = [0,0];
 end
 
+%% KALMAN PATH 
+addpath('../kalman');
 %% MAGNETIC FIELD MODEL
 hmax = 6000;
 % %Use this lines if your MATLAB version is up to 2020
