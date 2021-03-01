@@ -1,7 +1,7 @@
 function [x,P,y_res] = correctionGPS(x_pred,P_pred,x_sam,y_sam,z_sam,sigma_GPS,sats,fix)
 
 % Author: Alejandro Montero
-% Co-Autor: Alessandro Del Duca
+% Co-Author: Alessandro Del Duca
 % Skyward Experimental Rocketry | ELC-SCS Dept | electronics@skywarder.eu
 % email: alejandro.montero@skywarder.eu, alessandro.delduca@skywarder.eu
 % Release date: 01/03/2021

@@ -3,7 +3,7 @@ function [x_c,P_c]=run_kalman(x_prev,P_prev,t_v,a_v,w_v,t_baro,baro,sigma_baro,.
                               t_GPS,GPS,vGPS,sigma_GPS,n_sats,fix,QLinear,Qq)
 
 % Author: Alejandro Montero
-% Co-Autor: Alessandro Del Duca
+% Co-Author: Alessandro Del Duca
 % Skyward Experimental Rocketry | ELC-SCS Dept | electronics@kywarder.eu
 % email: alejandro.montero@skywarder.eu, alessandro.delduca@skywarder.eu
 % Release date: 01/03/2021
