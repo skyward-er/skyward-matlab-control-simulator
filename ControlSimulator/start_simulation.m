@@ -26,9 +26,9 @@ run('config.m');
 % Y = State = ( x y z | u v w | p q r | q0 q1 q2 q3 | thetax thetay thetaz | ) also for Ya,Yf corresponding to T
 
 if settings.electronics
-    [Yf, Tf, cpuTimes, flagMatr] = std_run_control(settings);
+    [Yf, Tf, t_ada, cpuTimes, flagMatr] = std_run_control(settings);
 else
-    [Yf, Tf, cpuTimes, flagMatr, data_flight] = std_run_control(settings);
+    [Yf, Tf, t_ada, cpuTimes, flagMatr, data_flight] = std_run_control(settings);
 end
 
 %% DATA-PRINTING
@@ -36,8 +36,8 @@ end
 Na = length(Yf(:,1));
 
 % POSITIONS
-xa = Yf(:,1);
-ya = Yf(:,2);
+xa =  Yf(:,1);
+ya =  Yf(:,2);
 za = -Yf(:,3);
 Xa = [xa, ya, za];
 
@@ -45,8 +45,8 @@ Xa = [xa, ya, za];
 T_apo = Tf(i_apo);
 
 % VELOCITIES
-ua = Yf(:,4);
-va = Yf(:,5);
+ua =  Yf(:,4);
+va =  Yf(:,5);
 wa = -Yf(:,6);
 Va = [ua, va, wa];
 
@@ -87,6 +87,9 @@ if not(settings.electronics)
     fprintf('@velocity: %g [m/s] \n', abs_V(imax_a))
     fprintf('@time: %g [sec] \n\n', Tf(imax_a))
 
+%% ADA detection time
+    fprintf('ADA detection time: %g [sec] \n', t_ada)
+    fprintf('Simulated apogee time : %g [sec] \n', T_apo)
 end
 
 %% PLOT 
