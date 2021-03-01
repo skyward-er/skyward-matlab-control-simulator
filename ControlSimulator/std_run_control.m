@@ -422,11 +422,11 @@ subplot(3,1,3);plot(ta,accel_tot(:,3)/g');grid on;xlabel('time [s]');ylabel('|az
 title('Accelerometer reads along z');
 %% FIGURE: Gyroscope reads
 figure 
-subplot(3,1,1);plot(ta,gyro_tot(:,1)/1000');grid on;xlabel('time [s]');ylabel('|wx| [°/s]');
+subplot(3,1,1);plot(ta,gyro_tot(:,1)*180/pi');grid on;xlabel('time [s]');ylabel('|wx| [°/s]');
 title('Gyroscope reads along x');
-subplot(3,1,2);plot(ta,gyro_tot(:,2)/1000');grid on;xlabel('time [s]');ylabel('|wy| [°/s]');
+subplot(3,1,2);plot(ta,gyro_tot(:,2)*180/pi');grid on;xlabel('time [s]');ylabel('|wy| [°/s]');
 title('Gyroscope reads along y');
-subplot(3,1,3);plot(ta,gyro_tot(:,3)/1000');grid on;xlabel('time [s]');ylabel('|wz| [°/s]');
+subplot(3,1,3);plot(ta,gyro_tot(:,3)*180/pi');grid on;xlabel('time [s]');ylabel('|wz| [°/s]');
 title('Gyroscope reads along z');
 %% FIGURE: Magnetometer reads
 figure 
