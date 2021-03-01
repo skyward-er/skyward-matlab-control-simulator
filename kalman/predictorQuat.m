@@ -1,7 +1,7 @@
 function [x_pred,P_pred]=predictorQuat(x,P,w,dt,Q)
 
 % Author: Alejandro Montero
-% Co-Autor: Alessandro Del Duca
+% Co-Author: Alessandro Del Duca
 % Skyward Experimental Rocketry | ELC-SCS Dept | electronics@skywarder.eu
 % email: alejandro.montero@skywarder.eu, alessandro.delduca@skywarder.eu
 % Release date: 01/03/2021
