@@ -75,16 +75,16 @@ end
 %% MAGNETIC FIELD MODEL
 hmax = 6000;
 % %Use this lines if your MATLAB version is up to 2020
-% dy = decyear(settings.launchDate);
-% [XYZ0,H0,D0,I0,F0] = wrldmagm(0, settings.lat0, settings.lon0, dy, '2020');
-% [XYZh] = wrldmagm(hmax, settings.lat0, settings.lon0, dy, '2020');
+dy = decyear(settings.launchDate);
+[XYZ0,H0,D0,I0,F0] = wrldmagm(0, settings.lat0, settings.lon0, dy, '2020');
+[XYZh] = wrldmagm(hmax, settings.lat0, settings.lon0, dy, '2020');
 % fprintf('Horizontal intensity in nT: %g [nT] \n', H0)
 % fprintf('Declination in degrees: %g [°]  \n', D0)
 % fprintf('Inclination in degrees: %g [°]  \n', I0)
 % fprintf('Total intensity in nT:  %g [nT] \n', F0)
     
 % %Use this next line if your MATLAB version is previous to 2020
-load('magn_field.mat');
+% load('magn_field.mat');
 
 magneticFieldApprox = @(zSlm) XYZ0 + (XYZh-XYZ0)./hmax.*zSlm;
 
@@ -92,6 +92,8 @@ magneticFieldApprox = @(zSlm) XYZ0 + (XYZh-XYZ0)./hmax.*zSlm;
 addpath('../sensors');
 addpath('../sensors/data/MS580301BA01');
 initSensors;
+%% KALMAN PATH 
+addpath('../kalman');
 %% INTEGRATION
 % setting initial condition before control phase
 dt = 1/settings.frequencies.controlFrequency;

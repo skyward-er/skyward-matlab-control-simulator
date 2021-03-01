@@ -40,7 +40,7 @@ Motors = [Motors.Cesaroni, Motors.Aerotech];
 
 name = 'M2000Rbis';
 % name = 'M1890';
-%name = 'M1800';
+% name = 'M1800';
 
 n_name = [Motors.MotorName] == name;
 settings.motor.exp_time = Motors(n_name).t;
@@ -149,8 +149,9 @@ settings.P_ada0     =   [0.1      0      0;
 settings.a0         =   -30;
 % [~,~,settings.p0,~] =   atmosisa(settings.z0);
 % settings.x_ada0     =   [settings.p0/100, 0, settings.a0];
-settings.x_ada0     =   [settings.z0, 0, settings.a0];
 % settings.x_ada0     =   [0, 0, settings.a0];
+
+settings.x_ada0     =   [settings.z0, 0, settings.a0];
 settings.N_ada      =   100;
     
 %% CONTROL SETTINGS 
