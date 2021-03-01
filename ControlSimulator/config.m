@@ -28,8 +28,6 @@ settings.launchDate = [2021, 10, 15];                                      % [YY
 settings.g0 = gravitywgs84(settings.z0, settings.lat0);                    % Gravity costant at launch latitude and altitude
 
 % launchpad directions
-% for a single run the maximum and the minimum value of the following
-% angles must be the same.
 settings.OMEGA = 84*pi/180;                                                %[rad] Minimum Elevation Angle, user input in degrees (ex. 80)
 settings.PHI = 0*pi/180;                                                   %[rad] Minimum Azimuth Angle from North Direction, user input in degrees (ex. 90)
 
@@ -40,7 +38,7 @@ filename = strcat(DATA_PATH,'Motors.mat');
 Motors = load(filename);
 Motors = [Motors.Cesaroni, Motors.Aerotech];
 
-name = 'M2000R';
+name = 'M2000Rbis';
 % name = 'M1890';
 %name = 'M1800';
 
@@ -48,12 +46,12 @@ n_name = [Motors.MotorName] == name;
 settings.motor.exp_time = Motors(n_name).t;
 settings.motor.exp_thrust = Motors(n_name).T;
 settings.motor.exp_m = Motors(n_name).m;
-settings.mp = Motors(n_name).mp;         % [kg]   Propellant Mass                                                
-settings.tb = Motors(n_name).t(end) ;    % [s]    Burning time
-mm = Motors(n_name).mm;                  % [kg]   Total Mass of the Motor 
-settings.ms = 18.5 + mm - settings.mp;   % [kg]   Structural Mass
-settings.m0 = settings.ms + settings.mp; % [kg]   Total Mass
-settings.mnc = 0.400;                    % [kg]   Nosecone Mass
+settings.mp = Motors(n_name).mp;                    % [kg]   Propellant Mass                                                
+settings.tb = Motors(n_name).t(end) ;               % [s]    Burning time
+mm = Motors(n_name).mm;                             % [kg]   Total Mass of the Motor 
+settings.ms = 17.873 + mm - settings.mp;            % [kg]   Structural Mass
+settings.m0 = settings.ms + settings.mp;            % [kg]   Total Mass
+settings.mnc = 0.400;                               % [kg]   Nosecone Mass
 
 clear ('Motors','name')
 
@@ -71,13 +69,13 @@ settings.S = pi*settings.C^2/4;                                             % [m
 
 % inertias for full configuration (with all the propellant embarqued) obtained with CAD's
 settings.Ixxf = 0.08;                     % [kg*m^2] Inertia to x-axis
-settings.Iyyf = 13.21;                    % [kg*m^2] Inertia to y-axis
-settings.Izzf = 13.21;                    % [kg*m^2] Inertia to z-axis
+settings.Iyyf = 13.05;                    % [kg*m^2] Inertia to y-axis
+settings.Izzf = 13.05;                    % [kg*m^2] Inertia to z-axis
 
 % inertias for empty configuration (all the propellant consumed) obtained with CAD's
 settings.Ixxe = 0.07;                     % [kg*m^2] Inertia to x-axis
-settings.Iyye = 10.27;                    % [kg*m^2] Inertia to y-axis
-settings.Izze = 10.27;                    % [kg*m^2] Inertia to z-axis
+settings.Iyye = 10.06;                    % [kg*m^2] Inertia to y-axis
+settings.Izze = 10.06;                    % [kg*m^2] Inertia to z-axis
 
 %% AERODYNAMICS DETAILS
 % These coefficients are obtained using MISSILE DATCOM
