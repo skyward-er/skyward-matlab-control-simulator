@@ -121,8 +121,6 @@ n_ada_old = 1;
 cpuTimes = zeros(nmax,1);
 iTimes = 0;
 g = 9.81;
-x_ada = settings.x_ada0;
-P_ada = settings.P_ada0;
 flagADA = false;
 
 while flagStopIntegration || n_old < nmax
@@ -289,8 +287,8 @@ while flagStopIntegration || n_old < nmax
     if iTimes==1
         x_prev    =  [X0; V0; Q0(2:4); Q0(1);0;0;0];
         P_prev    =   0.01*eye(12);
-        ada_prev  =   settings.x_ada0;
-        Pada_prev =   settings.P_ada0;
+        ada_prev  =   settings.x0_ada;
+        Pada_prev =   settings.P0_ada;
     else
         x_prev    =   x_est_tot(end,:);
         P_prev    =   P_c(:,:,end);

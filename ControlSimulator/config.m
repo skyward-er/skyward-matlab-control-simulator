@@ -142,7 +142,7 @@ settings.Q_ada      =  alfa*[1/3000      0         0;
                              0           1/300     0;
                              0           0         1/30;];
 settings.R_ada      =   800;     
-settings.P_ada0     =   [0.1      0      0;
+settings.P0_ada     =   [0.1      0      0;
                            0      0      0;
                            0      0      0;];
 
@@ -151,7 +151,7 @@ settings.a0         =   -30;
 % settings.x_ada0     =   [settings.p0/100, 0, settings.a0];
 % settings.x_ada0     =   [0, 0, settings.a0];
 
-settings.x_ada0     =   [settings.z0, 0, settings.a0];
+settings.x0_ada     =   [settings.z0, 0, settings.a0];
 settings.N_ada      =   100;
     
 %% CONTROL SETTINGS 
