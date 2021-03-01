@@ -1,5 +1,10 @@
 function [x_c,P_c,e,z]=correctorQuat(x_pred,P_pred,mag_sam,sigma_mag,mag_NED)
-%15/12/2020  ANY QUESTIONS CAN BE DIRECTED TO ALEJANDRO MONTERO FROM SKYWARD
+
+% Author: Alejandro Montero
+% Co-Autor: Alessandro Del Duca
+% Skyward Experimental Rocketry | ELC-SCS Dept | electronics@skywarder.eu
+% email: alejandro.montero@skywarder.eu, alessandro.delduca@skywarder.eu
+% Release date: 01/03/2021
 
 %-----------DESCRIPTION OF FUNCTION:------------------
 

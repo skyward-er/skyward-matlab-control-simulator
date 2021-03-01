@@ -1,5 +1,10 @@
 function [x,P,y_res] = correctionBarometer(x_pred,P_pred,h_sam,sigma_h)
-%13/11/2020  ANY QUESTIONS CAN BE DIRECTED TO ALEJANDRO MONTERO FROM SKYWARD
+
+% Author: Alejandro Montero
+% Co-Autor: Alessandro Del Duca
+% Skyward Experimental Rocketry | ELC-SCS Dept | electronics@skywarder.eu
+% email: alejandro.montero@skywarder.eu, alessandro.delduca@skywarder.eu
+% Release date: 01/03/2021
 
 %-----------DESCRIPTION OF FUNCTION:------------------
 

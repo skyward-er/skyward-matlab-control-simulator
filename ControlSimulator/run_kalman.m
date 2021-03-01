@@ -1,7 +1,12 @@
 function [x_c,P_c]=run_kalman(x_prev,P_prev,t_v,a_v,w_v,t_baro,baro,sigma_baro,...
                               t_mag,mag,sigma_mag,mag_NED,...
                               t_GPS,GPS,vGPS,sigma_GPS,n_sats,fix,QLinear,Qq)
-%23/02/2021 ANY QUESTIONS CAN BE DIRECTED TO ALEJANDRO MONTERO FROM SKYWARD
+
+% Author: Alejandro Montero
+% Co-Autor: Alessandro Del Duca
+% Skyward Experimental Rocketry | ELC-SCS Dept | electronics@kywarder.eu
+% email: alejandro.montero@skywarder.eu, alessandro.delduca@skywarder.eu
+% Release date: 01/03/2021
 
 %-----------DESCRIPTION OF FUNCTION:------------------
 % This function takes the angular velocity, the acceleration and the
