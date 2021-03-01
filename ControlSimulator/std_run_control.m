@@ -378,6 +378,11 @@ cpuTimes = cpuTimes(1:iTimes);
 Yf = Yf_tot(1:n_old, :);
 Tf = Tf_tot(1:n_old, :);
 
+i_apo = find(Tf<24.8);
+i_apo = max(i_apo);
+i_apo_est = find(t_est_tot<Tf(i_apo));
+i_apo_est=max(i_apo_est);
+
 flagMatr = flagMatr(1:n_old, :);
 %% RETRIVE PARAMETERS FROM THE ODE
 if not(settings.electronics)
@@ -385,99 +390,99 @@ if not(settings.electronics)
 end
 if true && not(settings.electronics)
 %% FIGURE: Barometer reads 
-fbaro = settings.frequencies.barometerFrequency;
-tp = Tf(1):1/fbaro:Tf(end);
-figure 
-subplot(2,1,1);plot(tp,pn_tot',Tf,p_tot'/100);grid on;xlabel('time [s]');ylabel('|P| [mBar]');
-legend('Pressure','Ground-truth','location','southeast');
-title('Barometer pressure reads');
-subplot(2,1,2);plot(tp,-hb_tot',Tf,-Yf(:,3));grid on;xlabel('time [s]');ylabel('|h| [m]');
-legend('Altitude','Ground-truth','location','northeast');
-title('Barometer altitude reads');
-figure 
-subplot(3,1,1);plot(t_ada_tot, x_ada_tot(:,1));grid on;xlabel('time [s]');ylabel('|P| [mBar]');
-title('ADA pressure estimation');
-subplot(3,1,2);plot(t_ada_tot,x_ada_tot(:,2));grid on;xlabel('time [s]');ylabel('|P_dot| [mBar/s]');
-title('ADA velocity estimation');
-subplot(3,1,3);plot(t_ada_tot,x_ada_tot(:,3));grid on;xlabel('time [s]');ylabel('|P_dot^2| [mBar/s^2]');
-title('ADA acceleration estimation');
+% fbaro = settings.frequencies.barometerFrequency;
+% tp = Tf(1):1/fbaro:Tf(end);
+% figure 
+% subplot(2,1,1);plot(tp,pn_tot',Tf,p_tot'/100);grid on;xlabel('time [s]');ylabel('|P| [mBar]');
+% legend('Pressure','Ground-truth','location','southeast');
+% title('Barometer pressure reads');
+% subplot(2,1,2);plot(tp,-hb_tot',Tf,-Yf(:,3));grid on;xlabel('time [s]');ylabel('|h| [m]');
+% legend('Altitude','Ground-truth','location','northeast');
+% title('Barometer altitude reads');
+% figure 
+% subplot(3,1,1);plot(t_ada_tot, x_ada_tot(:,1));grid on;xlabel('time [s]');ylabel('|P| [mBar]');
+% title('ADA pressure estimation');
+% subplot(3,1,2);plot(t_ada_tot,x_ada_tot(:,2));grid on;xlabel('time [s]');ylabel('|P_dot| [mBar/s]');
+% title('ADA velocity estimation');
+% subplot(3,1,3);plot(t_ada_tot,x_ada_tot(:,3));grid on;xlabel('time [s]');ylabel('|P_dot^2| [mBar/s^2]');
+% title('ADA acceleration estimation');
 %% FIGURE: Accelerometer reads
-faccel = settings.frequencies.accelerometerFrequency;
-ta = Tf(1):1/faccel:Tf(end);
-figure 
-subplot(3,1,1);plot(ta,accel_tot(:,1)/1000');grid on;xlabel('time [s]');ylabel('|ax| [g]');
-title('Accelerometer reads along x');
-subplot(3,1,2);plot(ta,accel_tot(:,2)/1000');grid on;xlabel('time [s]');ylabel('|ay| [g]');
-title('Accelerometer reads along y');
-subplot(3,1,3);plot(ta,accel_tot(:,3)/1000');grid on;xlabel('time [s]');ylabel('|az| [g]');
-title('Accelerometer reads along z');
+% faccel = settings.frequencies.accelerometerFrequency;
+% ta = Tf(1):1/faccel:Tf(end);
+% figure 
+% subplot(3,1,1);plot(ta,accel_tot(:,1)/1000');grid on;xlabel('time [s]');ylabel('|ax| [g]');
+% title('Accelerometer reads along x');
+% subplot(3,1,2);plot(ta,accel_tot(:,2)/1000');grid on;xlabel('time [s]');ylabel('|ay| [g]');
+% title('Accelerometer reads along y');
+% subplot(3,1,3);plot(ta,accel_tot(:,3)/1000');grid on;xlabel('time [s]');ylabel('|az| [g]');
+% title('Accelerometer reads along z');
 %% FIGURE: Gyroscope reads
-figure 
-subplot(3,1,1);plot(ta,gyro_tot(:,1)/1000');grid on;xlabel('time [s]');ylabel('|wx| [°/s]');
-title('Gyroscope reads along x');
-subplot(3,1,2);plot(ta,gyro_tot(:,2)/1000');grid on;xlabel('time [s]');ylabel('|wy| [°/s]');
-title('Gyroscope reads along y');
-subplot(3,1,3);plot(ta,gyro_tot(:,3)/1000');grid on;xlabel('time [s]');ylabel('|wz| [°/s]');
-title('Gyroscope reads along z');
+% figure 
+% subplot(3,1,1);plot(ta,gyro_tot(:,1)/1000');grid on;xlabel('time [s]');ylabel('|wx| [°/s]');
+% title('Gyroscope reads along x');
+% subplot(3,1,2);plot(ta,gyro_tot(:,2)/1000');grid on;xlabel('time [s]');ylabel('|wy| [°/s]');
+% title('Gyroscope reads along y');
+% subplot(3,1,3);plot(ta,gyro_tot(:,3)/1000');grid on;xlabel('time [s]');ylabel('|wz| [°/s]');
+% title('Gyroscope reads along z');
 %% FIGURE: Magnetometer reads
-figure 
-subplot(3,1,1);plot(ta,mag_tot(:,1)');grid on;xlabel('time [s]');ylabel('|mx| [Gauss]');
-title('Magnetometer reads along x');
-subplot(3,1,2);plot(ta,mag_tot(:,2)');grid on;xlabel('time [s]');ylabel('|my| [Gauss]');
-title('Magnetometer reads along y');
-subplot(3,1,3);plot(ta,mag_tot(:,3)');grid on;xlabel('time [s]');ylabel('|mz| [Gauss]');
-title('Magnetometer reads along z');
+% figure 
+% subplot(3,1,1);plot(ta,mag_tot(:,1)');grid on;xlabel('time [s]');ylabel('|mx| [Gauss]');
+% title('Magnetometer reads along x');
+% subplot(3,1,2);plot(ta,mag_tot(:,2)');grid on;xlabel('time [s]');ylabel('|my| [Gauss]');
+% title('Magnetometer reads along y');
+% subplot(3,1,3);plot(ta,mag_tot(:,3)');grid on;xlabel('time [s]');ylabel('|mz| [Gauss]');
+% title('Magnetometer reads along z');
 %% FIGURE: Gps reads
-fgps = settings.frequencies.gpsFrequency;
-tgps = Tf(1):1/fgps:Tf(end);
-figure 
-subplot(3,1,1);plot(tgps, gps_tot(:,1)');grid on;xlabel('time [s]');ylabel('|Pn| [m]');
-title('GPS position  North');
-subplot(3,1,2);plot(tgps, gps_tot(:,2)');grid on;xlabel('time [s]');ylabel('|Pe| [m]');
-title('GPS position  East');
-subplot(3,1,3);plot(tgps,-gps_tot(:,3)');grid on;xlabel('time [s]');ylabel('|Pu| [m]');
-title('GPS position Upward');
-figure 
-subplot(3,1,1);plot(tgps, gpsv_tot(:,1)');grid on;xlabel('time [s]');ylabel('|Vn| [m/s]');
-title('GPS velocity  North');
-subplot(3,1,2);plot(tgps, gpsv_tot(:,2)');grid on;xlabel('time [s]');ylabel('|Ve| [m/s]');
-title('GPS velocity  East');
-subplot(3,1,3);plot(tgps,-gpsv_tot(:,3)');grid on;xlabel('time [s]');ylabel('|Vu| [m/s]');
-title('GPS velocity Upward');
+% fgps = settings.frequencies.gpsFrequency;
+% tgps = Tf(1):1/fgps:Tf(end);
+% figure 
+% subplot(3,1,1);plot(tgps, gps_tot(:,1)');grid on;xlabel('time [s]');ylabel('|Pn| [m]');
+% title('GPS position  North');
+% subplot(3,1,2);plot(tgps, gps_tot(:,2)');grid on;xlabel('time [s]');ylabel('|Pe| [m]');
+% title('GPS position  East');
+% subplot(3,1,3);plot(tgps,-gps_tot(:,3)');grid on;xlabel('time [s]');ylabel('|Pu| [m]');
+% title('GPS position Upward');
+% figure 
+% subplot(3,1,1);plot(tgps, gpsv_tot(:,1)');grid on;xlabel('time [s]');ylabel('|Vn| [m/s]');
+% title('GPS velocity  North');
+% subplot(3,1,2);plot(tgps, gpsv_tot(:,2)');grid on;xlabel('time [s]');ylabel('|Ve| [m/s]');
+% title('GPS velocity  East');
+% subplot(3,1,3);plot(tgps,-gpsv_tot(:,3)');grid on;xlabel('time [s]');ylabel('|Vu| [m/s]');
+% title('GPS velocity Upward');
 %% FIGURE: Estimated position vs ground-truth
 figure
-subplot(3,1,1);plot(t_est_tot, x_est_tot(:,1),Tf, Yf(:,1));grid on;xlabel('time [s]');ylabel('|Pn| [m]');
+subplot(3,1,1);plot(t_est_tot(1:i_apo_est), x_est_tot(1:i_apo_est,1),Tf(1:i_apo), Yf(1:i_apo,1));grid on;xlabel('time [s]');ylabel('|Pn| [m]');
 legend('North','Ground-truth','location','best');
 title('Estimated North position vs ground-truth');
-subplot(3,1,2);plot(t_est_tot, x_est_tot(:,2),Tf, Yf(:,2));grid on;xlabel('time [s]');ylabel('|Pe| [m]');
+subplot(3,1,2);plot(t_est_tot(1:i_apo_est), x_est_tot(1:i_apo_est,2),Tf(1:i_apo), Yf(1:i_apo,2));grid on;xlabel('time [s]');ylabel('|Pe| [m]');
 legend('East','Ground-truth','location','best');
 title('Estimated East position vs ground-truth');
-subplot(3,1,3);plot(t_est_tot,-x_est_tot(:,3),Tf,-Yf(:,3));grid on;xlabel('time [s]');ylabel('|Pu| [m]');
+subplot(3,1,3);plot(t_est_tot(1:i_apo_est), -x_est_tot(1:i_apo_est,3),Tf(1:i_apo), -Yf(1:i_apo,3));grid on;xlabel('time [s]');ylabel('|Pu| [m]');
 legend('Upward','Ground-truth','location','best');
 title('Estimated Upward position vs ground-truth');
 %% FIGURE: Estimated velocities vs ground-truth
 figure
-subplot(3,1,1);plot(t_est_tot, x_est_tot(:,4),Tf, v_NED_tot(:,1));grid on;xlabel('time [s]');ylabel('|Vn| [m/s]');
+subplot(3,1,1);plot(t_est_tot(1:i_apo_est), x_est_tot(1:i_apo_est,4),Tf(1:i_apo), v_NED_tot(1:i_apo,1));grid on;xlabel('time [s]');ylabel('|Vn| [m/s]');
 legend('North','Ground-truth','location','best');
 title('Estimated North velocity vs ground-truth');
-subplot(3,1,2);plot(t_est_tot, x_est_tot(:,5),Tf, v_NED_tot(:,2));grid on;xlabel('time [s]');ylabel('|Ve| [m/s]');
+subplot(3,1,2);plot(t_est_tot(1:i_apo_est), x_est_tot(1:i_apo_est,5),Tf(1:i_apo), v_NED_tot(1:i_apo,2));grid on;xlabel('time [s]');ylabel('|Ve| [m/s]');
 legend('East','Ground-truth','location','best');
 title('Estimated East velocity vs ground-truth');
-subplot(3,1,3);plot(t_est_tot,-x_est_tot(:,6),Tf,-v_NED_tot(:,3));grid on;xlabel('time [s]');ylabel('|Vu| [m/s]');
+subplot(3,1,3);plot(t_est_tot(1:i_apo_est+1),-x_est_tot(1:i_apo_est+1,6),Tf(1:i_apo),-v_NED_tot(1:i_apo,3));grid on;xlabel('time [s]');ylabel('|Vu| [m/s]');
 legend('Upward','Ground-truth','location','best');
 title('Estimated Upward velocity vs ground-truth');
 %% FIGURE: Estimated quaternions vs ground-truth
 figure
-subplot(4,1,1);plot(t_est_tot,x_est_tot(:,10),Tf,Yf(:,10));grid on;ylabel('|q0| [-]');
+subplot(4,1,1);plot(t_est_tot(1:i_apo_est),x_est_tot(1:i_apo_est,10),Tf(1:i_apo),Yf(1:i_apo,10));grid on;ylabel('|q0| [-]');
 legend('Estimated q0','Ground-truth','location','northeast');
 title('Estimated q0 vs ground-truth');
-subplot(4,1,2);plot(t_est_tot,x_est_tot(:,7),Tf,Yf(:,11));grid on;ylabel('|q1| [-]');
+subplot(4,1,2);plot(t_est_tot(1:i_apo_est),x_est_tot(1:i_apo_est,7),Tf(1:i_apo),Yf(1:i_apo,11));grid on;ylabel('|q1| [-]');
 legend('Estimated q1','Ground-truth','location','northeast');
 title('Estimated q1 vs ground-truth');
-subplot(4,1,3);plot(t_est_tot,x_est_tot(:,8),Tf,Yf(:,12));grid on;ylabel('|q2| [-]');
+subplot(4,1,3);plot(t_est_tot(1:i_apo_est),x_est_tot(1:i_apo_est,8),Tf(1:i_apo),Yf(1:i_apo,12));grid on;ylabel('|q2| [-]');
 legend('Estimated q2','Ground-truth','location','northeast');
 title('Estimated q2 vs ground-truth');
-subplot(4,1,4);plot(t_est_tot,x_est_tot(:,9),Tf,Yf(:,13));grid on;ylabel('|q3| [-]');
+subplot(4,1,4);plot(t_est_tot(1:i_apo_est),x_est_tot(1:i_apo_est,9),Tf(1:i_apo),Yf(1:i_apo,13));grid on;ylabel('|q3| [-]');
 legend('Estimated q3','Ground-truth','location','northeast');
 title('Estimated q3 vs ground-truth');
 end
