@@ -1,4 +1,4 @@
-function [Yf, Tf, cpuTimes, flagMatr, dataBallisticFlight] = std_run_control(settings)
+function [Yf, Tf, t_ada, cpuTimes, flagMatr, dataBallisticFlight] = std_run_control(settings)
 %{
 
 STD_RUN_BALLISTIC - This function runs a standard ballistic (non-stochastic) simulation
@@ -73,12 +73,21 @@ else
 end
 
 %% MAGNETIC FIELD MODEL
-dy = decyear(settings.launchDate);
 hmax = 6000;
-[XYZ0] = wrldmagm(0, settings.lat0, settings.lon0, dy, '2020');
-[XYZh] = wrldmagm(hmax, settings.lat0, settings.lon0, dy, '2020');
+% %Use this lines if your MATLAB version is up to 2020
+% dy = decyear(settings.launchDate);
+% [XYZ0,H0,D0,I0,F0] = wrldmagm(0, settings.lat0, settings.lon0, dy, '2020');
+% [XYZh] = wrldmagm(hmax, settings.lat0, settings.lon0, dy, '2020');
+% fprintf('Horizontal intensity in nT: %g [nT] \n', H0)
+% fprintf('Declination in degrees: %g [°]  \n', D0)
+% fprintf('Inclination in degrees: %g [°]  \n', I0)
+% fprintf('Total intensity in nT:  %g [nT] \n', F0)
+    
+% %Use this next line if your MATLAB version is previous to 2020
+load('magn_field.mat');
 
 magneticFieldApprox = @(zSlm) XYZ0 + (XYZh-XYZ0)./hmax.*zSlm;
+
 %% SENSORS DEFINITION
 addpath('../sensors');
 addpath('../sensors/data/MS580301BA01');
@@ -100,13 +109,18 @@ Yf_tot = zeros(nmax, 16);
 Tf_tot = zeros(nmax, 1);
 p_tot  = zeros(nmax, 1);
 C = zeros(nmax, 1);
-n_old = 1;
-np_old = 1;
-na_old = 1;
-ngps_old = 1;
+n_old     = 1;
+np_old    = 1;
+na_old    = 1;
+ngps_old  = 1;
+n_est_old = 1;
+n_ada_old = 1;
 cpuTimes = zeros(nmax,1);
 iTimes = 0;
 g = 9.81;
+x_ada = settings.x_ada0;
+P_ada = settings.P_ada0;
+flagADA = false;
 
 while flagStopIntegration || n_old < nmax
     tic 
@@ -173,31 +187,54 @@ while flagStopIntegration || n_old < nmax
         end
     end
 
+    
+    %rotation of velocity to inertial axis
+    A = zeros(3,3,size(Yf,1));
+    v_NED = zeros(size(Yf,1),3);
+     for ii=1:size(Yf,1)
+         
+         q               = [Yf(ii,11:13),Yf(ii,10)];        %composition of the quaternion in the form [q,q0]
+
+         v_b             = Yf(ii,4:6)';                     %Velocity in body axis (column vector)
+         
+         q_mat           =  [0      -q(3)      q(2);        %Matrix needed for the
+                             q(3)    0        -q(1);        %definition of rotation
+                            -q(2)    q(1)      0   ;];      %matrix
+                   
+         A(:,:,ii)       =   (q(4)^2-q(1:3)*q(1:3)')*eye(3) + 2*q(1:3)'*q(1:3) - 2*q(4)*q_mat;               
+                                                            %Rotation matrix to
+                                                            %body axis from inertial
+                                                            
+         v_NED(ii,:)     = (A(:,:,ii)'*v_b)';               %Matrix with the velocity components in NED;
+                                                            %each column is a velocity component
+     end
+   
+     
     [sensorData] = manageSignalFrequencies(magneticFieldApprox, flagAscent, settings, Yf, Tf, x, uw, vw, ww, uncert);
     [~, ~, p, ~]  = atmosisa(-Yf(:,3)) ; 
-    
-    
+ 
  
     if settings.dataNoise
-        
-    pn      = zeros(1,length(sensorData.barometer.time));
-    accel   = zeros(length(sensorData.accelerometer.time),3);
-    gyro    = zeros(length(sensorData.gyro.time),3);
-    mag     = zeros(length(sensorData.magnetometer.time),3);
-    mag_msa = zeros(length(sensorData.magnetometer.time),3);
-    mag_mod = zeros(length(sensorData.magnetometer.time),1);
-    gps     = zeros(length(sensorData.gps.time),3);
-    gpsv    = zeros(length(sensorData.gps.time),3);
-        
+
         % Baro Acquisition loop
+        pn      = zeros(1,length(sensorData.barometer.time));
+        h_baro  = zeros(1,length(sensorData.barometer.time));
+
         for ii=1:length(sensorData.barometer.time)
-                pn(ii,1) = MS580301BA01.sens(sensorData.barometer.measures(ii)/100,...
-                                           sensorData.barometer.temperature(ii) - 273.15);  
+                pn(ii)        = MS580301BA01.sens(sensorData.barometer.measures(ii)/100,...
+                                                  sensorData.barometer.temperature(ii) - 273.15);  
+                h_baro(ii)    = -atmospalt(pn(ii)*100,'None');
         end 
-        pn_tot(np_old:np_old + size(pn,1) - 1,1) = pn(1:end,1)';
-        np_old = np_old + size(pn,1);
+        pn_tot(np_old:np_old + size(pn,2) - 1,1) = pn(1:end);
+        hb_tot(np_old:np_old + size(pn,2) - 1,1) = h_baro(1:end);
+        np_old = np_old + size(pn,2);
         
+      
         % IMU Acquisition loop
+        accel   = zeros(length(sensorData.accelerometer.time),3);
+        gyro    = zeros(length(sensorData.gyro.time),3);
+        mag     = zeros(length(sensorData.magnetometer.time),3);  
+        
         for ii=1:length(sensorData.accelerometer.time)
                 [accel(ii,1),accel(ii,2),accel(ii,3)] = ACCEL_LSM9DS1.sens(...
                                                  sensorData.accelerometer.measures(ii,1)*1000/g,...
@@ -208,37 +245,36 @@ while flagStopIntegration || n_old < nmax
                                                  sensorData.gyro.measures(ii,1)*1000*360/2/pi,...
                                                  sensorData.gyro.measures(ii,2)*1000*360/2/pi,...
                                                  sensorData.gyro.measures(ii,3)*1000*360/2/pi,...
-                                                 14.8500);  
+                                                 14.8500);
                  [mag(ii,1),mag(ii,2),mag(ii,3)]      = MAGN_LSM9DS1.sens(...
-                                                 sensorData.magnetometer.measure(ii,1)*0.01,...
-                                                 sensorData.magnetometer.measure(ii,2)*0.01,...
-                                                 sensorData.magnetometer.measure(ii,3)*0.01,...
-                                                 14.8500);  
-                 mag_msa(ii,:)      =          [ sensorData.magnetometer.measure(ii,1)*0.01,...
-                                                 sensorData.magnetometer.measure(ii,2)*0.01,...
-                                                 sensorData.magnetometer.measure(ii,3)*0.01];     
-                
-                 mag_mod(ii,1) =sqrt(mag_msa(ii,1)^2 + mag_msa(ii,2)^2 + mag_msa(ii,3)^2);                      
+                                                 sensorData.magnetometer.measures(ii,1)*0.01,...
+                                                 sensorData.magnetometer.measures(ii,2)*0.01,...
+                                                 sensorData.magnetometer.measures(ii,3)*0.01,...
+                                                 14.8500);   
+                 accel(ii,:) = accel(ii,:)*g/1000;
+                 gyro(ii,:)  = gyro(ii,:)*2*pi/360/1000;
                                             
         end 
         accel_tot(na_old:na_old + size(accel,1) - 1,:) = accel(1:end,:) ;
         gyro_tot(na_old:na_old + size(gyro,1) - 1,:)   = gyro(1:end,:) ;
         mag_tot(na_old:na_old + size(mag,1) - 1,:)     = mag(1:end,:) ;
-        mag_msa_tot(na_old:na_old + size(mag,1) - 1,:)     = mag_msa(1:end,:) ;
-        mag_mod_tot(na_old:na_old + size(mag,1) - 1,1)     = mag_mod(1:end,:) ;
         na_old = na_old + size(accel,1);
         
+
         % GPS Acquisition loop
+        gps     = zeros(length(sensorData.gps.time),3);
+        gpsv    = zeros(length(sensorData.gps.time),3);
+        
         for ii=1:length(sensorData.gps.time)
             [gps(ii,1),gps(ii,2),gps(ii,3)]   =  GPS_NEOM9N.sens(...
                                                  sensorData.gps.positionMeasures(ii,1),...
                                                  sensorData.gps.positionMeasures(ii,2),...
-                                                 sensorData.gps.positionMeasures(ii,3),...
+                                               - sensorData.gps.positionMeasures(ii,3),...
                                                  14.8500);  
             [gpsv(ii,1),gpsv(ii,2),gpsv(ii,3)] = GPS_NEOM9N.sens(...
                                                  sensorData.gps.velocityMeasures(ii,1),...
                                                  sensorData.gps.velocityMeasures(ii,2),...
-                                                 sensorData.gps.velocityMeasures(ii,3),...
+                                               - sensorData.gps.velocityMeasures(ii,3),...
                                                  14.8500);  
         end
         gps_tot(ngps_old:ngps_old + size(gps,1) - 1,:)   =  gps(1:end,:) ;
@@ -247,10 +283,40 @@ while flagStopIntegration || n_old < nmax
 
     end
   
-
+    if iTimes==1
+        x_prev    =  [X0; V0; Q0(2:4); Q0(1);0;0;0];
+        P_prev    =   0.01*eye(12);
+        ada_prev  =   settings.x_ada0;
+        Pada_prev =   settings.P_ada0;
+    else
+        x_prev    =   x_est_tot(end,:);
+        P_prev    =   P_c(:,:,end);
+        ada_prev  =   x_ada_tot(end,:);
+        Pada_prev =   P_ada(:,:,end);
+    end
+    
+    %%%%%%%%%%%%% ADA %%%%%%%%%%%%%
+    if flagADA == false
+    [x_ada, P_ada, flagADA, t_ada]   =  run_ADA(ada_prev, Pada_prev, h_baro, sensorData.barometer.time, settings.Q_ada, settings.N_ada);
+    end
+     x_ada_tot(n_ada_old:n_ada_old + size(x_ada(:,1),1)-1,:)  = x_ada(1:end,:);
+     t_ada_tot(n_ada_old:n_ada_old + size(x_ada(:,1),1)-1)    = sensorData.barometer.time;              
+     n_ada_old = n_ada_old + size(x_ada(1,:)); 
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     %%%%%%% kalmann filter %%%%%%%%
-    % kalman(p, acc_body, ang_vel, q, [u, v, w]ned, [x, y, z]ned )
+    n_satellite = 4;
+    flagGPS_fix = true;
+    [x_c,P_c]   =  run_kalman(x_prev,P_prev,...
+                              sensorData.accelerometer.time, accel,...
+                              gyro,...
+                              sensorData.barometer.time, h_baro, settings.sigma_baro,...
+                              sensorData.magnetometer.time, mag,settings.sigma_mag, XYZ0*0.01,...
+                              sensorData.gps.time, gps,gpsv, settings.sigma_GPS,...
+                              n_satellite,flagGPS_fix,settings.QLinear,settings.Qq);
+     x_est_tot(n_est_old:n_est_old + size(x_c(:,1),1)-1,:)  = x_c(1:end,:);
+     t_est_tot(n_est_old:n_est_old + size(x_c(:,1),1)-1) = sensorData.accelerometer.time;              
+     n_est_old = n_est_old + size(x_c(1,:)); 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     if flagAeroBrakes
@@ -294,6 +360,8 @@ while flagStopIntegration || n_old < nmax
     p_tot(n_old:n_old+n-1,1) = p(1:end, 1);
     C(n_old:n_old+n-1) = x;
     
+    v_NED_tot(n_old:n_old+n-1,:) = v_NED;
+    
     n_old = n_old + n -1;
    
     cpuTimes(iTimes) = toc;
@@ -313,59 +381,110 @@ Yf = Yf_tot(1:n_old, :);
 Tf = Tf_tot(1:n_old, :);
 
 flagMatr = flagMatr(1:n_old, :);
-
 %% RETRIVE PARAMETERS FROM THE ODE
 if not(settings.electronics)
     dataBallisticFlight = RecallOdeFcn(@ascent, Tf(flagMatr(:, 2)), Yf(flagMatr(:, 2), :), settings, C, uw, vw, ww, uncert);
 end
-
-% FIGURE: Barometer reads 
+if true && not(settings.electronics)
+%% FIGURE: Barometer reads 
 fbaro = settings.frequencies.barometerFrequency;
 tp = Tf(1):1/fbaro:Tf(end);
 figure 
-subplot(2,1,1);plot(tp,pn_tot');grid on;xlabel('time [s]');ylabel('|P| [mBar]');
-subplot(2,1,2);plot(Tf,p_tot'/100);grid on;xlabel('time [s]');ylabel('|P| [mBar]');
-title('Barometer reads');
-% FIGURE: Accelerometer reads
+subplot(2,1,1);plot(tp,pn_tot',Tf,p_tot'/100);grid on;xlabel('time [s]');ylabel('|P| [mBar]');
+legend('Pressure','Ground-truth','location','southeast');
+title('Barometer pressure reads');
+subplot(2,1,2);plot(tp,-hb_tot',Tf,-Yf(:,3));grid on;xlabel('time [s]');ylabel('|h| [m]');
+legend('Altitude','Ground-truth','location','northeast');
+title('Barometer altitude reads');
+figure 
+subplot(3,1,1);plot(t_ada_tot, x_ada_tot(:,1));grid on;xlabel('time [s]');ylabel('|P| [mBar]');
+title('ADA pressure estimation');
+subplot(3,1,2);plot(t_ada_tot,x_ada_tot(:,2));grid on;xlabel('time [s]');ylabel('|P_dot| [mBar/s]');
+title('ADA velocity estimation');
+subplot(3,1,3);plot(t_ada_tot,x_ada_tot(:,3));grid on;xlabel('time [s]');ylabel('|P_dot^2| [mBar/s^2]');
+title('ADA acceleration estimation');
+%% FIGURE: Accelerometer reads
 faccel = settings.frequencies.accelerometerFrequency;
 ta = Tf(1):1/faccel:Tf(end);
 figure 
-subplot(3,1,1);plot(ta,accel_tot(:,1)/1000');grid on;xlabel('time [s]');ylabel('|Acc x| [mg]');
-subplot(3,1,2);plot(ta,accel_tot(:,2)/1000');grid on;xlabel('time [s]');ylabel('|Acc y| [mg]');
-subplot(3,1,3);plot(ta,accel_tot(:,3)/1000');grid on;xlabel('time [s]');ylabel('|Acc z| [mg]');
-title('Accelerometer reads');
-% FIGURE: Gyroscope reads
+subplot(3,1,1);plot(ta,accel_tot(:,1)/1000');grid on;xlabel('time [s]');ylabel('|ax| [g]');
+title('Accelerometer reads along x');
+subplot(3,1,2);plot(ta,accel_tot(:,2)/1000');grid on;xlabel('time [s]');ylabel('|ay| [g]');
+title('Accelerometer reads along y');
+subplot(3,1,3);plot(ta,accel_tot(:,3)/1000');grid on;xlabel('time [s]');ylabel('|az| [g]');
+title('Accelerometer reads along z');
+%% FIGURE: Gyroscope reads
 figure 
 subplot(3,1,1);plot(ta,gyro_tot(:,1)/1000');grid on;xlabel('time [s]');ylabel('|Ang vel x| [°/s]');
 subplot(3,1,2);plot(ta,gyro_tot(:,2)/1000');grid on;xlabel('time [s]');ylabel('|Ang vel y| [°/s]');
 subplot(3,1,3);plot(ta,gyro_tot(:,3)/1000');grid on;xlabel('time [s]');ylabel('|Ang vel z| [°/s]');
 title('Gyroscope reads');
-% FIGURE: Magnetometer reads
+%% FIGURE: Magnetometer reads
 figure 
-subplot(3,1,1);plot(ta,mag_tot(:,1)/1000');grid on;xlabel('time [s]');ylabel('|Mag field x| [gauss]');
-subplot(3,1,2);plot(ta,mag_tot(:,2)/1000');grid on;xlabel('time [s]');ylabel('|Mag field y| [gauss]');
-subplot(3,1,3);plot(ta,mag_tot(:,3)/1000');grid on;xlabel('time [s]');ylabel('|Mag field z| [gauss]');
-title('Magnetometer reads')
-figure 
-subplot(3,1,1);plot(ta,mag_msa_tot(:,1)/1000');grid on;xlabel('time [s]');ylabel('|Mag field x| [gauss]');
-subplot(3,1,2);plot(ta,mag_msa_tot(:,2)/1000');grid on;xlabel('time [s]');ylabel('|Mag field y| [gauss]');
-subplot(3,1,3);plot(ta,mag_msa_tot(:,3)/1000');grid on;xlabel('time [s]');ylabel('|Mag field z| [gauss]');
-title('Magnetometer msa interpolation')
-figure
-plot(ta,mag_mod_tot/1000');grid on;xlabel('time [s]');ylabel('|Mag field| [gauss]');
-title('Magnetometer modulus')
-% FIGURE: Gps reads
+subplot(3,1,1);plot(ta,mag_tot(:,1)');grid on;xlabel('time [s]');ylabel('|mx| [Gauss]');
+title('Magnetometer reads along x');
+subplot(3,1,2);plot(ta,mag_tot(:,2)');grid on;xlabel('time [s]');ylabel('|my| [Gauss]');
+title('Magnetometer reads along y');
+subplot(3,1,3);plot(ta,mag_tot(:,3)');grid on;xlabel('time [s]');ylabel('|mz| [Gauss]');
+title('Magnetometer reads along z');
+%% FIGURE: Gps reads
 fgps = settings.frequencies.gpsFrequency;
 tgps = Tf(1):1/fgps:Tf(end);
 figure 
-subplot(3,1,1);plot(tgps,gps_tot(:,1)');grid on;xlabel('time [s]');ylabel('|Position N| [m]');
-subplot(3,1,2);plot(tgps,gps_tot(:,2)');grid on;xlabel('time [s]');ylabel('|Position E| [m]');
-subplot(3,1,3);plot(tgps,gps_tot(:,3)');grid on;xlabel('time [s]');ylabel('|Position D| [m]');
-title('GPS position reads');
+subplot(3,1,1);plot(tgps, gps_tot(:,1)');grid on;xlabel('time [s]');ylabel('|Pn| [m]');
+title('GPS position  North');
+subplot(3,1,2);plot(tgps, gps_tot(:,2)');grid on;xlabel('time [s]');ylabel('|Pe| [m]');
+title('GPS position  East');
+subplot(3,1,3);plot(tgps,-gps_tot(:,3)');grid on;xlabel('time [s]');ylabel('|Pu| [m]');
+title('GPS position Upward');
 figure 
 subplot(3,1,1);plot(tgps,gpsv_tot(:,1)');grid on;xlabel('time [s]');ylabel('|Velocity N| [m/s]');
 subplot(3,1,2);plot(tgps,gpsv_tot(:,2)');grid on;xlabel('time [s]');ylabel('|Velocity E| [m/s]');
 subplot(3,1,3);plot(tgps,gpsv_tot(:,3)');grid on;xlabel('time [s]');ylabel('|Velocity D| [m/s]');
 title('GPS velocity reads');
-
+subplot(3,1,1);plot(tgps, gpsv_tot(:,1)');grid on;xlabel('time [s]');ylabel('|Vn| [m/s]');
+title('GPS velocity  North');
+subplot(3,1,2);plot(tgps, gpsv_tot(:,2)');grid on;xlabel('time [s]');ylabel('|Ve| [m/s]');
+title('GPS velocity  East');
+subplot(3,1,3);plot(tgps,-gpsv_tot(:,3)');grid on;xlabel('time [s]');ylabel('|Vu| [m/s]');
+title('GPS velocity Upward');
+%% FIGURE: Estimated position vs ground-truth
+figure
+subplot(3,1,1);plot(t_est_tot, x_est_tot(:,1),Tf, Yf(:,1));grid on;xlabel('time [s]');ylabel('|Pn| [m]');
+legend('North','Ground-truth','location','best');
+title('Estimated North position vs ground-truth');
+subplot(3,1,2);plot(t_est_tot, x_est_tot(:,2),Tf, Yf(:,2));grid on;xlabel('time [s]');ylabel('|Pe| [m]');
+legend('East','Ground-truth','location','best');
+title('Estimated East position vs ground-truth');
+subplot(3,1,3);plot(t_est_tot,-x_est_tot(:,3),Tf,-Yf(:,3));grid on;xlabel('time [s]');ylabel('|Pu| [m]');
+legend('Upward','Ground-truth','location','best');
+title('Estimated Upward position vs ground-truth');
+%% FIGURE: Estimated velocities vs ground-truth
+figure
+subplot(3,1,1);plot(t_est_tot, x_est_tot(:,4),Tf, v_NED_tot(:,1));grid on;xlabel('time [s]');ylabel('|Vn| [m/s]');
+legend('North','Ground-truth','location','best');
+title('Estimated North velocity vs ground-truth');
+subplot(3,1,2);plot(t_est_tot, x_est_tot(:,5),Tf, v_NED_tot(:,2));grid on;xlabel('time [s]');ylabel('|Ve| [m/s]');
+legend('East','Ground-truth','location','best');
+title('Estimated East velocity vs ground-truth');
+subplot(3,1,3);plot(t_est_tot,-x_est_tot(:,6),Tf,-v_NED_tot(:,3));grid on;xlabel('time [s]');ylabel('|Vu| [m/s]');
+legend('Upward','Ground-truth','location','best');
+title('Estimated Upward velocity vs ground-truth');
+%% FIGURE: Estimated quaternions vs ground-truth
+figure
+subplot(4,1,1);plot(t_est_tot,x_est_tot(:,10),Tf,Yf(:,10));grid on;ylabel('|q0| [-]');
+legend('Estimated q0','Ground-truth','location','northeast');
+title('Estimated q0 vs ground-truth');
+subplot(4,1,2);plot(t_est_tot,x_est_tot(:,7),Tf,Yf(:,11));grid on;ylabel('|q1| [-]');
+legend('Estimated q1','Ground-truth','location','northeast');
+title('Estimated q1 vs ground-truth');
+subplot(4,1,3);plot(t_est_tot,x_est_tot(:,8),Tf,Yf(:,12));grid on;ylabel('|q2| [-]');
+legend('Estimated q2','Ground-truth','location','northeast');
+title('Estimated q2 vs ground-truth');
+subplot(4,1,4);plot(t_est_tot,x_est_tot(:,9),Tf,Yf(:,13));grid on;ylabel('|q3| [-]');
+legend('Estimated q3','Ground-truth','location','northeast');
+title('Estimated q3 vs ground-truth');
 end
+end
+
+
