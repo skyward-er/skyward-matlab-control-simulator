@@ -1,5 +1,11 @@
 classdef GPS < Sensor3D
-    %GPS GPS Sensor
+    
+    % Author: Jan Hammelman
+    % Skyward Experimental Rocketry | ELC-SCS Dept | electronics@skywarder.eu
+    % email: jan.hammelmann@skywarder.eu,alessandro.delduca@skywarder.eu
+    % Release date: 01/03/2021
+    
+    %   GPS Sensor
     %   Uses Sensor3D methods but tronsformes lat and lon degree data in
     %   meter before and afterwards transformes it back to degree
     
