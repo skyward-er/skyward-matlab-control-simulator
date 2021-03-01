@@ -116,6 +116,7 @@ if settings.plots && not(settings.electronics)
     subplot(1, 2, 2)
     plot(Tf(flagMatr(:, 2)), abs_A/9.81), grid on;
     xlabel('time [s]'), ylabel('|A| [g]');
+
        
 end
 
