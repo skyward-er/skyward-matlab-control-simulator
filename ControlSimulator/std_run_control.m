@@ -114,8 +114,7 @@ coeff_Cd = data.coeffs;
 
 % Load the trajectories
 struct_trajectories = load('Trajectories_FULL');
-% struct_trajectories = load('Trajectories_FULL_xyz');
-data_trajectories = struct_trajectories.trajectories_saving;
+data_trajectories = struct_trajectories.trajectories_saving_FULL;
 
 % Define global variables
 global delta_S_prec alpha_degree_prec index_min_value iteration_flag chosen_trajectory
