@@ -2,7 +2,7 @@ function [alpha_degree, Vz_setpoint, z_setpoint, U, formula, Cd, delta_S] = cont
 
 % Define global variables
 global data_trajectories coeff_Cd 
-global Kp Ki I alpha_degree_prec index_min_value iteration_flag chosen_trajectory saturation
+global Kp_2 Ki_2 I alpha_degree_prec index_min_value iteration_flag chosen_trajectory saturation
 
 %% TRAJECTORY SELECTION and REFERENCES COMPUTATION
 
@@ -75,9 +75,9 @@ dt = 0.1;   % se viene modificato, bisogna modificare pure i PID values
 % PID
 error = (Vz_setpoint - Vz); % Changed the signum
 
-P = Kp*error;
+P = Kp_2*error;
 if saturation == false
-    I = I + Ki*error*dt;
+    I = I + Ki_2*error*dt;
 end
 
 U = P + I;
@@ -143,6 +143,10 @@ if (rate > rate_limiter_max)
 elseif (rate < rate_limiter_min)
     alpha_degree = sample_time*rate_limiter_min + alpha_degree_prec;
 end
+
+% Smooth the control variable with a filter
+filter_coeff = 0.9;
+alpha_degree = filter_coeff*alpha_degree + (1-filter_coeff)*alpha_degree_prec;
 
 alpha_degree = round(alpha_degree);
 alpha_degree_prec = alpha_degree;
