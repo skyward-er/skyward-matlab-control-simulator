@@ -152,7 +152,7 @@ settings.a0         =    30;
 % settings.x_ada0     =   [0, 0, settings.a0];
 
 settings.x0_ada     =   [settings.z0, 0, settings.a0];
-settings.N_ada      =   100;
+settings.N_ada      =   30;
     
 %% CONTROL SETTINGS 
 

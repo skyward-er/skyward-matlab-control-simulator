@@ -1,4 +1,4 @@
-function [x_ada,P_ada,flagADA,t_ADA]   =  run_ADA(x_ada, P_ada, h_baro, t_baro, Q_ada, R_ada)
+function [x_ada, P_ada, flag_ADA, t_ADA, count_ADA]   =  run_ADA(x_ada, P_ada, h_baro, t_baro, Q_ada, R_ada, N, count_ADA)
 
 % Author: Alessandro Del Duca
 % Skyward Experimental Rocketry | ELC-SCS Dept | electronics@skywarder.eu
@@ -17,33 +17,35 @@ function [x_ada,P_ada,flagADA,t_ADA]   =  run_ADA(x_ada, P_ada, h_baro, t_baro, 
 % - v(t+1) = vt + a*dt
 % - a(t+1) = const
 % with observation on the first state y(t) = p(t)
-%     -INPUTS: 
-%         -x_ada:   1x3 VECTOR OF PREVIOUS VALUES --> p,v,a
+%      INPUTS: 
+%         - x_ada:   1x3 VECTOR OF PREVIOUS VALUES --> p,v,a
 %
-%         -P_ada:   3x3 MATRIX OF PREVIOUS COVARIANCE OF STATE
+%         - P_ada:   3x3 MATRIX OF PREVIOUS COVARIANCE OF STATE
 %
-%         -t_baro:  VECTOR OF TIME INSTANTS AT WHICH THE BAROMETER TOOK 
-%                   SAMPLES INSIDE THE 0.1 INTEGRATION PERIOD. SINCE IT RUNS
-%                   AT 20 HZ, THIS IS A 2x1 VECTOR. s
+%         - t_baro:  VECTOR OF TIME INSTANTS AT WHICH THE BAROMETER TOOK 
+%                    SAMPLES INSIDE THE 0.1 INTEGRATION PERIOD. SINCE IT RUNS
+%                    AT 20 HZ, THIS IS A 2x1 VECTOR. s
 %
-%         -h_baro:  CORRESPONDING ALTITUDE MEASUREMENTS FROM THE BAROMETER.
-%                   2x1. m
+%         - h_baro:  CORRESPONDING ALTITUDE MEASUREMENTS FROM THE BAROMETER.
+%                    2x1. m
 %
-%         -Q_ada:   COVARIANCE MATRIX OF PROCESS NOISE. 3x3   
+%         - Q_ada:   COVARIANCE MATRIX OF PROCESS NOISE. 3x3   
 %
-%         -R_ada:   COVARIANCE MATRIX OF OBSERVATION NOISE. 1x1   
+%         - R_ada:   COVARIANCE MATRIX OF OBSERVATION NOISE. 1x1   
 %
-%       -OUTPUTS:
-%         -x_ada:   FILTERED STATES OF THE ADA 
+%       OUTPUTS:
+%         - x_ada:   FILTERED STATES OF THE ADA 
 % 
-%         -P_ada:   PROPAGATED COVARIANCE MATRIX FOR EACH OF THE ESTIMATION TIME
-%                   INSTANTS. 3x3x2
+%         - P_ada:   PROPAGATED COVARIANCE MATRIX FOR EACH OF THE ESTIMATION TIME
+%                    INSTANTS. 3x3x2
 %
-%         -flagADA: BOOLEAN VARIABLE THAT BECOME TRUE AFTER THE APOGEE IS
-%                   DETECTED
+%         - flagADA: BOOLEAN VARIABLE THAT BECOME TRUE AFTER THE APOGEE IS
+%                    DETECTED
 %
-%         -t_ADA:   TIME OF THE PREDICTED APOGEE 
+%         - t_ADA:   TIME OF THE PREDICTED APOGEE 
 % -----------------------------------------------------------------------
+    count_threshold = 5;
+
     dt = t_baro(2) - t_baro(1);
     x  = x_ada';
     At = [ 1    dt 0.5*dt^2;
@@ -51,23 +53,38 @@ function [x_ada,P_ada,flagADA,t_ADA]   =  run_ADA(x_ada, P_ada, h_baro, t_baro, 
            0     0     1;];
 
     Ct = [ 1     0     0 ];
-for ii = 1:length(t_baro)
     
-    % Prediction step:
-    x      =   At*x;
+    for ii = 1:length(t_baro)
     
-    % Prediction variance propagation:
-    P_ada  =   Q_ada + At*P_ada*At';
+        % Prediction step:
+        x      =   At*x;
     
-    % Correction step:
-    S      =   Ct*P_ada*Ct' + R_ada;
-    K      =   P_ada*Ct'/S;
-    x      =   x + K*(h_baro(ii) - Ct*x);
-    P_ada  =  (eye(3) - K*Ct)*P_ada;
+        % Prediction variance propagation:
+        P_ada  =   Q_ada + At*P_ada*At';
     
-    x_ada(ii,:)  =   x';
+        % Correction step:
+        S      =   Ct*P_ada*Ct' + R_ada;
+        K      =   P_ada*Ct'/S;
+        x      =   x + K*(h_baro(ii) - Ct*x);
+        P_ada  =  (eye(3) - K*Ct)*P_ada;
+    
+        x_ada(ii,:)  =   x';
     % Prediction N state ahead and check if the apogee is reached
+
+        xapo = x;
+        for k = 1:N
+            xapo = (At^k)*xapo;
+            if xapo(2) > 0 
+                count_ADA = count_ADA + 1;
+                flag_ADA = true;
+                break
+            else
+                flag_ADA = false;
+            end
+        end
+        t_ADA = t_baro + dt*k;
+    end
 end
-flagADA = false;
-t_ADA   = false;
-end
+
+    
+        
