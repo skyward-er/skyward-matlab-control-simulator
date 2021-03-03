@@ -44,7 +44,6 @@ name = 'M2000R';
 % name = 'M1890';
 % name = 'M1800';
 
-
 n_name = [Motors.MotorName] == name;
 settings.motor.exp_time = Motors(n_name).t;
 settings.motor.exp_thrust = Motors(n_name).T;

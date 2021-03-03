@@ -319,7 +319,14 @@ while flagStopIntegration || n_old < nmax
      n_est_old = n_est_old + size(x_c(1,:)); 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
-    
+
+    if flagAeroBrakes
+         alpha_degree = controlAlgorithm(z, vz, vx);
+         x = get_extension_from_angle(alpha_degree);
+    else 
+        x = 0;
+    end    
+
     % vertical velocity and position
     if flagAscent || (not(flagAscent) && settings.ballisticFligth)
         Q = Yf(end, 10:13);
@@ -337,8 +344,8 @@ while flagStopIntegration || n_old < nmax
          x = get_extension_from_angle(alpha_degree);
     else 
         x = 0;
-    end    
-
+    end
+    
     if lastFlagAscent && not(flagAscent)
         Y0 = [Yf(end, 1:3), vels, Yf(end, 7:end)];
     else
