@@ -319,9 +319,13 @@ while flagStopIntegration || n_old < nmax
      n_est_old = n_est_old + size(x_c(1,:)); 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
+    
     % vertical velocity and position
     if flagAscent || (not(flagAscent) && settings.ballisticFligth)
-        Q = Yvels(1); % Needed for the control algorithm. Ask if it is right
+        Q = Yf(end, 10:13);
+        vels = quatrotate(quatconj(Q), Yf(end, 4:6));
+        vz = - vels(3);
+        vx = vels(1); % Needed for the control algorithm. Ask if it is right
     else
         vz = -Yf(end, 6);
         vx = Yf(end, 4);  % Needed for the control algorithm. Ask if it is right
