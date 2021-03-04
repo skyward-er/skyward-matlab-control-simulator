@@ -18,31 +18,45 @@ function [x_ada, P_ada, flag_ADA, t_ADA, count_ADA]   =  run_ADA(x_ada, P_ada, h
 % - a(t+1) = const
 % with observation on the first state y(t) = p(t)
 %      INPUTS: 
-%         - x_ada:   1x3 VECTOR OF PREVIOUS VALUES --> p,v,a
+%         - x_ada:      1x3 VECTOR OF PREVIOUS VALUES --> p,v,a
 %
-%         - P_ada:   3x3 MATRIX OF PREVIOUS COVARIANCE OF STATE
+%         - P_ada:      3x3 MATRIX OF PREVIOUS COVARIANCE OF STATE
 %
-%         - t_baro:  VECTOR OF TIME INSTANTS AT WHICH THE BAROMETER TOOK 
-%                    SAMPLES INSIDE THE 0.1 INTEGRATION PERIOD. SINCE IT RUNS
-%                    AT 20 HZ, THIS IS A 2x1 VECTOR. s
+%         - t_baro:     VECTOR OF TIME INSTANTS AT WHICH THE BAROMETER TOOK 
+%                       SAMPLES INSIDE THE 0.1 INTEGRATION PERIOD. SINCE IT RUNS
+%                       AT 20 HZ, THIS IS A 2x1 VECTOR. s
 %
-%         - h_baro:  CORRESPONDING ALTITUDE MEASUREMENTS FROM THE BAROMETER.
-%                    2x1. m
+%         - h_baro:     CORRESPONDING ALTITUDE MEASUREMENTS FROM THE BAROMETER.
+%                       2x1. m
 %
-%         - Q_ada:   COVARIANCE MATRIX OF PROCESS NOISE. 3x3   
+%         - Q_ada:      COVARIANCE MATRIX OF PROCESS NOISE. 3x3   
 %
-%         - R_ada:   COVARIANCE MATRIX OF OBSERVATION NOISE. 1x1   
+%         - R_ada:      COVARIANCE MATRIX OF OBSERVATION NOISE. 1x1 
 %
+%         - N:          INTEGRATION WINDOWS FOR THE PREDICTION
+%
+%         - count_ADA:  COUNTER OF THE NUMBER OF CONSECUTIVES APOGEE
+%                      	DETECTED
+%
+%         - flagADA:    BOOLEAN VARIABLE THAT BECOME TRUE AFTER THE APOGEE IS
+%                       DETECTED count_threshold TIMES
+%
+%         - t_ADA:      TIME OF THE PREDICTED APOGEE
+
 %       OUTPUTS:
-%         - x_ada:   FILTERED STATES OF THE ADA 
+
+%         - x_ada:      FILTERED STATES OF THE ADA 
 % 
-%         - P_ada:   PROPAGATED COVARIANCE MATRIX FOR EACH OF THE ESTIMATION TIME
-%                    INSTANTS. 3x3x2
+%         - P_ada:      PROPAGATED COVARIANCE MATRIX FOR EACH OF THE ESTIMATION TIME
+%                       INSTANTS. 3x3x2
 %
-%         - flagADA: BOOLEAN VARIABLE THAT BECOME TRUE AFTER THE APOGEE IS
-%                    DETECTED
+%         - flagADA:    BOOLEAN VARIABLE THAT BECOME TRUE AFTER THE APOGEE IS
+%                       DETECTED count_threshold TIMES
 %
-%         - t_ADA:   TIME OF THE PREDICTED APOGEE 
+%         - t_ADA:      TIME OF THE PREDICTED APOGEE 
+%
+%         - count_ADA:  COUNTER OF THE NUMBER OF CONSECUTIVES APOGEE
+%                      	DETECTED
 % -----------------------------------------------------------------------
     count_threshold = 5;
 
@@ -72,9 +86,11 @@ function [x_ada, P_ada, flag_ADA, t_ADA, count_ADA]   =  run_ADA(x_ada, P_ada, h
     % Prediction N state ahead and check if the apogee is reached
         if flag_ADA == false
             xapo = x;
-%             xapo = (At^N)*xapo;
+%            xapo = (At^N)*xapo;
             if xapo(2) < 0 
                 count_ADA = count_ADA + 1;
+            else
+                count_ADA = 0;
             end
             if count_ADA >= count_threshold
             	t_ADA = t_baro(ii);
