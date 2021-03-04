@@ -122,8 +122,9 @@ iTimes = 0;
 g = 9.81;
 x_ada       =   settings.x_ada0;
 P_ada       =   settings.P_ada0;
-flagADA     =   false;
+flag_ADA    =   false;
 count_ADA   =   0;
+t_ada       =   0;
 while flagStopIntegration || n_old < nmax
     tic 
     iTimes = iTimes + 1;
@@ -296,9 +297,7 @@ while flagStopIntegration || n_old < nmax
     end
     
     %%%%%%%%%%%%% ADA %%%%%%%%%%%%%
-    if flagADA == false
-    [x_ada, P_ada, flagADA, t_ada, count_ADA]   =  run_ADA(ada_prev, Pada_prev, h_baro, sensorData.barometer.time, settings.Q_ada, settings.R_ada, settings.N_ada, count_ADA);
-    end
+    [x_ada, P_ada, flag_ADA, t_ada, count_ADA]   =  run_ADA(ada_prev, Pada_prev,- h_baro, sensorData.barometer.time, settings.Q_ada, settings.R_ada, settings.N_ada, count_ADA, flag_ADA, t_ada);
      x_ada_tot(n_ada_old:n_ada_old + size(x_ada(:,1),1)-1,:)  = x_ada(1:end,:);
      t_ada_tot(n_ada_old:n_ada_old + size(x_ada(:,1),1)-1)    = sensorData.barometer.time;              
      n_ada_old = n_ada_old + size(x_ada(1,:)); 
