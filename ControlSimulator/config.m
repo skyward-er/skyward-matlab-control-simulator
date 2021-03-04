@@ -138,21 +138,21 @@ settings.Qq         =  [(settings.sigma_w^2*settings.dt_k+(1/3)*settings.sigma_b
                                 0.5*settings.sigma_beta^2*settings.dt_k^2*eye(3)                settings.sigma_beta^2*settings.dt_k*eye(3)];
 %% ADA TUNING PARAMETER
 alfa  = 0.1;
-settings.Q_ada      =  alfa*[1/3000      0         0;
-                             0           1/300     0;
-                             0           0         1/30;];
+settings.Q_ada      =  alfa*[1/3000     0           0;
+                             0          1/200       0;
+                             0          0           1/30;];
 settings.R_ada      =   800;     
 settings.P0_ada     =   [0.1      0      0;
                            0      0      0;
                            0      0      0;];
 
-settings.a0         =    30;
+settings.a0         =   30;
 % [~,~,settings.p0,~] =   atmosisa(settings.z0);
 % settings.x_ada0     =   [settings.p0/100, 0, settings.a0];
 % settings.x_ada0     =   [0, 0, settings.a0];
 
 settings.x0_ada     =   [settings.z0, 0, settings.a0];
-settings.N_ada      =   30;
+settings.N_ada      =   5;
     
 %% CONTROL SETTINGS 
 
