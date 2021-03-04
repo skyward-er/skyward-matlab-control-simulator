@@ -68,26 +68,28 @@ function [x_ada, P_ada, flag_ADA, t_ADA, count_ADA]   =  run_ADA(x_ada, P_ada, h
 
     Ct = [ 1     0     0 ];
     
+    [K, ~,~,poles]  = dlqe(At,eye(3),Ct,Q_ada,R_ada);
+    
     for ii = 1:length(t_baro)
     
         % Prediction step:
         x      =   At*x;
     
-        % Prediction variance propagation:
-        P_ada  =   Q_ada + At*P_ada*At';
-    
-        % Correction step:
-        S      =   Ct*P_ada*Ct' + R_ada;
-        K      =   P_ada*Ct'/S;
+%         % Prediction variance propagation:
+%         P_ada  =   Q_ada + At*P_ada*At';
+%     
+%         % Correction step:
+%         S      =   Ct*P_ada*Ct' + R_ada;
+%         K      =   P_ada*Ct'/S;
         x      =   x + K*(h_baro(ii) - Ct*x);
-        P_ada  =  (eye(3) - K*Ct)*P_ada;
+%         P_ada  =  (eye(3) - K*Ct)*P_ada;
 
         x_ada(ii,:)  =   x';
     % Prediction N state ahead and check if the apogee is reached
         if flag_ADA == false
             xapo = x;
 %            xapo = (At^N)*xapo;
-            if xapo(2) < 0 
+            if xapo(2) < 10
                 count_ADA = count_ADA + 1;
             else
                 count_ADA = 0;

@@ -15,6 +15,9 @@ close all
 clear 
 clc
 
+% Comment out if you want to tune the algorithm
+%  rng('default')
+
 path = genpath(pwd);
 addpath(path);
 
