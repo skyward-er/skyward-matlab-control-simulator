@@ -30,6 +30,8 @@ data = serialbridge("Read", 2);       % Receives 2 floats and stores them in the
 serialbridge("Close");                % Closes the serial port
 ```
 
+Procedure in order to use the **MatlabTransceiver** module: https://git.skywarder.eu/scs/hermes/r2a-obsw/-/blob/Serial4Simulations-dev/src/tests/hardware_in_the_loop/README.md
+
 ***WARNING***:
 * It's possible to open just ONE serial port with this module
 * The files serialib.h and serialib.cpp were modified in order to fix compiling errors on windows

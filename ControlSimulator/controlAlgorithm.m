@@ -1,5 +1,11 @@
-function [alpha_degree] = controlAlgorithm(z, Vz, Vx)
+function [alpha_degree] = controlAlgorithm(sensorData, z, vz, vMod)
 
-alpha_degree = 25;  % servomotor angle in degrees. It corresponds to half opening of the aerobrakes
+sd = sensorData;
+sd.Yf.z = z;
+sd.Yf.vz = vz;
+sd.Yf.vMod = vMod;
+
+serialbridge("Write", structToSingles(sd));
+alpha_degree = serialbridge("Read", 1);
 
 end

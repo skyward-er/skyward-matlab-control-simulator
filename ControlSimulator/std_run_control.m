@@ -175,18 +175,14 @@ while flagStopIntegration || n_old < nmax
     %%%%%%% kalmann filter %%%%%%%%
     % kalman(p, acc_body, ang_vel, q, [u, v, w]ned, [x, y, z]ned )
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    
+
     if flagAeroBrakes
-%          alpha_degree = controlAlgorithm(z, vz, vx);
-         % Socket
-        serialbridge("Write", structToSingles(sensorData));
-        alpha_degree = serialbridge("Read", 1);
-         % end_Socket
-         
+         alpha_degree = controlAlgorithm(sensorData, z, vz, normV);
          x = get_extension_from_angle(alpha_degree);
     else 
         x = 0;
-    end    
+    end 
+
 
     % vertical velocity and position
     if flagAscent || (not(flagAscent) && settings.ballisticFligth)
