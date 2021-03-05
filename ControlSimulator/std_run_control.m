@@ -118,19 +118,23 @@ data_trajectories = struct_trajectories.trajectories_saving;
 
 % Define global variables
 global Kp_1 Ki_1 Kp_2 Ki_2 Kp_3 Ki_3 I alpha_degree_prec index_min_value iteration_flag chosen_trajectory saturation
+
+% PI controler tune parameter
 Kp_1 = 77; % using Fdrag nel pid --> da migliorare (magari si può ottenere variabile controllo più smooth)
 Ki_1 = 5; % using Fdrag nel pid
 Kp_2 = 50; % using u nel pid --> da migliorare (magari si può ottenere variabile controllo più smooth)
 Ki_2 = 37; % using u nel pid
 Kp_3 = 50; % using alfa_degree nel pid --> ancora da tunare
 Ki_3 = 10; % using alfa_degree nel pid
+
+% Internal parameter of controler
 I = 0;
 alpha_degree_prec = 0;
 iteration_flag = 1;
 saturation = false;
 
 % Select the PID algorithm
-PID_flag = 3; % 1: Fdrag;  2: u;  3: alfa_degree;
+PID_flag = 2; % 1: Fdrag;  2: u;  3: alfa_degree;
 
 index_plot = 1; % To plot
 
@@ -220,6 +224,7 @@ while flagStopIntegration || n_old < nmax
 
          tempo = index_plot*0.1 - 0.1; % Print time instant for debugging
          
+         %% selection of controler type
          if PID_flag == 1
              [alpha_degree, Vz_setpoint, z_setpoint, pid,U_linear, Cdd, delta_S] = controlAlgorithm(z, vz, normV, dt);
          elseif PID_flag == 2

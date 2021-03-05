@@ -1,12 +1,31 @@
 function [alpha_degree, Vz_setpoint, z_setpoint, U, formula, Cd, delta_S] = controlAlgorithmLinearized(z,Vz,V_mod,sample_time)
+%CONTROL_ALGORITHM_LINEARIZED  Finds trejectory (z-Vz) to follow and uses a
+%PI controler to follow the trejectory but uses linearization to calculate delta_S
+%
+%   INPUTS:
+%   z               acutal hight of the rocket
+%   Vz              actual vertical velocity of the rocket
+%   V_mod           actual roket velocity in the direction of the main axis
+%   sample_time     sample time of the control system
+%
+%   OUTPUTS:
+%   alpha_degree    output angle for servo
+%   Vz_setpoint     setpoint vertical velocity from trejectory
+%   z_setpoint      setpoint hight
+%   U               PI control output
+%   formula         linearized PI controler output
+%   Cd              resulting drag coefficiant 
+%   delta_S         resulting force
 
 % Define global variables
 global data_trajectories coeff_Cd 
 global Kp_2 Ki_2 I alpha_degree_prec index_min_value iteration_flag chosen_trajectory saturation
 
-%% TRAJECTORY SELECTION and REFERENCES COMPUTATION
 
-if iteration_flag == 1 % Choose the nearest trajectory ( only at the first iteration )
+%%%%%%%%%%%%%%%%%%%% TRAJECTORY SELECTION and REFERENCES COMPUTATION %%%%%%%%%%%%%%%%%%%%
+
+%% Choose the nearest trajectory ( only at the first iteration )
+if iteration_flag == 1
    
     best_min = inf;
     best_index = inf;
@@ -36,7 +55,8 @@ if iteration_flag == 1 % Choose the nearest trajectory ( only at the first itera
     z_setpoint  =  data_trajectories(chosen_trajectory).Z_ref(index_min_value);
     Vz_setpoint =  data_trajectories(chosen_trajectory).V_ref(index_min_value);
 
-else  % For the following iterations keep tracking the chosen trajectory
+%% For the following iterations keep tracking the chosen trajectory
+else
 
     % Select the z trajectory and the Vz trajectory 
     % To speed up the research, I reduce the vector at each iteration (add if-else for problems in index limits)
@@ -55,7 +75,9 @@ else  % For the following iterations keep tracking the chosen trajectory
 
 end  
 
-%% PID ALGORITHM
+
+
+%%%%%%%%%%%%%%%%%%%% PID ALGORITHM %%%%%%%%%%%%%%%%%%%%
 
 % If e>0 the rocket is too fast. I slow it down with Fx>0 --> open aerobrakes
 % If e<0 the rocket is too slow. I speed it up with Fx<0 --> close aerobrakes
@@ -92,7 +114,9 @@ else
     saturation = false;
 end
 
-%% TRANSFORMATION FROM U to delta_S
+
+
+%%%%%%%%%%%%%%%%%%%% TRANSFORMATION FROM U to delta_S %%%%%%%%%%%%%%%%%%%%
 
 % Range of values for the control variable
 delta_S_available = [0.0:0.001/2:0.01]';   % Chiedere velocità: step 0.001 o 0.001/2 ?????
@@ -115,7 +139,9 @@ pid = U;
 formula = -m*g-0.5*ro*S0*Cd_available(index_minimum)*Vz*V_mod;
 Cd = Cd_available(index_minimum);
 
-%% TRANSFORMATION FROM delta_S to SERVOMOTOR ANGLE DEGREES
+
+
+%%%%%%%%%%%%%%%%%%%% TRANSFORMATION FROM delta_S to SERVOMOTOR ANGLE DEGREES %%%%%%%%%%%%%%%%%%%%
 
 % delta_S [m^2] = (-9.43386 * alpha^2 + 19.86779 * alpha) * 10^(-3). Alpha belongs to [0 ; 0.89 rad]
 a = -9.43386/1000;
@@ -131,7 +157,9 @@ end
 
 alpha_degree = (alpha_rad*180)/pi;
 
-%% LIMIT THE RATE OF THE CONTROL VARIABLE
+
+
+%%%%%%%%%%%%%%%%%%%% LIMIT THE RATE OF THE CONTROL VARIABLE %%%%%%%%%%%%%%%%%%%%
 
 rate_limiter_max =  60/0.2; % datasheet: 60deg/0.13s --> increased for robustness
 rate_limiter_min = -60/0.2;

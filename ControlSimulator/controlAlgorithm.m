@@ -1,6 +1,5 @@
 function [alpha_degree, Vz_setpoint, z_setpoint, pid, U_linear, Cd, delta_S] = controlAlgorithm(z,Vz,V_mod,sample_time)
-%CONTROL_ALGORITHM  Finds trejectory (z-Vz) to follow and uses a PI
-%                   controler to follow the trejectory
+%CONTROL_ALGORITHM  Finds trejectory (z-Vz) to follow and uses a PI controler to follow the trejectory
 %
 %   INPUTS:
 %   z               acutal hight of the rocket
