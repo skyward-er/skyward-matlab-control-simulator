@@ -1,12 +1,28 @@
 function [alpha_degree, Vz_setpoint, z_setpoint, Cd, delta_S] = controlAlgorithmServoDegree(z,Vz,V_mod,sample_time)
+%CONTROL_ALGORITHM_SERVO_DEGREE  Finds trejectory (z-Vz) to follow and uses a PI controler to follow the trejectory
+%
+%   INPUTS:
+%   z               acutal hight of the rocket
+%   Vz              actual vertical velocity of the rocket
+%   V_mod           actual roket velocity in the direction of the main axis
+%   sample_time     sample time of the control system
+%
+%   OUTPUTS:
+%   alpha_degree    output angle for servo
+%   Vz_setpoint     setpoint vertical velocity from trejectory
+%   z_setpoint      setpoint hight
+%   Cd              resulting drag coefficiant 
+%   delta_S         resulting force
 
 % Define global variables
 global data_trajectories coeff_Cd 
 global Kp_3 Ki_3 I alpha_degree_prec index_min_value iteration_flag chosen_trajectory saturation
 
-%% TRAJECTORY SELECTION and REFERENCES COMPUTATION
 
-if iteration_flag == 1 % Choose the nearest trajectory ( only at the first iteration )
+%%%%%%%%%%%%%%%%%%%% TRAJECTORY SELECTION and REFERENCES COMPUTATION %%%%%%%%%%%%%%%%%%%%
+
+%% Choose the nearest trajectory ( only at the first iteration )
+if iteration_flag == 1
     
     best_min   = inf;
     best_index = inf;
@@ -36,7 +52,9 @@ if iteration_flag == 1 % Choose the nearest trajectory ( only at the first itera
     z_setpoint  =  data_trajectories(chosen_trajectory).Z_ref(index_min_value);
     Vz_setpoint =  data_trajectories(chosen_trajectory).V_ref(index_min_value);
 
-else  % For the following iterations keep tracking the chosen trajectory
+    
+%% For the following iterations keep tracking the chosen trajectory
+else
 
     % Select the z trajectory and the Vz trajectory 
     % To speed up the research, I reduce the vector at each iteration (add if-else for problem in index limits)
@@ -51,7 +69,9 @@ else  % For the following iterations keep tracking the chosen trajectory
 
 end  
 
-%% PID ALGORITHM
+
+
+%%%%%%%%%%%%%%%%%%%% PID ALGORITHM %%%%%%%%%%%%%%%%%%%%
 
 % Control variable limits
 Umin = 0;  % degrees   
@@ -80,7 +100,9 @@ end
 
 alpha_degree = U;
 
-%% LIMIT THE RATE OF THE CONTROL VARIABLE
+
+
+%%%%%%%%%%%%%%%%%%%% LIMIT THE RATE OF THE CONTROL VARIABLE %%%%%%%%%%%%%%%%%%%%
 
 rate_limiter_max =  60/0.2; % datasheet: 60deg/0.13s --> increased for robustness
 rate_limiter_min = -60/0.2;
@@ -93,7 +115,7 @@ elseif (rate < rate_limiter_min)
     alpha_degree = sample_time*rate_limiter_min + alpha_degree_prec;
 end
 
-% Smooth the control variable with a filter
+%%%%%%%%%%%%%%%%%%%% Smooth the control variable with a filter %%%%%%%%%%%%%%%%%%%%
 filter_coeff = 0.9;
 alpha_degree = filter_coeff*alpha_degree + (1-filter_coeff)*alpha_degree_prec;
 

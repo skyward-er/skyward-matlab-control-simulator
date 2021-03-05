@@ -134,7 +134,7 @@ iteration_flag = 1;
 saturation = false;
 
 % Select the PID algorithm
-PID_flag = 2; % 1: Fdrag;  2: u;  3: alfa_degree;
+PID_flag = 1; % 1: Fdrag;  2: u;  3: alfa_degree;
 
 index_plot = 1; % To plot
 
