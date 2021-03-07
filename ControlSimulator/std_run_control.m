@@ -118,8 +118,11 @@ data_trajectories = struct_trajectories.trajectories_saving;
 
 % Define global variables
 global Kp Ki I alpha_degree_prec index_min_value iteration_flag chosen_trajectory saturation
-Kp = 77; % using Fdrag nel pid
-Ki = 5; % using Fdrag nel pid
+controlerTuneVariable=load('PIDoptimizer/interationData.mat','x');
+Kp=controlerTuneVariable.x(1);
+Ki=controlerTuneVariable.x(2);
+% Kp = 77; % using Fdrag nel pid
+% Ki = 5; % using Fdrag nel pid
 % Kp = 50; % using u nel pid
 % Ki = 37; % using u nel pid
 I = 0;
