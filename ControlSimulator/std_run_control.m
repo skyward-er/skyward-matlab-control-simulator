@@ -97,7 +97,7 @@ addpath('../sensors/data/MS580301BA01');
 initSensors;
 %% INTEGRATION
 % setting initial condition before control phase
-dt = 1/settings.frequencies.controlFrequency;
+dt = 1/settings.frequencies.controlFrequency
 t0 = 0;
 t1 = t0 + dt;
 vz = 1;
@@ -124,6 +124,46 @@ g = 9.81;
 flag_ADA  = false;
 t_ada     = 0;
 count_ADA = 0;
+
+
+
+%%%%%%%%%%%%%%%%%%%%% VARIABLES NEEDED FOR CONTROL %%%%%%%%%%%%%%%%%%%%%%%%
+
+% Define global variables
+global data_trajectories coeff_Cd 
+
+% Load coefficients for Cd
+data = load('coeffs.mat');
+coeff_Cd = data.coeffs;
+
+% Load the trajectories
+struct_trajectories = load('Trajectories');
+data_trajectories = struct_trajectories.trajectories_saving;
+
+% Define global variables
+global Kp_1 Ki_1 Kp_2 Ki_2 Kp_3 Ki_3 I alpha_degree_prec index_min_value iteration_flag chosen_trajectory saturation
+
+% PI controler tune parameter
+Kp_1 = 30; % using Fdrag nel pid --> da migliorare (magari si può ottenere variabile controllo più smooth)
+Ki_1 = 5; % using Fdrag nel pid
+Kp_2 = 50; % using u nel pid --> da migliorare (magari si può ottenere variabile controllo più smooth)
+Ki_2 = 37; % using u nel pid
+Kp_3 = 50; % using alfa_degree nel pid --> ancora da tunare
+Ki_3 = 10; % using alfa_degree nel pid
+
+% Internal parameter of controler
+I = 0;
+alpha_degree_prec = 0;
+iteration_flag = 1;
+saturation = false;
+
+% Select the PID algorithm
+PID_flag = 1; % 1: Fdrag;  2: u;  3: alfa_degree;
+
+index_plot = 1; % To plot
+
+fprintf('START:\n\n\n');
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 while flagStopIntegration || n_old < nmax
     tic 
@@ -321,8 +361,38 @@ while flagStopIntegration || n_old < nmax
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     if flagAeroBrakes
-         alpha_degree = controlAlgorithm(z, vz, vx);
+%          yyy
+%          vyyy
+%          xxx
+%          vxxx
+
+         tempo = index_plot*0.1 - 0.1; % Print time instant for debugging
+         
+         %% selection of controler type
+         if PID_flag == 1
+             [alpha_degree, Vz_setpoint, z_setpoint, pid,U_linear, Cdd, delta_S] = controlAlgorithm(-x_c(end,3), -x_c(end,6), sqrt(x_c(end,4)^2+x_c(end,5)^2+x_c(end,6)^2), dt);
+         elseif PID_flag == 2
+             [alpha_degree, Vz_setpoint, z_setpoint, pid,U_linear, Cdd, delta_S] = controlAlgorithmLinearized(-x_c(end,3), -x_c(end,6), sqrt(x_c(end,4)^2+x_c(end,5)^2+x_c(end,6)^2), dt);
+         elseif PID_flag == 3
+                 [alpha_degree, Vz_setpoint, z_setpoint] = controlAlgorithmServoDegree(-x_c(end,3), -x_c(end,6), sqrt(x_c(end,4)^2+x_c(end,5)^2+x_c(end,6)^2), dt);
+         end
+             
          x = get_extension_from_angle(alpha_degree);
+         
+         % Save the values to plot them
+         plot_Vz_real(index_plot) = vz;
+         plot_z_real(index_plot) = z;
+         plot_normV(index_plot) = normV;
+         plot_Vz_setpoint(index_plot) = Vz_setpoint;
+         plot_z_setpoint(index_plot) = z_setpoint;
+         plot_control_variable(index_plot) = alpha_degree;
+         if PID_flag ~= 3
+             plot_Cd(index_plot) = Cdd;
+             plot_pid(index_plot) = pid;
+             plot_U_linear(index_plot) = U_linear;
+             plot_delta_S(index_plot) = delta_S;
+         end
+         index_plot = index_plot + 1;
     else 
         x = 0;
     end    
@@ -330,14 +400,20 @@ while flagStopIntegration || n_old < nmax
     % vertical velocity and position
     if flagAscent || (not(flagAscent) && settings.ballisticFligth)
         Q = Yf(end, 10:13);
-        vels = quatrotate(quatconj(Q), Yf(end, 4:6));
-        vz = - vels(3);
-        vx = vels(1); % Needed for the control algorithm. Ask if it is right
+        vels = quatrotate(quatconj(Q), Yf(end, 4:6)); 
+        vz = - vels(3);   % down
+        vxxx = vels(2);   % north
+        vyyy = vels(1);   % east
     else
-        vz = -Yf(end, 6);
-        vx = Yf(end, 4);  % Needed for the control algorithm. Ask if it is right
+        vz = -Yf(end, 6);  
+%         vx = Yf(end, 5); 
+%         vy = Yf(end, 4); 
     end
     z = -Yf(end, 3);
+
+    xxx = Yf(end, 2);
+    yyy = Yf(end, 1);
+    
 
     if lastFlagAscent && not(flagAscent)
         Y0 = [Yf(end, 1:3), vels, Yf(end, 7:end)];
@@ -388,8 +464,114 @@ i_apo_est=max(i_apo_est);
 
 flagMatr = flagMatr(1:n_old, :);
 %% RETRIVE PARAMETERS FROM THE ODE
+
 if not(settings.electronics)
     dataBallisticFlight = RecallOdeFcn(@ascent, Tf(flagMatr(:, 2)), Yf(flagMatr(:, 2), :), settings, C, uw, vw, ww, uncert);
+
+    
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%% PLOT THE RESULTS
+
+% Obtain the control variable
+time = 0:dt:(length(plot_control_variable)-1)*dt;                 
+                     
+% Obtain the total altitude
+plot_z = -Yf(:,3);
+
+% Obtain the total vertical velocity
+nStates = length(Yf);
+plot_Vz = zeros(nStates, 1);
+for index = 1:nStates
+    Q = Yf(index,10:13);
+    vels = quatrotate(quatconj(Q), Yf(index,4:6));
+    plot_Vz(index) = - vels(3);
+end
+
+% Control variable: servo angle
+figure('Name','Servo angle after burning phase','NumberTitle','off');
+plot(time, plot_control_variable), grid on;
+axis([0,20, 0,60])
+xlabel('time [s]'), ylabel('Angle [deg]');
+
+if PID_flag ~= 3
+    % Control variable: pid vs linearization
+    figure('Name','Linearization of the control variable','NumberTitle','off');
+    plot(time, plot_U_linear, 'DisplayName','Linearized','LineWidth',0.8), grid on;
+    hold on
+    plot(time, plot_pid, 'DisplayName','PID','LineWidth',0.8), grid on;
+    xlabel('time [s]'), ylabel('U [N]');
+    hold off
+    legend('Location','northeast')
+
+    % delta_S
+    figure('Name','Delta_S','NumberTitle','off');
+    plot(time, plot_delta_S), grid on;
+    xlabel('time [s]'), ylabel('A [m^2]');
+
+    % Cd
+    figure('Name','Cd','NumberTitle','off');
+    plot(time, plot_Cd), grid on;
+    xlabel('time [s]'), ylabel('Cd []');
+end
+
+% Altitude real vs setpoint
+figure('Name','Altitude real vs setpoint after burning phase','NumberTitle','off');
+plot(time, plot_z_real,'DisplayName','real','LineWidth',0.8), grid on;
+hold on
+plot(time, plot_z_setpoint,'DisplayName','setpoint','LineWidth',0.8), grid on;
+axis([0,20, 0, 3100])
+xlabel('time [s]'), ylabel('z [m]');
+hold off
+legend('Location','southeast')
+
+% Vertical velocity real vs setpoint
+figure('Name','Vertical velocity real vs setpoint after burning phase','NumberTitle','off');
+plot(time, plot_Vz_real,'DisplayName','real','LineWidth',0.8), grid on;
+hold on
+plot(time, plot_Vz_setpoint, 'DisplayName','setpoint', 'LineWidth',0.8), grid on;
+axis([0,20, -50,300])
+xlabel('time [s]'), ylabel('Vz [m/s]');
+hold off
+legend
+
+% V(z) real vs setpoint
+figure('Name','V(z) real vs setpoint after burning phase','NumberTitle','off');
+plot(plot_z_real, plot_Vz_real,'DisplayName','real','LineWidth',0.8), grid on;
+hold on
+plot(plot_z_setpoint, plot_Vz_setpoint, 'DisplayName','setpoint', 'LineWidth',0.8), grid on;
+axis([1100,3200, -50, 250])
+xlabel('z [m]'), ylabel('Vz [m/s]');
+hold off
+legend
+
+% Total altitude
+figure('Name','Time, Altitude','NumberTitle','off');
+plot(Tf, plot_z), grid on;
+axis([0,50, 0, 3100])
+xlabel('time [s]'), ylabel('z [m]');
+
+% Total vertical velocity
+figure('Name','Time, Vertical Velocity','NumberTitle','off');
+plot(Tf, plot_Vz), grid on;
+xlabel('time [s]'), ylabel('Vz [m/s]');
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% % Save to csv
+% in = [plot_z_real',plot_Vz_real',plot_normV' ];
+% out = [plot_delta_S', plot_control_variable'];
+% setpoint = [plot_z_setpoint',plot_Vz_setpoint'];
+% U = [plot_pid'];
+% csvwrite('setpoint.txt',setpoint)
+% csvwrite('U.txt',U)
+
+% altitude_velocity = struct('Z_ref',plot_z_setpoint','V_ref',plot_Vz_setpoint', 'Z_real',plot_z_real','V_real',plot_Vz_real','normV',plot_normV');
+% control_inputs = struct('U',plot_pid','delta_S',plot_delta_S', 'Angle',plot_control_variable');
+% save('altitude_velocity.mat','altitude_velocity');
+% save('control_inputs.mat','control_inputs');
+
+
 end
 
 

@@ -31,6 +31,7 @@ settings.g0 = gravitywgs84(settings.z0, settings.lat0);                    % Gra
 settings.OMEGA = 84*pi/180;                                                %[rad] Minimum Elevation Angle, user input in degrees (ex. 80)
 settings.PHI = 0*pi/180;                                                   %[rad] Minimum Azimuth Angle from North Direction, user input in degrees (ex. 90)
 
+
 %% ENGINE DETAILS
 % load motors data 
 DATA_PATH = '../data/';
@@ -38,7 +39,9 @@ filename = strcat(DATA_PATH,'Motors.mat');
 Motors = load(filename);
 Motors = [Motors.Cesaroni, Motors.Aerotech];
 
-name = 'M2000Rbis';
+
+name = 'M2020';
+% name = 'M2000Rbis';
 % name = 'M1890';
 % name = 'M1800';
 
@@ -54,6 +57,7 @@ settings.m0 = settings.ms + settings.mp;            % [kg]   Total Mass
 settings.mnc = 0.400;                               % [kg]   Nosecone Mass
 
 clear ('Motors','name')
+
 
 %% GEOMETRY DETAILS
 % This parameters should be the same parameters set up in MISSILE DATCOM
@@ -76,6 +80,7 @@ settings.Izzf = 13.05;                    % [kg*m^2] Inertia to z-axis
 settings.Ixxe = 0.07;                     % [kg*m^2] Inertia to x-axis
 settings.Iyye = 10.06;                    % [kg*m^2] Inertia to y-axis
 settings.Izze = 10.06;                    % [kg*m^2] Inertia to z-axis
+
 
 %% AERODYNAMICS DETAILS
 % These coefficients are obtained using MISSILE DATCOM
@@ -195,13 +200,13 @@ settings.ode.optionsasc1 = odeset('Events',@event_mach,'InitialStep',1);    % OD
 % select which model you want to use:
 
 %%%%% Input wind
-settings.wind.input = false;
+settings.wind.input = true;
 % Wind is generated for every altitude interpolating with the coefficient defined below
 
 settings.wind.input_ground = 7;                                             % wind magnitude at the ground [m/s]
-settings.wind.input_alt = [0 100 600 750 900 1500 2500];                    % altitude vector [m]
-settings.wind.input_mult = [0 0 10 15 20 30 30];                            % percentage of increasing magnitude at each altitude
-settings.wind.input_azimut = [30 30 30 30 30 30 30];                        % wind azimut angle at each altitude (toward wind incoming direction) [deg]
+settings.wind.input_alt = [0 100 600 750 900 1500 2500 3000 3500];          % altitude vector [m]
+settings.wind.input_mult = [0 0 10 15 20 30 30 30 30];                      % percentage of increasing magnitude at each altitude
+settings.wind.input_azimut = [30 30 30 30 30 30 30 30 30];                  % wind azimut angle at each altitude (toward wind incoming direction) [deg]
 
 settings.wind.input_uncertainty = [1, 1];
 % settings.wind.input_uncertainty = [a,b];      wind uncertanties:
