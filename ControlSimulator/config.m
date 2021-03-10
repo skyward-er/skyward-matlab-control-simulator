@@ -14,42 +14,50 @@ Release date: 16/04/2016
 settings.electronics = false;
 settings.ascentOnly = false;
 settings.ballisticFligth = false;
-settings.dataNoise = false;
+settings.dataNoise = true;
 
 %% LAUNCH SETUP
-% launchpad
-settings.z0 = 109;                                                          %[m] Launchpad Altitude
-settings.lrampa = 4.9;                                                      %[m] LaunchPad route (distance from ground of the first hook)
-settings.lat0 = 44.519272;                                                  % Launchpad latitude
-settings.lon0 = 11.642333;                                                  % Launchpad longitude
-settings.launchDate = [2021, 10, 15];                                       % [YYYY, mm, dd] date of launch
+% launchpad for Pont De Sor
+settings.z0 = 109;                                                         %[m] Launchpad Altitude
+lpin = 1.150;                                                              %[m] Distance from base of second pin
+settings.lrampa = 5.9 - lpin;                                              %[m] LaunchPad route (total available route)
+settings.lat0 = 39.201778;                                                 % Launchpad latitude
+settings.lon0 = -8.138368;                                                 % Launchpad longitude
+settings.launchDate = [2021, 10, 15];                                      % [YYYY, mm, dd] date of launch
+
+settings.g0 = gravitywgs84(settings.z0, settings.lat0);                    % Gravity costant at launch latitude and altitude
 
 % launchpad directions
-% for a single run the maximum and the minimum value of the following
-% angles must be the same.
-settings.OMEGA = 84*pi/180;                                                 %[rad] Minimum Elevation Angle, user input in degrees (ex. 80)
-settings.PHI = 0*pi/180;                                                  %[rad] Minimum Azimuth Angle from North Direction, user input in degrees (ex. 90)
+settings.OMEGA = 84*pi/180;                                                %[rad] Minimum Elevation Angle, user input in degrees (ex. 80)
+settings.PHI = 0*pi/180;                                                   %[rad] Minimum Azimuth Angle from North Direction, user input in degrees (ex. 90)
+
 
 %% ENGINE DETAILS
 % load motors data 
 DATA_PATH = '../data/';
-filename_full = strcat(DATA_PATH,'MotorsList.mat');
-motors = load(filename_full,'MotorsByName');
-motors = motors.MotorsByName;
+filename = strcat(DATA_PATH,'Motors.mat');
+Motors = load(filename);
+Motors = [Motors.Cesaroni, Motors.Aerotech];
+
 
 name = 'M2020';
+% name = 'M2000Rbis';
 % name = 'M1890';
-%name = 'M1800';
-settings.motor.exp_time = motors.(name).t;
-settings.motor.exp_thrust = motors.(name).T;
-settings.mp = motors.(name).mp;                                             % [kg]   Propellant Mass                                                
-settings.tb = motors.(name).t(end) ;                                        % [s]    Burning time
-settings.mfr = settings.mp/settings.tb;                                     % [kg/s] Mass Flow Rate
-settings.ms = 21.05;                                                        % [kg]   Total Mass
-settings.m0 = settings.ms + settings.mp;                                    % [kg]   Structural Mass
-settings.mnc = 0.400;                                                       % [kg]   Nosecone Mass
+% name = 'M1800';
 
-clear ('motors','name')
+n_name = [Motors.MotorName] == name;
+settings.motor.exp_time = Motors(n_name).t;
+settings.motor.exp_thrust = Motors(n_name).T;
+settings.motor.exp_m = Motors(n_name).m;
+settings.mp = Motors(n_name).mp;                    % [kg]   Propellant Mass                                                
+settings.tb = Motors(n_name).t(end) ;               % [s]    Burning time
+mm = Motors(n_name).mm;                             % [kg]   Total Mass of the Motor 
+settings.ms = 17.873 + mm - settings.mp;            % [kg]   Structural Mass
+settings.m0 = settings.ms + settings.mp;            % [kg]   Total Mass
+settings.mnc = 0.400;                               % [kg]   Nosecone Mass
+
+clear ('Motors','name')
+
 
 %% GEOMETRY DETAILS
 % This parameters should be the same parameters set up in MISSILE DATCOM
@@ -57,7 +65,6 @@ clear ('motors','name')
 
 settings.C = 0.15;                                                          % [m]      Caliber (Fuselage Diameter)
 settings.S = pi*settings.C^2/4;                                             % [m^2]    Cross-sectional Surface
-L = 3;                                                                      % [m]      Rocket length
 
 %% MASS GEOMERTY DETAILS
 % x-axis: along the fuselage
@@ -65,14 +72,15 @@ L = 3;                                                                      % [m
 % z-axis: downward
 
 % inertias for full configuration (with all the propellant embarqued) obtained with CAD's
-settings.Ixxf = 0.0540;                     % [kg*m^2] Inertia to x-axis
-settings.Iyyf = 13.7274;                    % [kg*m^2] Inertia to y-axis
-settings.Izzf = 13.7302;                    % [kg*m^2] Inertia to z-axis
+settings.Ixxf = 0.08;                     % [kg*m^2] Inertia to x-axis
+settings.Iyyf = 13.05;                    % [kg*m^2] Inertia to y-axis
+settings.Izzf = 13.05;                    % [kg*m^2] Inertia to z-axis
 
 % inertias for empty configuration (all the propellant consumed) obtained with CAD's
-settings.Ixxe = 0.0498;                     % [kg*m^2] Inertia to x-axis
-settings.Iyye = 11.5612;                    % [kg*m^2] Inertia to y-axis
-settings.Izze = 11.5640;                    % [kg*m^2] Inertia to z-axis
+settings.Ixxe = 0.07;                     % [kg*m^2] Inertia to x-axis
+settings.Iyye = 10.06;                    % [kg*m^2] Inertia to y-axis
+settings.Izze = 10.06;                    % [kg*m^2] Inertia to z-axis
+
 
 %% AERODYNAMICS DETAILS
 % These coefficients are obtained using MISSILE DATCOM
@@ -117,6 +125,41 @@ settings.frequencies.magnetometerFrequency = 100;                           % [h
 settings.frequencies.gpsFrequency = 10;                                     % [hz] control action frequency 
 settings.frequencies.barometerFrequency = 20;                               % [hz] control action frequency 
 
+%% KALMAN TUNING PARAMETERS
+settings.sigma_baro =   4;                                                  % [mbar^2]   estimated barometer variance    
+settings.sigma_mag  =   0.5;                                                % [mgauss^2] estimated magnetometer variance    
+settings.sigma_GPS  =   2;                                                  % [mg^2]     estimated GPS variance
+settings.QLinear    =        100*...
+                                 [1     0     0      0      0      0;       % Noise covariance matrix
+                                  0     1     0      0      0      0;       % for the linear dynamics
+                                  0     0     1      0      0      0;
+                                  0     0     0      1000   0      0;
+                                  0     0     0      0      1000   0;
+                                  0     0     0      0      0      1000];
+settings.dt_k       =   0.01;                                               % [s]       kalman time step
+settings.sigma_w    =   10*(1000*pi/180)^2;                                 % [mdps^2]  estimated gyroscope variance;
+settings.sigma_beta =   1e-2;                                               % [mdps^2]  estimated gyroscope bias variance;
+settings.Qq         =  [(settings.sigma_w^2*settings.dt_k+(1/3)*settings.sigma_beta^2*settings.dt_k^3)*eye(3)     0.5*settings.sigma_beta^2*settings.dt_k^2*eye(3);
+                                0.5*settings.sigma_beta^2*settings.dt_k^2*eye(3)                settings.sigma_beta^2*settings.dt_k*eye(3)];
+%% ADA TUNING PARAMETER
+alfa  = 10;
+settings.Q_ada      =  alfa*[1/3000     0           0;
+                             0          1/300       0;
+                             0          0           1/300;];
+settings.R_ada      =   1000;     
+settings.P0_ada     =   [  0.1    0     0;
+                           0      0     0;
+                           0      0     0;];
+
+settings.v0         =   15;
+settings.a0         =   15;
+% [~,~,settings.p0,~] =   atmosisa(settings.z0);
+% settings.x0_ada     =   [settings.p0/100, 0, settings.a0];
+settings.x0_ada     =   [0, settings.v0, settings.a0];
+
+% settings.x0_ada     =   [settings.z0, 0, settings.a0];
+settings.N_ada      =   5;
+    
 %% CONTROL SETTINGS 
 
 settings.Mach_control = 0.7;                                                % Mach of activation of aerobrakes 
@@ -126,18 +169,19 @@ settings.Atot = settings.brakesWidth*settings.brakesHeigth*3;               % [m
 
 %% PARACHUTES DETAILS
 % parachute 1
-settings.para(1).S = 1.55;                                                  % [m^2]   Surface
-settings.para(1).mass = 0.4;                                                % [kg]   Parachute Mass
-settings.para(1).CD = 0.75;                                                 % [/] Parachute Drag Coefficient
-settings.para(1).CL = 0;                                                    % [/] Parachute Lift Coefficient
-settings.para(1).z_cut = 300;                                               % [m] Final altitude of the parachute
+settings.para(1).S = 0.4;    % [m^2]   Surface
+settings.para(1).mass = 0.2;  % [kg]   Parachute Mass
+settings.para(1).CD = 0.78;   % [/] Parachute Drag Coefficient
+settings.para(1).CL = 0;      % [/] Parachute Lift Coefficient
+settings.para(1).delay = 1;   % [s] drogue opening delay
+settings.para(1).z_cut = 450; % [m] Final altitude of the parachute
 
 % parachute 2
-settings.para(2).S = 10.5;                                                  % [m^2]   Surface
-settings.para(2).mass = 0.8;                                                % [kg]   Parachute Mass
-settings.para(2).CD = 0.7;                                                  % [/] Parachute Drag Coefficient
-settings.para(2).CL = 0;                                                    % [/] Parachute Lift Coefficient
-settings.para(2).z_cut = 0;                                                 % [m] Final altitude of the parachute
+settings.para(2).S = 10.5;    % [m^2]   Surface
+settings.para(2).mass = 1.5;  % [kg]   Parachute Mass
+settings.para(2).CD = 0.7;    % [/] Parachute Drag Coefficient
+settings.para(2).CL = 0;      % [/] Parachute Lift Coefficient
+settings.para(2).z_cut = 0;   % [m] Final altitude of the parachute
                                
 %% INTEGRATION OPTIONS
 settings.ode.final_time =  2000;                                            % [s] Final integration time
@@ -156,13 +200,13 @@ settings.ode.optionsasc1 = odeset('Events',@event_mach,'InitialStep',1);    % OD
 % select which model you want to use:
 
 %%%%% Input wind
-settings.wind.input = false;
+settings.wind.input = true;
 % Wind is generated for every altitude interpolating with the coefficient defined below
 
 settings.wind.input_ground = 7;                                             % wind magnitude at the ground [m/s]
-settings.wind.input_alt = [0 100 600 750 900 1500 2500];                    % altitude vector [m]
-settings.wind.input_mult = [0 0 10 15 20 30 30];                            % percentage of increasing magnitude at each altitude
-settings.wind.input_azimut = [30 30 30 30 30 30 30];                        % wind azimut angle at each altitude (toward wind incoming direction) [deg]
+settings.wind.input_alt = [0 100 600 750 900 1500 2500 3000 3500];          % altitude vector [m]
+settings.wind.input_mult = [0 0 10 15 20 30 30 30 30];                      % percentage of increasing magnitude at each altitude
+settings.wind.input_azimut = [30 30 30 30 30 30 30 30 30];                  % wind azimut angle at each altitude (toward wind incoming direction) [deg]
 
 settings.wind.input_uncertainty = [1, 1];
 % settings.wind.input_uncertainty = [a,b];      wind uncertanties:
@@ -188,4 +232,4 @@ settings.wind.AzMax = (360)*pi/180;                                         % [r
 % 270 deg                       -> West
 
 %% PLOT DETAILS
-settings.plots = true;
+settings.plots = false;

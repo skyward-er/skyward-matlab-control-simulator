@@ -1,17 +1,15 @@
 function [dY, parout] = ascent(t, Y, settings, c, uw, vw, ww, uncert)
-%{ 
+%{
 
 ASCENT - ode function of the 6DOF Rigid Rocket Model
 
-INPUTS:      
+INPUTS:
             - t, integration time;
-            - Y, state vector, [ x y z | u v w | p q r | q0 q1 q2 q3 | m | Ixx Iyy Izz | thetax thetay thetaz]:
+            - Y, state vector, [ x y z | u v w | p q r | q0 q1 q2 q3 | Ixx Iyy Izz]:
 
-                                * (x y z), NED{north, east, down} horizontal frame; 
+                                * (x y z), NED{north, east, down} horizontal frame;
                                 * (u v w), body frame velocities;
                                 * (p q r), body frame angular rates;
-                                * (thetax thetay thetaz), body angles;
-                                * m , total mass;
                                 * (Ixx Iyy Izz), Inertias;
                                 * (q0 q1 q2 q3), attitude unit quaternion.
  
@@ -25,7 +23,7 @@ INPUTS:
             - Day, day of the month of the needed simulation;
             - OMEGA, launchpad azimuth angle;
 
-OUTPUTS:    
+OUTPUTS:
             - dY, state derivatives;
             - parout, interesting fligth quantities structure (aerodyn coefficients, forces and so on..).
 
@@ -48,11 +46,10 @@ Release date: 16/04/2016
 Author: Adriano Filippo Inno
 Skyward Experimental Rocketry | AFD Dept | crd@skywarder.eu
 email: adriano.filippo.inno@skywarder.eu
-Release date: 13/01/2018
 
 %}
 
-% recalling the state
+% recalling the states
 % x = Y(1);
 % y = Y(2);
 z = Y(3);
@@ -66,14 +63,12 @@ q0 = Y(10);
 q1 = Y(11);
 q2 = Y(12);
 q3 = Y(13);
-m = Y(14);
-Ixx = Y(15);
-Iyy = Y(16);
-Izz = Y(17);
+Ixx = Y(14);
+Iyy = Y(15);
+Izz = Y(16);
 
 %% QUATERION ATTITUDE
 Q = [q0 q1 q2 q3];
-Q_conj = [q0 -q1 -q2 -q3];
 normQ = norm(Q);
 
 if abs(normQ - 1) > 0.1
@@ -83,10 +78,11 @@ end
 
 %% ADDING WIND (supposed to be added in NED axes);
 if settings.wind.input
-    [uw, vw, ww] = wind_input_generator(settings, z, uncert);    
+    [uw, vw, ww] = wind_input_generator(settings, z, uncert);
 end
 
-wind = quatrotate(Q, [uw vw ww]);
+dcm = quatToDcm(Q);
+wind = dcm*[uw; vw; ww];
 
 % Relative velocities (plus wind);
 ur = u - wind(1);
@@ -94,7 +90,7 @@ vr = v - wind(2);
 wr = w - wind(3);
 
 % Body to Inertial velocities
-Vels = quatrotate(Q_conj, [u v w]);
+Vels = dcm'*[u; v; w];
 V_norm = norm([ur vr wr]);
 
 %% ATMOSPHERE DATA
@@ -105,7 +101,7 @@ end
 h = -z + settings.z0;
 
 atmC = [9.80665, 1.4, 287.0531, 0.0065, 11000, 20000, ...
-            1.225, 101325, 288.15]; % atmosisa constants:
+    1.225, 101325, 288.15]; % atmosisa constants:
 
 h(h > atmC(6)) = atmC(6);
 h(h < 0) = 0;
@@ -124,7 +120,7 @@ a = sqrt(T*atmC(2)*atmC(3));
 theta = T/atmC(9);
 
 P = atmC(8)*theta.^(atmC(1)/(atmC(4)*atmC(3))).*expon;
-rho = atmC(7)*theta.^((atmC(1)/(atmC(4)*atmC(3)))-1.0).*expon;  
+rho = atmC(7)*theta.^((atmC(1)/(atmC(4)*atmC(3)))-1.0).*expon;
 
 M = V_norm/a;
 M_value = M;
@@ -134,9 +130,8 @@ S = settings.S;              % [m^2] cross surface
 C = settings.C;              % [m]   caliber
 CoeffsE = settings.CoeffsE;  % Empty Rocket Coefficients
 CoeffsF = settings.CoeffsF;  % Full Rocket Coefficients
-g = 9.80655;                 % [N/kg] module of gravitational field at zero
+g = settings.g0/(1 + (-z*1e-3/6371))^2; % [N/kg]  module of gravitational field
 tb = settings.tb;            % [s]     Burning Time
-mfr = settings.mfr;          % [kg/s]  Mass Flow Rate
 
 OMEGA = settings.OMEGA;      % [rad] Elevation Angle in the launch pad
 
@@ -154,14 +149,14 @@ Izze = settings.Izze;        % [kg*m^2] Inertia to z-axis
 dI = 1/tb*([Ixxf Iyyf Izzf]'-[Ixxe Iyye Izze]');
 
 if t<tb
-    mdot = -mfr;
+    m = settings.ms + interp1(settings.motor.exp_time, settings.motor.exp_m, t);
     Ixxdot = -dI(1);
     Iyydot = -dI(2);
     Izzdot = -dI(3);
     T = interp1(settings.motor.exp_time, settings.motor.exp_thrust, t);
     
 else             % for t >= tb the fligth condition is the empty one(no interpolation needed)
-    mdot = 0;
+    m = settings.ms;
     Ixxdot = 0;
     Iyydot = 0;
     Izzdot = 0;
@@ -171,7 +166,7 @@ end
 %% AERODYNAMICS ANGLES
 if not(ur < 1e-9 || V_norm < 1e-9)
     alpha = atan(wr/ur);
-    beta = atan(vr/ur);             % beta = asin(vr/V_norm); is the classical notation, Datcom uses this one though. 
+    beta = atan(vr/ur);             % beta = asin(vr/V_norm); is the classical notation, Datcom uses this one though.
 else
     alpha = 0;
     beta = 0;
@@ -208,7 +203,7 @@ for i = 1:15
     if c == 0
         VE = CmatE(index(1), index(2), index(3), index(4), 1);
     else
-        c_cmp = C_datcom(c > C_datcom); 
+        c_cmp = C_datcom(c > C_datcom);
         n0 = length(c_cmp);
         n1 = n0 + 1;
         c0 = c_cmp(end);
@@ -217,18 +212,18 @@ for i = 1:15
         C1 =  CmatE(index(1), index(2), index(3), index(4), n1);
         VE = C1 + ((C1 - C0)/(c1 - c0))*(c - c1);
     end
-
+    
     if t <= tb
         VF = CmatF(index(1), index(2), index(3), index(4));
         
         coeffsValues(i) =  t/tb*(VE-VF)+VF;
-    else 
+    else
         coeffsValues(i) = VE;
     end
-
+    
 end
 
-% Retrieve Coefficients 
+% Retrieve Coefficients
 CA = coeffsValues(1); CYB = coeffsValues(2); CY0 = coeffsValues(3);
 CNA = coeffsValues(4); CN0 = coeffsValues(5); Cl = coeffsValues(6);
 Clp = coeffsValues(7); Cma = coeffsValues(8); Cm0 = coeffsValues(9);
@@ -265,12 +260,11 @@ if -z < settings.lrampa*sin(OMEGA)      % No torque on the Launch
     end
     
 else
-    
     %% FORCES
     % first computed in the body-frame reference system
     qdyn = 0.5*rho*V_norm^2;        %[Pa] dynamics pressure
-    qdynL_V = 0.5*rho*V_norm*S*C; 
-
+    qdynL_V = 0.5*rho*V_norm*S*C;
+    
     X = qdyn*S*CA;              %[N] x-body component of the aerodynamics force
     Y = qdyn*S*CY;            %[N] y-body component of the aerodynamics force
     Z = qdyn*S*CN;           %[N] z-body component of the aerodynamics force
@@ -292,13 +286,13 @@ else
         -Izzdot*r/Izz;
     
 end
-% Quaternion
-OM = 1/2* [ 0 -p -q -r  ;
-            p  0  r -q  ;
-            q -r  0  p  ;
-            r  q -p  0 ];
+% Quaternions
+OM = [ 0 -p -q -r  ;
+       p  0  r -q  ;
+       q -r  0  p  ;
+       r  q -p  0 ];
 
-dQQ = OM*Q';
+dQQ = 1/2*OM*Q';
 
 %% FINAL DERIVATIVE STATE ASSEMBLING
 dY(1:3) = Vels;
@@ -309,14 +303,12 @@ dY(7) = dp;
 dY(8) = dq;
 dY(9) = dr;
 dY(10:13) = dQQ;
-dY(14) = mdot;
-dY(15) = Ixxdot;
-dY(16) = Iyydot;
-dY(17) = Izzdot;
-dY(18:20) = [p q r];
+dY(14) = Ixxdot;
+dY(15) = Iyydot;
+dY(16) = Izzdot;
 dY = dY';
 
-%% SAVING QUANTITIES FOR PLOTS 
+%% SAVING QUANTITIES FOR PLOTS
 if not(settings.electronics)
     parout.integration.t = t;
     

@@ -9,9 +9,14 @@ Release date: 16/04/2016
 
 %}
 
+
+
 close all
 clear
 clc
+
+% Comment out if you want to tune the algorithm
+%  rng('default')
 
 path = genpath(pwd);
 addpath(path);
@@ -26,9 +31,9 @@ serialbridge("Open", "COM6", 256000); % Initialization of the serial port
 % Y = State = ( x y z | u v w | p q r | q0 q1 q2 q3 | thetax thetay thetaz | ) also for Ya,Yf corresponding to T
 
 if settings.electronics
-    [Yf, Tf, cpuTimes, flagMatr] = std_run_control(settings);
+    [Yf, Tf, t_ada, cpuTimes, flagMatr] = std_run_control(settings);
 else
-    [Yf, Tf, cpuTimes, flagMatr, data_flight] = std_run_control(settings);
+    [Yf, Tf, t_ada, cpuTimes, flagMatr, data_flight] = std_run_control(settings);
 end
 
 %% DATA-PRINTING
@@ -36,8 +41,8 @@ end
 Na = length(Yf(:,1));
 
 % POSITIONS
-xa = Yf(:,1);
-ya = Yf(:,2);
+xa =  Yf(:,1);
+ya =  Yf(:,2);
 za = -Yf(:,3);
 Xa = [xa, ya, za];
 
@@ -45,8 +50,8 @@ Xa = [xa, ya, za];
 T_apo = Tf(i_apo);
 
 % VELOCITIES
-ua = Yf(:,4);
-va = Yf(:,5);
+ua =  Yf(:,4);
+va =  Yf(:,5);
 wa = -Yf(:,6);
 Va = [ua, va, wa];
 
@@ -87,11 +92,15 @@ if not(settings.electronics)
     fprintf('@velocity: %g [m/s] \n', abs_V(imax_a))
     fprintf('@time: %g [sec] \n\n', Tf(imax_a))
 
+%% ADA detection time
+    fprintf('ADA detection time: %g [sec] \n', t_ada)
+    fprintf('Simulated apogee time : %g [sec] \n', T_apo)
 end
 
 %% PLOT 
 
 if settings.plots && not(settings.electronics)
+    
     
     % AERO FORCES
     figure('Name', 'Forces - ascent Phase', 'NumberTitle', 'off');
@@ -112,6 +121,21 @@ if settings.plots && not(settings.electronics)
     subplot(1, 2, 2)
     plot(Tf(flagMatr(:, 2)), abs_A/9.81), grid on;
     xlabel('time [s]'), ylabel('|A| [g]');
+    
+    % ANGULAR VELOCITIES
+    
+    figure('Name', 'Angular Velocities - ascent Phase', 'NumberTitle', 'off');
+    subplot(3, 1, 1)
+    plot(Tf(flagMatr(:, 2)), Yf(flagMatr(:, 2), 7)*180/pi), grid on;
+    xlabel('time [s]'), ylabel('p [deg/s]');
+    
+    subplot(3, 1, 2)
+    plot(Tf(flagMatr(:, 2)), Yf(flagMatr(:, 2), 8)*180/pi), grid on;
+    xlabel('time [s]'), ylabel('p [deg/s]');
+        
+    subplot(3, 1, 3)
+    plot(Tf(flagMatr(:, 2)), Yf(flagMatr(:, 2), 9)*180/pi), grid on;
+    xlabel('time [s]'), ylabel('p [deg/s]');
        
 end
 serialbridge("Close")

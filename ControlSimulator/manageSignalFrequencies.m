@@ -126,15 +126,15 @@ if freq.magnetometerFrequency > freq.controlFrequency
             end
         end
         magnFieldInertial = magneticFieldApprox(z + settings.z0)';
-        sensorData.magnetometer.measure = quatrotate(Q, magnFieldInertial);
+        sensorData.magnetometer.measures = quatrotate(Q, magnFieldInertial);
     else
-        sensorData.magnetometer.measure = repmat(magneticFieldApprox(0), N, 1);
+        sensorData.magnetometer.measures = repmat(magneticFieldApprox(0)', N, 1);
     end
 else
     z = -Y(end, 3);
     Q = Y(end, 10:13);
     magnFieldInertial = magneticFieldApprox(z + settings.z0)';
-    sensorData.magnetometer.measure = quatrotate(Q, magnFieldInertial);
+    sensorData.magnetometer.measures = quatrotate(Q, magnFieldInertial);
     sensorData.magnetometer.time = T(end);
 end
 
@@ -246,5 +246,6 @@ else
     z = -Y(end, 3);
 end
 
-[~, ~, P, ~] = atmosisa(z);
+[Temp, ~, P, ~] = atmosisa(z);
 sensorData.barometer.measures = P;
+sensorData.barometer.temperature = Temp;

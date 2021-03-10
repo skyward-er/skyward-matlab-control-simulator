@@ -22,7 +22,6 @@ q0 = Y(10);
 q1 = Y(11);
 q2 = Y(12);
 q3 = Y(13);
-m = Y(14);
 
 %% QUATERION ATTITUDE
 Q = [q0 q1 q2 q3];
@@ -37,7 +36,8 @@ if settings.wind.input
     [uw, vw, ww] = wind_input_generator(settings, z, uncert);    
 end
 
-wind = quatrotate(Q, [uw vw ww]);
+dcm = quatToDcm(Q);
+wind = dcm*[uw; vw; ww];
 
 % Relative velocities (plus wind);
 ur = u - wind(1);
@@ -88,8 +88,10 @@ OMEGA = settings.OMEGA;      % [rad] Elevation Angle in the launch pad
 %% TIME-DEPENDENTS VARIABLES
 
 if t < tb
+    m = settings.ms + interp1(settings.motor.exp_time, settings.motor.exp_m, t);
     T = interp1(settings.motor.exp_time, settings.motor.exp_thrust, t);
 else 
+    m = settings.ms;
     T = 0;
 end
 
