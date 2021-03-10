@@ -1,5 +1,16 @@
+%{
+
+STRUCT TO SINGLES - a nested structs or a matrix composed of singles into a 
+                    row array of singles (doesn't send fields named "time")
+
+Author: Emilio Corigliano
+Skyward Experimental Rocketry | ELC Dept | electronics@skywarder.eu
+email: emilio.corigliano@skywarder.eu
+Release date: 10/03/2021
+
+%}
+
 function [data] = structToSingles(sensorData)
-% converts a struct, a nested structs or a matrix composed of singles into a row array of singles (doesn't send fields named "time")
     if(isfield(sensorData, 'time'))
         sensorData = rmfield(sensorData, 'time');
     end

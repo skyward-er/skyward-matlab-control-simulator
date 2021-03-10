@@ -9,14 +9,9 @@ Release date: 16/04/2016
 
 %}
 
-
-
 close all
 clear
 clc
-
-% Comment out if you want to tune the algorithm
-%  rng('default')
 
 path = genpath(pwd);
 addpath(path);
@@ -24,14 +19,14 @@ addpath(path);
 %% LOAD DATA
 run('config.m');
 
-serialbridge("Open", "COM6", 256000); % Initialization of the serial port
-
 %% START THE CHOSEN SIMULATION
 % T = vector of time used by ODE, [s] also for Tf Ta
 % Y = State = ( x y z | u v w | p q r | q0 q1 q2 q3 | thetax thetay thetaz | ) also for Ya,Yf corresponding to T
 
 if settings.electronics
-    [Yf, Tf, t_ada, cpuTimes, flagMatr] = std_run_control(settings);
+    run('HILconfig.m');
+    serialbridge("Open", hil_settings.serial_port, hil_settings.baudrate); % Initialization of the serial port
+    [Yf, Tf, cpuTimes, flagMatr] = std_run_HIL(settings);
 else
     [Yf, Tf, t_ada, cpuTimes, flagMatr, data_flight] = std_run_control(settings);
 end
@@ -138,5 +133,9 @@ if settings.plots && not(settings.electronics)
     xlabel('time [s]'), ylabel('p [deg/s]');
        
 end
-serialbridge("Close")
+
+if settings.electronics
+    serialbridge("Close")
+end
+
 clearvars -except Yf data_flight settings

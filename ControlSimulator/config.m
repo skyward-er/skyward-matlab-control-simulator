@@ -11,7 +11,7 @@ Release date: 16/04/2016
 %}
 
 %% SIMULATION SETTINGS
-settings.electronics = false;
+settings.electronics = true;  % run hardware-in-the-loop simulation 
 settings.ascentOnly = false;
 settings.ballisticFligth = false;
 settings.dataNoise = true;

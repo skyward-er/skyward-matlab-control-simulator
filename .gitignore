@@ -1,3 +1,5 @@
 
 ControlSimualtor/.DS_Store
 *.asv
+*.mexa64
+**/*.mexa64
