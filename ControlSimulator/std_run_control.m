@@ -97,7 +97,7 @@ addpath('../sensors/data/MS580301BA01');
 initSensors;
 %% INTEGRATION
 % setting initial condition before control phase
-dt = 1/settings.frequencies.controlFrequency
+dt = 1/settings.frequencies.controlFrequency;
 t0 = 0;
 t1 = t0 + dt;
 vz = 1;
