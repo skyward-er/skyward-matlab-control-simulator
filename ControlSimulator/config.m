@@ -15,6 +15,7 @@ settings.electronics = false;
 settings.ascentOnly = false;
 settings.ballisticFligth = false;
 settings.dataNoise = true;
+settings.launchWindow = true;                                             % switch off this to avoid pausing the launch till you press the launch button
 
 %% LAUNCH SETUP
 % launchpad for Pont De Sor
@@ -40,8 +41,8 @@ Motors = load(filename);
 Motors = [Motors.Cesaroni, Motors.Aerotech];
 
 
-name = 'M2020';
-% name = 'M2000Rbis';
+% name = 'M2020';
+name = 'M2000Rbis';
 % name = 'M1890';
 % name = 'M1800';
 

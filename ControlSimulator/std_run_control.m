@@ -37,7 +37,8 @@ Q0 = angle2quat(settings.PHI, settings.OMEGA, 0*pi/180, 'ZYX')';
 X0 = [0 0 0]';
 V0 = [0 0 0]';
 W0 = [0 0 0]';
-Y0 = [X0; V0; W0; Q0; settings.Ixxf; settings.Iyyf; settings.Izzf];
+initialCond = [X0; V0; W0; Q0; settings.Ixxf; settings.Iyyf; settings.Izzf];
+Y0 = initialCond;
 
 %% WIND GENERATION
 if settings.wind.input   % will be computed inside the integrations
@@ -162,6 +163,15 @@ PID_flag = 1; % 1: Fdrag;  2: u;  3: alfa_degree;
 
 index_plot = 1; % To plot
 
+if settings.launchWindow
+    launchWindow;
+    pause(0.01);
+    launchFlag = false;
+    lastLaunchflag = true;
+else
+    launchFlag = true;
+end
+
 fprintf('START:\n\n\n');
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -171,7 +181,15 @@ while flagStopIntegration || n_old < nmax
     
     lastFlagAscent = flagAscent;
 
-    if t0 <= settings.tb
+    if settings.launchWindow
+        if not(lastLaunchflag) && launchFlag
+            tLaunch = t0;
+        end
+    else 
+        tLaunch = 0;
+    end
+    
+    if launchFlag && (t0 - tLaunch) <= settings.tb
         flagBurning = true;
     else
         flagBurning = false;
@@ -183,19 +201,19 @@ while flagStopIntegration || n_old < nmax
         flagAeroBrakes = false;
     end
     
-    if z < 0
+    if z < 0 || not(launchFlag)
         flagFligth = false;
     else
         flagFligth = true;
     end
     
-    if vz >= 0
+    if vz >= 0 && launchFlag
         flagAscent = true;
     else
         flagAscent = false;
     end
     
-    if not(flagAscent) 
+    if not(flagAscent) && launchFlag
         if z >= settings.para(1).z_cut
             flagPara1 = true;
             flagPara2 = false;
@@ -209,25 +227,30 @@ while flagStopIntegration || n_old < nmax
     end
     
     % dynamics
-    if settings.ballisticFligth
-        [Tf, Yf] = ode45(@ascent, [t0, t1], Y0, [], settings, x, uw, vw, ww, uncert);
-    else
-        if flagAscent
-            [Tf, Yf] = ode45(@ascent, [t0, t1], Y0, [], settings, x, uw, vw, ww, uncert);
+    if flagFligth
+        if settings.ballisticFligth
+            [Tf, Yf] = ode45(@ascent, [t0, t1], Y0, [], settings, x, uw, vw, ww, uncert, tLaunch);
         else
-            if flagPara1 
-                para = 1; 
+            if flagAscent
+                [Tf, Yf] = ode45(@ascent, [t0, t1], Y0, [], settings, x, uw, vw, ww, uncert, tLaunch);
+            else
+                if flagPara1
+                    para = 1;
+                end
+                if flagPara2
+                    para = 2;
+                end
+                
+                Y0 = Y0(1:6);
+                [Tf, Yd] = ode45(@descentParachute, [t0, t1], Y0, [], settings, uw, vw, ww, para, uncert);
+                [nd, ~] = size(Yd);
+                Yf = [Yd, zeros(nd, 7), settings.Ixxe*ones(nd, 1), ...
+                    settings.Iyye*ones(nd, 1), settings.Iyye*ones(nd, 1)];
             end
-            if flagPara2 
-                para = 2; 
-            end
-            
-            Y0 = Y0(1:6);
-            [Tf, Yd] = ode45(@descentParachute, [t0, t1], Y0, [], settings, uw, vw, ww, para, uncert);
-            [nd, ~] = size(Yd);
-            Yf = [Yd, zeros(nd, 7), settings.Ixxe*ones(nd, 1), ...
-                settings.Iyye*ones(nd, 1), settings.Iyye*ones(nd, 1)];
         end
+    else
+        Tf = [t0, t1];
+        Yf = [initialCond'; initialCond'];
     end
 
     
@@ -443,6 +466,14 @@ while flagStopIntegration || n_old < nmax
    
     cpuTimes(iTimes) = toc;
     
+    if settings.launchWindow
+        lastLaunchflag = launchFlag;
+        pause(1e-6);
+        if exist('launchFlag.txt','file') == 2
+            launchFlag = true;
+        end
+    end
+    
      if settings.ascentOnly
          flagStopIntegration = flagAscent;
      else
@@ -451,6 +482,12 @@ while flagStopIntegration || n_old < nmax
     
      flagMatr(n_old:n_old+n-1, :) = repmat([flagFligth, flagAscent, flagBurning, flagAeroBrakes, flagPara1, flagPara2], n, 1);
 end
+
+if settings.launchWindow
+    fclose('all');
+    delete('launchFlag.txt');
+end
+
 cpuTimes = cpuTimes(1:iTimes);
 
 %% ASSEMBLE TOTAL FLIGHT STATE
@@ -466,7 +503,7 @@ flagMatr = flagMatr(1:n_old, :);
 %% RETRIVE PARAMETERS FROM THE ODE
 
 if not(settings.electronics)
-    dataBallisticFlight = RecallOdeFcn(@ascent, Tf(flagMatr(:, 2)), Yf(flagMatr(:, 2), :), settings, C, uw, vw, ww, uncert);
+    dataBallisticFlight = RecallOdeFcn(@ascent, Tf(flagMatr(:, 2)), Yf(flagMatr(:, 2), :), settings, C, uw, vw, ww, uncert, tLaunch);
 
     
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

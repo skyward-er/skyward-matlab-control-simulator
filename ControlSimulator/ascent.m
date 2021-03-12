@@ -1,4 +1,4 @@
-function [dY, parout] = ascent(t, Y, settings, c, uw, vw, ww, uncert)
+function [dY, parout] = ascent(t, Y, settings, c, uw, vw, ww, uncert, tLaunch)
 %{
 
 ASCENT - ode function of the 6DOF Rigid Rocket Model
@@ -66,6 +66,8 @@ q3 = Y(13);
 Ixx = Y(14);
 Iyy = Y(15);
 Izz = Y(16);
+
+t = t - tLaunch;
 
 %% QUATERION ATTITUDE
 Q = [q0 q1 q2 q3];
