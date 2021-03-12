@@ -10,22 +10,24 @@ Release date: 10/03/2021
 
 %}
 
-function [data] = structToSingles(sensorData)
-    if(isfield(sensorData, 'time'))
-        sensorData = rmfield(sensorData, 'time');
+function [data] = structToSingles(inputData)
+    if(isfield(inputData, 'time'))
+        inputData = rmfield(inputData, 'time');
     end
     
-    if(class(sensorData)=="struct")
+    if(class(inputData)=="struct")
         data = [];
-        c = struct2cell(sensorData);
+        c = struct2cell(inputData);
         for i= 1:length(c)
             if(class(c{i})=="struct")
                 data = [data structToSingles(c{i})]; %#ok<*AGROW>
-            elseif(class(c{i})=="double")
+            else
                 data = [data reshape(c{i}',[],1)'];
             end
         end
-    elseif(class(sensorData)=="double")
-        data = reshape(sensorData',[],1)';
+    else
+        data = reshape(inputData',[],1)';
     end
+    
+    data
 end

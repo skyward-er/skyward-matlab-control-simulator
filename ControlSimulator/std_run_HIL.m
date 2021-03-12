@@ -42,7 +42,8 @@ Q0 = angle2quat(settings.PHI, settings.OMEGA, 0*pi/180, 'ZYX')';
 X0 = [0 0 0]';
 V0 = [0 0 0]';
 W0 = [0 0 0]';
-Y0 = [X0; V0; W0; Q0; settings.Ixxf; settings.Iyyf; settings.Izzf];
+initialCond = [X0; V0; W0; Q0; settings.Ixxf; settings.Iyyf; settings.Izzf];
+Y0 = initialCond;
 
 %% WIND GENERATION
 if settings.wind.input   % will be computed inside the integrations
@@ -133,14 +134,14 @@ flagAeroBrakes = false;
 flagPara1 = false;
 flagPara2 = false;
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-%[sensorData] = manageSignalFrequencies(magneticFieldApprox, flagAscent, settings, Y0, [0,0,0]', x, uw, vw, ww, uncert);
-
-%i = 0;
-%while i < 2000
-%    i = i + 1;
-%end 
+if settings.launchWindow
+    launchWindow;
+    pause(0.01);
+    launchFlag = false;
+    lastLaunchflag = true;
+else
+    launchFlag = true;
+end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -150,31 +151,39 @@ while flagStopIntegration || n_old < nmax
     
     lastFlagAscent = flagAscent;
 
-    if t0 <= settings.tb
+    if settings.launchWindow
+        if not(lastLaunchflag) && launchFlag
+            tLaunch = t0;
+        end
+    else 
+        tLaunch = 0;
+    end
+    
+    if launchFlag && (t0 - tLaunch) <= settings.tb
         flagBurning = true;
     else
         flagBurning = false;
     end
     
-    if flagAscent && not(flagBurning) && mach <= 0.7
+    if flagAscent && not(flagBurning) && mach <=0.7
         flagAeroBrakes = true;
     else
         flagAeroBrakes = false;
     end
     
-    if z < 0
+    if z < 0 || not(launchFlag)
         flagFligth = false;
     else
         flagFligth = true;
     end
     
-    if vz >= 0
+    if vz >= 0 && launchFlag
         flagAscent = true;
     else
         flagAscent = false;
     end
     
-    if not(flagAscent) 
+    if not(flagAscent) && launchFlag
         if z >= settings.para(1).z_cut
             flagPara1 = true;
             flagPara2 = false;
@@ -188,43 +197,63 @@ while flagStopIntegration || n_old < nmax
     end
     
     % dynamics
-    if settings.ballisticFligth
-        [Tf, Yf] = ode45(@ascent, [t0, t1], Y0, [], settings, x, uw, vw, ww, uncert);
-    else
-        if flagAscent
-            [Tf, Yf] = ode45(@ascent, [t0, t1], Y0, [], settings, x, uw, vw, ww, uncert);
+    % dynamics
+    if flagFligth
+        if settings.ballisticFligth
+            [Tf, Yf] = ode45(@ascent, [t0, t1], Y0, [], settings, x, uw, vw, ww, uncert, tLaunch);
         else
-            if flagPara1 
-                para = 1; 
+            if flagAscent
+                [Tf, Yf] = ode45(@ascent, [t0, t1], Y0, [], settings, x, uw, vw, ww, uncert, tLaunch);
+            else
+                if flagPara1
+                    para = 1;
+                end
+                if flagPara2
+                    para = 2;
+                end
+                
+                Y0 = Y0(1:6);
+                [Tf, Yd] = ode45(@descentParachute, [t0, t1], Y0, [], settings, uw, vw, ww, para, uncert);
+                [nd, ~] = size(Yd);
+                Yf = [Yd, zeros(nd, 7), settings.Ixxe*ones(nd, 1), ...
+                    settings.Iyye*ones(nd, 1), settings.Iyye*ones(nd, 1)];
             end
-            if flagPara2 
-                para = 2; 
-            end
-            
-            Y0 = Y0(1:6);
-            [Tf, Yd] = ode45(@descentParachute, [t0, t1], Y0, [], settings, uw, vw, ww, para, uncert);
-            [nd, ~] = size(Yd);
-            Yf = [Yd, zeros(nd, 7), settings.Ixxe*ones(nd, 1), ...
-                settings.Iyye*ones(nd, 1), settings.Iyye*ones(nd, 1)];
         end
+    else
+        Tf = [t0, t1];
+        Yf = [initialCond'; initialCond'];
     end
    
     [sensorData] = manageSignalFrequencies(magneticFieldApprox, flagAscent, settings, Yf, Tf, x, uw, vw, ww, uncert);
     %[~, ~, p, ~]  = atmosisa(-Yf(:,3)) ; 
+    
+    sensorData.barometer.measures(1)
  
     if settings.dataNoise
         % QUA  MI SERVE CHE IL NOISE VENGA APPLICATO AI DATI DENTRO A
         % SENSOR DATA ALTRIMENTI NON POSSO MANDARLI SU SERIALE
     end
-
+    
+    %%%%%%%%%%%
+    % TEMPORARY SOLUTION UNTIL WE DON'T HAVE THE OBSW KALMAN
     if flagAeroBrakes
-         % temporary solution until we don't the OBSW kalman implementation
          sensorData.kalman.z    = z;
          sensorData.kalman.vz   = vz;
          sensorData.kalman.vMod = normV;
+    else 
+        sensorData.kalman.z    = 0;
+        sensorData.kalman.vz   = 0;
+        sensorData.kalman.vMod = 0;
+    end 
+    %%%%%%%%%%
     
-         sendDataOverSerial(sensorData, flagsArray);
-         alpha_degree = readControlOutputFromSerial();
+    flagsArray = [flagFligth, flagAscent, flagBurning, flagAeroBrakes, flagPara1, flagPara2];
+    
+    sendDataOverSerial(sensorData, flagsArray);
+    %alpha_degree = readControlOutputFromSerial();
+    alpha_degree = 25;
+         
+    if flagAeroBrakes
          x = get_extension_from_angle(alpha_degree);
     else 
         x = 0;
@@ -257,7 +286,7 @@ while flagStopIntegration || n_old < nmax
     % atmosphere
     [~, a, ~, ~] = atmosisa(z); % pressure and temperature at each sample time
     normV = norm(Yf(end, 4:6));
-    mach = normV/a;
+    mach = normV / a;
     
     % time update
     t0 = t0 + dt;
@@ -273,6 +302,14 @@ while flagStopIntegration || n_old < nmax
    
     cpuTimes(iTimes) = toc;
     
+    if settings.launchWindow
+        lastLaunchflag = launchFlag;
+        pause(1e-6);
+        if exist('launchFlag.txt','file') == 2
+            launchFlag = true;
+        end
+    end
+    
      if settings.ascentOnly
          flagStopIntegration = flagAscent;
      else
@@ -282,6 +319,12 @@ while flagStopIntegration || n_old < nmax
      flagsArray = [flagFligth, flagAscent, flagBurning, flagAeroBrakes, flagPara1, flagPara2];
      flagMatr(n_old:n_old+n-1, :) = repmat(flagsArray, n, 1);
 end
+
+if settings.launchWindow
+    fclose('all');
+    delete('launchFlag.txt');
+end
+
 cpuTimes = cpuTimes(1:iTimes);
 
 %% ASSEMBLE TOTAL FLIGHT STATE

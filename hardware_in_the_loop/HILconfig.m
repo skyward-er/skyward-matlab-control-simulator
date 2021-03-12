@@ -12,5 +12,12 @@ Release date: 10/03/2021
 %}
 
 %% HIL SIMULATION SETTINGS
+
+% Windows, e.g. "COM6"
+% Linux, e.g. "/dev/ttyACM0"
 hil_settings.serial_port = "/dev/ttyUSB0";
+
+% Windows, e.g. 256000
+% Linux, e.g. 115200
+% See serialib for supported baudrates
 hil_settings.baudrate = 115200;

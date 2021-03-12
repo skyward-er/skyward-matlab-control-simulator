@@ -24,6 +24,8 @@ run('config.m');
 % Y = State = ( x y z | u v w | p q r | q0 q1 q2 q3 | thetax thetay thetaz | ) also for Ya,Yf corresponding to T
 
 if settings.electronics
+    addpath('../hardware_in_the_loop/');
+    addpath('../hardware_in_the_loop/serialbridge');
     run('HILconfig.m');
     serialbridge("Open", hil_settings.serial_port, hil_settings.baudrate); % Initialization of the serial port
     [Yf, Tf, cpuTimes, flagMatr] = std_run_HIL(settings);
