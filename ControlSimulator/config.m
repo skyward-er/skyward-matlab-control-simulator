@@ -152,8 +152,8 @@ settings.P0_ada     =   [  0.1    0     0;
                            0      0     0;
                            0      0     0;];
 
-settings.v0         =   15;
-settings.a0         =   15;
+settings.v0         =   0;
+settings.a0         =   0;
 % [~,~,settings.p0,~] =   atmosisa(settings.z0);
 % settings.x0_ada     =   [settings.p0/100, 0, settings.a0];
 settings.x0_ada     =   [0, settings.v0, settings.a0];

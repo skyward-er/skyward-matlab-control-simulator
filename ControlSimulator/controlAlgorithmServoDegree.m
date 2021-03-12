@@ -58,8 +58,8 @@ else
 
     % Select the z trajectory and the Vz trajectory 
     % To speed up the research, I reduce the vector at each iteration (add if-else for problem in index limits)
-    z_ref  = data_trajectories(chosen_trajectory).Z_ref(index_min_value-1:end);  
-    Vz_ref = data_trajectories(chosen_trajectory).V_ref(index_min_value-1:end);  
+    z_ref  = data_trajectories(chosen_trajectory).Z_ref(index_min_value:end);  
+    Vz_ref = data_trajectories(chosen_trajectory).V_ref(index_min_value:end);  
 
     % Find the value of the altitude in z_reference nearer to z_misured 
     [~, index_min_value] = min( abs(z_ref - z) );
