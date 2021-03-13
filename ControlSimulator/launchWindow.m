@@ -12,12 +12,9 @@ classdef launchWindow < matlab.apps.AppBase
 
         % Button pushed function: launchButton
         function launchButtonPushed(app, ~)
-%             launch = true;
-%             assignin('base', 'launchFlag', launch);
-            fopen(strcat(pwd, '/launchFlag.txt'),'w+');
-            
-            delete(app);
-            
+            global isLaunch 
+	        isLaunch = true;
+	        delete(app);
         end
     end
 

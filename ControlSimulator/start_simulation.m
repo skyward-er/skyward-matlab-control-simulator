@@ -12,6 +12,7 @@ Release date: 16/04/2016
 close all
 clear
 clc
+delete('launchFlag.txt');
 
 path = genpath(pwd);
 addpath(path);

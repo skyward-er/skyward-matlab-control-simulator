@@ -29,5 +29,4 @@ function [data] = structToSingles(inputData)
         data = reshape(inputData',[],1)';
     end
     
-    data
 end

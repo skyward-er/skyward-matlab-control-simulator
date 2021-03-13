@@ -125,6 +125,9 @@ plot_control_variable = zeros(nmax,1);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+global isLaunch
+isLaunch = false;
+
 flagStopIntegration = true;
 flagMatr = false(nmax, 6);
 flagFligth = false;
@@ -226,8 +229,6 @@ while flagStopIntegration || n_old < nmax
    
     [sensorData] = manageSignalFrequencies(magneticFieldApprox, flagAscent, settings, Yf, Tf, x, uw, vw, ww, uncert);
     %[~, ~, p, ~]  = atmosisa(-Yf(:,3)) ; 
-    
-    sensorData.barometer.measures(1)
  
     if settings.dataNoise
         % QUA  MI SERVE CHE IL NOISE VENGA APPLICATO AI DATI DENTRO A
@@ -250,7 +251,7 @@ while flagStopIntegration || n_old < nmax
     flagsArray = [flagFligth, flagAscent, flagBurning, flagAeroBrakes, flagPara1, flagPara2];
     
     sendDataOverSerial(sensorData, flagsArray);
-    %alpha_degree = readControlOutputFromSerial();
+    alpha_degree = readControlOutputFromSerial();
     alpha_degree = 25;
          
     if flagAeroBrakes
@@ -305,7 +306,7 @@ while flagStopIntegration || n_old < nmax
     if settings.launchWindow
         lastLaunchflag = launchFlag;
         pause(1e-6);
-        if exist('launchFlag.txt','file') == 2
+        if isLaunch
             launchFlag = true;
         end
     end
@@ -318,11 +319,12 @@ while flagStopIntegration || n_old < nmax
         
      flagsArray = [flagFligth, flagAscent, flagBurning, flagAeroBrakes, flagPara1, flagPara2];
      flagMatr(n_old:n_old+n-1, :) = repmat(flagsArray, n, 1);
+     toc
 end
 
 if settings.launchWindow
     fclose('all');
-    delete('launchFlag.txt');
+%     delete('launchFlag.txt');
 end
 
 cpuTimes = cpuTimes(1:iTimes);

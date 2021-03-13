@@ -12,12 +12,14 @@ Release date: 10/03/2021
 
 function [] = sendDataOverSerial(data, flags)
 
-data.flags.flagFligth = cast(flags(1), "single");
-data.flags.flagAscent = cast(flags(2), "single");
-data.flags.flagBurning = cast(flags(3), "single");
-data.flags.flagAeroBrakes = cast(flags(4), "single");
-data.flags.flagPara1 = cast(flags(5), "single");
-data.flags.flagPara2 = cast(flags(6), "single");
+data.barometer = rmfield(data.barometer, 'temperature');
+
+data.flags.flagFligth = cast(flags(1), "double");
+data.flags.flagAscent = cast(flags(2), "double");
+data.flags.flagBurning = cast(flags(3), "double");
+data.flags.flagAeroBrakes = cast(flags(4), "double");
+data.flags.flagPara1 = cast(flags(5), "double");
+data.flags.flagPara2 = cast(flags(6), "double");
 
 serialbridge("Write", structToSingles(data));
 

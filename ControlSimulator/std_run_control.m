@@ -131,7 +131,8 @@ count_ADA = 0;
 %%%%%%%%%%%%%%%%%%%%% VARIABLES NEEDED FOR CONTROL %%%%%%%%%%%%%%%%%%%%%%%%
 
 % Define global variables
-global data_trajectories coeff_Cd 
+global data_trajectories coeff_Cd isLaunch
+isLaunch = false;
 
 % Load coefficients for Cd
 data = load('coeffs.mat');
@@ -470,7 +471,7 @@ while flagStopIntegration || n_old < nmax
     if settings.launchWindow
         lastLaunchflag = launchFlag;
         pause(1e-6);
-        if exist('launchFlag.txt','file') == 2
+        if isLaunch
             launchFlag = true;
         end
     end
@@ -482,11 +483,12 @@ while flagStopIntegration || n_old < nmax
      end        
     
      flagMatr(n_old:n_old+n-1, :) = repmat([flagFligth, flagAscent, flagBurning, flagAeroBrakes, flagPara1, flagPara2], n, 1);
+    toc
 end
 
 if settings.launchWindow
     fclose('all');
-    delete('launchFlag.txt');
+%     delete('launchFlag.txt');
 end
 
 cpuTimes = cpuTimes(1:iTimes);
