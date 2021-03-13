@@ -120,10 +120,10 @@ data_trajectories = struct_trajectories.trajectories_saving;
 global Kp_1 Ki_1 Kp_2 Ki_2 Kp_3 Ki_3 I alpha_degree_prec index_min_value iteration_flag chosen_trajectory saturation
 
 % PI controler tune parameter
-Kp_1 = 77; % using Fdrag nel pid --> da migliorare (magari si può ottenere variabile controllo più smooth)
+Kp_1 = 90; % using Fdrag nel pid --> da migliorare (magari si può ottenere variabile controllo più smooth)
 Ki_1 = 5; % using Fdrag nel pid
-Kp_2 = 50; % using u nel pid --> da migliorare (magari si può ottenere variabile controllo più smooth)
-Ki_2 = 37; % using u nel pid
+Kp_2 = 55; % using u nel pid --> da migliorare (magari si può ottenere variabile controllo più smooth)
+Ki_2 = 45; % using u nel pid
 Kp_3 = 75; % using alfa_degree nel pid --> ancora da tunare
 Ki_3 = 30; % using alfa_degree nel pid
 
@@ -134,7 +134,7 @@ iteration_flag = 1;
 saturation = false;
 
 % Select the PID algorithm
-PID_flag = 3; % 1: Fdrag;  2: u;  3: alfa_degree;
+PID_flag = 1; % 1: Fdrag;  2: u;  3: alfa_degree;
 
 index_plot = 1; % To plot
 
