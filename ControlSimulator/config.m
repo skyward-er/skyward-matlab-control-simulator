@@ -38,6 +38,7 @@ motors = load(filename_full,'MotorsByName');
 motors = motors.MotorsByName;
 
 
+%name = 'M2000Rbis';
 name = 'M2020'; % USE THIS
 %name = 'M1890';  % UNFEASIBLE, TOO STRONG TO DECELERATE
 %name = 'M1800'; % UNFEASIBLE, TOO STRONG TO DECELERATE
