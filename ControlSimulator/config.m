@@ -40,7 +40,8 @@ filename = strcat(DATA_PATH,'Motors.mat');
 Motors = load(filename);
 Motors = [Motors.Cesaroni, Motors.Aerotech];
 
-name = 'M2000R';
+name = 'M2000Rbis';
+% name = 'M2000R';
 % name = 'M1890';
 % name = 'M1800';
 
@@ -130,9 +131,9 @@ settings.QLinear    =        100*...
                                  [1     0     0      0      0      0;       % Noise covariance matrix
                                   0     1     0      0      0      0;       % for the linear dynamics
                                   0     0     1      0      0      0;
-                                  0     0     0      1000   0      0;
-                                  0     0     0      0      1000   0;
-                                  0     0     0      0      0      1000];
+                                  0     0     0      0.1    0      0;
+                                  0     0     0      0      0.1    0;
+                                  0     0     0      0      0      0.1];
 settings.dt_k       =   0.01;                                               % [s]       kalman time step
 settings.sigma_w    =   100*(1000*pi/180)^2;                                % [mdps^2]  estimated gyroscope variance;
 settings.sigma_beta =   1e-2;                                               % [mdps^2]  estimated gyroscope bias variance;
@@ -195,7 +196,7 @@ settings.ode.optionsasc1 = odeset('Events',@event_mach,'InitialStep',1);    % OD
 % select which model you want to use:
 
 %%%%% Input wind
-settings.wind.input = true;
+settings.wind.input = false;
 % Wind is generated for every altitude interpolating with the coefficient defined below
 
 settings.wind.input_ground = 7;                                             % wind magnitude at the ground [m/s]

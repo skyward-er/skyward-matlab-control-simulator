@@ -20,7 +20,7 @@ MS580301BA01=Sensor(); % presure in mbar, temp should be in C°
 MS580301BA01.maxMeasurementRange=1100; % 1100, 1300 in mbar
 MS580301BA01.minMeasurementRange=300; % 300, 10 in mbar
 MS580301BA01.resolution=0.065; % 0.012, 0.018, 0.027, 0.042, 0.065 in mbar
-MS580301BA01.noiseVariance= 200; % guess in mbar
+MS580301BA01.noiseVariance= 10; % guess in mbar
 MS580301BA01.error2dOffset=ep_data; % [p in mbar, T in celsius, ep in mbar]
 
 % initial accelerometer sensor from LSM9DS1
@@ -53,7 +53,7 @@ MAGN_LSM9DS1=Sensor3D(); % magnetic field in mgauss
 MAGN_LSM9DS1.maxMeasurementRange=16000; % 4000, 8000, 12000, 16000 in mgauss
 MAGN_LSM9DS1.minMeasurementRange=-16000; % -4000, -8000, -12000, -16000 in mgauss
 MAGN_LSM9DS1.resolution=0.58; % 0.14, 0.29, 0.43, 0.58 in mgauss
-MAGN_LSM9DS1.noiseVariance=5; % guess in mgauss    original guess 2
+MAGN_LSM9DS1.noiseVariance=3; % guess in mgauss    original guess 2
 MAGN_LSM9DS1.offsetX=0; % +-1000 in mgauss
 MAGN_LSM9DS1.offsetY=0; % +-1000 in mgauss
 MAGN_LSM9DS1.offsetZ=0; % +-1000 in mgauss
