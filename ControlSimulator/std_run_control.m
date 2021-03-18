@@ -72,6 +72,8 @@ else
     uncert = [0,0];
 end
 
+%% KALMAN PATH 
+addpath('../kalman');
 %% MAGNETIC FIELD MODEL
 hmax = 6000;
 % %Use this lines if your MATLAB version is up to 2020
@@ -118,10 +120,11 @@ n_ada_old = 1;
 cpuTimes = zeros(nmax,1);
 iTimes = 0;
 g = 9.81;
-x_ada = settings.x_ada0;
-P_ada = settings.P_ada0;
-flagADA = false;
-
+x_ada       =   settings.x_ada0;
+P_ada       =   settings.P_ada0;
+flag_ADA    =   false;
+count_ADA   =   0;
+t_ada       =   0;
 while flagStopIntegration || n_old < nmax
     tic 
     iTimes = iTimes + 1;
@@ -294,9 +297,7 @@ while flagStopIntegration || n_old < nmax
     end
     
     %%%%%%%%%%%%% ADA %%%%%%%%%%%%%
-    if flagADA == false
-    [x_ada, P_ada, flagADA, t_ada]   =  run_ADA(ada_prev, Pada_prev, h_baro, sensorData.barometer.time, settings.Q_ada, settings.N_ada);
-    end
+    [x_ada, P_ada, flag_ADA, t_ada, count_ADA]   =  run_ADA(ada_prev, Pada_prev,- h_baro, sensorData.barometer.time, settings.Q_ada, settings.R_ada, settings.N_ada, count_ADA, flag_ADA, t_ada);
      x_ada_tot(n_ada_old:n_ada_old + size(x_ada(:,1),1)-1,:)  = x_ada(1:end,:);
      t_ada_tot(n_ada_old:n_ada_old + size(x_ada(:,1),1)-1)    = sensorData.barometer.time;              
      n_ada_old = n_ada_old + size(x_ada(1,:)); 
@@ -317,6 +318,7 @@ while flagStopIntegration || n_old < nmax
      n_est_old = n_est_old + size(x_c(1,:)); 
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
+
     if flagAeroBrakes
          alpha_degree = controlAlgorithm(z, vz, vx);
          x = get_extension_from_angle(alpha_degree);
@@ -335,7 +337,14 @@ while flagStopIntegration || n_old < nmax
         vx = Yf(end, 4);  % Needed for the control algorithm. Ask if it is right
     end
     z = -Yf(end, 3);
-
+    
+    if flagAeroBrakes
+         alpha_degree = controlAlgorithm(z, vz, vx);
+         x = get_extension_from_angle(alpha_degree);
+    else 
+        x = 0;
+    end
+    
     if lastFlagAscent && not(flagAscent)
         Y0 = [Yf(end, 1:3), vels, Yf(end, 7:end)];
     else
@@ -399,13 +408,13 @@ if true && not(settings.electronics)
 % subplot(2,1,2);plot(tp,-hb_tot',Tf,-Yf(:,3));grid on;xlabel('time [s]');ylabel('|h| [m]');
 % legend('Altitude','Ground-truth','location','northeast');
 % title('Barometer altitude reads');
-% figure 
-% subplot(3,1,1);plot(t_ada_tot, x_ada_tot(:,1));grid on;xlabel('time [s]');ylabel('|P| [mBar]');
-% title('ADA pressure estimation');
-% subplot(3,1,2);plot(t_ada_tot,x_ada_tot(:,2));grid on;xlabel('time [s]');ylabel('|P_dot| [mBar/s]');
-% title('ADA velocity estimation');
-% subplot(3,1,3);plot(t_ada_tot,x_ada_tot(:,3));grid on;xlabel('time [s]');ylabel('|P_dot^2| [mBar/s^2]');
-% title('ADA acceleration estimation');
+figure 
+subplot(3,1,1);plot(t_ada_tot, x_ada_tot(:,1));grid on;xlabel('time [s]');ylabel('|P| [mBar]');
+title('ADA pressure estimation');
+subplot(3,1,2);plot(t_ada_tot,x_ada_tot(:,2));grid on;xlabel('time [s]');ylabel('|P_dot| [mBar/s]');
+title('ADA velocity estimation');
+subplot(3,1,3);plot(t_ada_tot,x_ada_tot(:,3));grid on;xlabel('time [s]');ylabel('|P_dot^2| [mBar/s^2]');
+title('ADA acceleration estimation');
 %% FIGURE: Accelerometer reads
 % faccel = settings.frequencies.accelerometerFrequency;
 % ta = Tf(1):1/faccel:Tf(end);

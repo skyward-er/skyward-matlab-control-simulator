@@ -1,4 +1,10 @@
 classdef Sensor < handle
+    
+    % Author: Jan Hammelman
+    % Skyward Experimental Rocketry | ELC-SCS Dept | electronics@skywarder.eu
+    % email: jan.hammelmann@skywarder.eu,alessandro.delduca@skywarder.eu
+    % Release date: 01/03/2021
+    
     %SENSOR Super call for all sensor
     %   Inherit from handle to have state variables which can be changed
     %   inside a method
