@@ -468,7 +468,7 @@ title('Estimated North velocity vs ground-truth');
 subplot(3,1,2);plot(t_est_tot(1:i_apo_est), x_est_tot(1:i_apo_est,5),Tf(1:i_apo), v_NED_tot(1:i_apo,2));grid on;xlabel('time [s]');ylabel('|Ve| [m/s]');
 legend('East','Ground-truth','location','best');
 title('Estimated East velocity vs ground-truth');
-subplot(3,1,3);plot(t_est_tot(1:i_apo_est+1),-x_est_tot(1:i_apo_est+1,6),Tf(1:i_apo),-v_NED_tot(1:i_apo,3));grid on;xlabel('time [s]');ylabel('|Vu| [m/s]');
+subplot(3,1,3);plot(t_est_tot(1:i_apo_est+3),-x_est_tot(1:i_apo_est+3,6),Tf(1:i_apo+3),-v_NED_tot(1:i_apo+3,3));grid on;xlabel('time [s]');ylabel('|Vu| [m/s]');
 legend('Upward','Ground-truth','location','best');
 title('Estimated Upward velocity vs ground-truth');
 %% FIGURE: Estimated quaternions vs ground-truth
@@ -485,6 +485,12 @@ title('Estimated q2 vs ground-truth');
 subplot(4,1,4);plot(t_est_tot(1:i_apo_est),x_est_tot(1:i_apo_est,9),Tf(1:i_apo),Yf(1:i_apo,13));grid on;ylabel('|q3| [-]');
 legend('Estimated q3','Ground-truth','location','northeast');
 title('Estimated q3 vs ground-truth');
+%% FIGURE: Vertical velocity only
+figure
+plot(t_est_tot(1:i_apo_est+3),-x_est_tot(1:i_apo_est+3,6),Tf(1:i_apo+40),-v_NED_tot(1:i_apo+40,3));grid on;xlabel('time [s]');ylabel('|Vu| [m/s]');
+legend('Upward','Ground-truth','location','best');
+title('Estimated Upward velocity vs ground-truth');
+
 end
 end
 
