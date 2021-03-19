@@ -206,7 +206,7 @@ while flagStopIntegration || n_old < nmax
 
          % tempo = index_plot*0.1 - 0.1;
          fprintf('\nCONTROL:\n');
-         [alpha_degree, delta_S, Vz_setpoint, z_setpoint, Vx_setpoint, x_setpoint, Cdd] = controlAlgorithm(z, vz, xxx, vxxx, normV, dt);
+         [alpha_degree, delta_S, Vz_setpoint, z_setpoint, Vx_setpoint, Cdd] = controlAlgorithm(z, vz, xxx, vxxx, normV, dt);
 %          [alpha_degree, delta_S, Vz_setpoint, z_setpoint, Vx_setpoint, x_setpoint, Cdd] = controlAlgorithm(z, vz, sqrt(xxx^2 + yyy^2), sqrt(vxxx^2 + vyyy^2), normV, dt);
          x = get_extension_from_angle(alpha_degree);
          
@@ -223,7 +223,6 @@ while flagStopIntegration || n_old < nmax
          plot_Vz_setpoint(index_plot) = Vz_setpoint;
          plot_z_setpoint(index_plot) = z_setpoint;
          plot_Vx_setpoint(index_plot) = Vx_setpoint;
-         plot_x_setpoint(index_plot) = x_setpoint;
          plot_control_variable(index_plot) = alpha_degree;
          plot_delta_S(index_plot) = delta_S;
          plot_Cd(index_plot) = Cdd;
@@ -405,7 +404,7 @@ legend
 figure('Name','XY_displacement real vs setpoint after burning phase','NumberTitle','off');
 plot(time, plot_xy_real,'DisplayName','real','LineWidth',0.8), grid on;
 hold on
-plot(time, plot_x_setpoint,'DisplayName','setpoint','LineWidth',0.8), grid on;
+% plot(time, plot_x_setpoint,'DisplayName','setpoint','LineWidth',0.8), grid on;
 % axis([0,20, 0, 3100])
 xlabel('time [s]'), ylabel('xy [m]');
 hold off

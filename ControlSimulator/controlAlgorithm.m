@@ -1,4 +1,4 @@
-function [alpha_degree, delta_S, Vz_setpoint, z_setpoint, Vx_setpoint, x_setpoint, Cd] = controlAlgorithm(z,Vz,x,Vx,V_mod,sample_time)
+function [alpha_degree, delta_S, Vz_setpoint, z_setpoint, Vx_setpoint, Cd] = controlAlgorithm(z,Vz,x,Vx,V_mod,sample_time)
 
 % Define global variables
 global data_trajectories coeff_Cd 
@@ -35,28 +35,21 @@ if iteration_flag == 1 % Choose the nearest trajectory ( only at the first itera
     % I select the reference altitude and the reference vertical velocity
     z_setpoint  =  data_trajectories(chosen_trajectory).Z_ref(index_min_value);
     Vz_setpoint =  data_trajectories(chosen_trajectory).VZ_ref(index_min_value);
-    x_setpoint  =  data_trajectories(chosen_trajectory).X_ref(index_min_value);
     Vx_setpoint =  data_trajectories(chosen_trajectory).VX_ref(index_min_value);
 
 else  % For the following iterations keep tracking the chosen trajectory
 
     % Select the z trajectory and the Vz trajectory 
     % To speed up the research, I reduce the vector at each iteration (add if-else for problem in index limits)
-    z_ref  = data_trajectories(chosen_trajectory).Z_ref(index_min_value-1:end);  
-    Vz_ref = data_trajectories(chosen_trajectory).VZ_ref(index_min_value-1:end);  
-    x_ref  = data_trajectories(chosen_trajectory).X_ref(index_min_value-1:end);  
-    Vx_ref = data_trajectories(chosen_trajectory).VX_ref(index_min_value-1:end);  
+    z_ref  = data_trajectories(chosen_trajectory).Z_ref(index_min_value:end);  
+    Vz_ref = data_trajectories(chosen_trajectory).VZ_ref(index_min_value:end);   
+    Vx_ref = data_trajectories(chosen_trajectory).VX_ref(index_min_value:end);  
 
     % 1) Find the value of the altitude in z_reference nearer to z_misured 
     [~, index_min_value] = min( abs(z_ref - z) );
 
-    % 2) Find the reference using Vz(z)
-%     distances_from_current_state = (z_ref-z).^2 + (Vz_ref-Vz).^2; 
-%     [~, index_min_value] = min( distances_from_current_state );
-
     z_setpoint  = z_ref(index_min_value);
     Vz_setpoint = Vz_ref(index_min_value);
-    x_setpoint  = x_ref(index_min_value);
     Vx_setpoint = Vx_ref(index_min_value);
 
 end  
@@ -77,13 +70,13 @@ Cd       = (S0*Cd_fake)/S;
     
 %% LQR ALGORITHM
 
-% States: z,Vz,x,Vx
+% States: z,Vz,Vx
 
 %% Original matrix
-Q = [0.7,    0,            0,           0;
-       0,    1,            0,           0;
-       0,    0,   0.00000001,           0;
-       0,    0,            0,    0.000001];
+Q = [0.7,    0,           0,   0;
+       0,    1,           0,   0;
+       0,    0,       0.001,   0;
+       0,    0,           0,   1];
    
 R = 65000; 
 
@@ -97,22 +90,29 @@ R = 65000;
 %    
 % R = 0.6/S_max_squared; 
 
-
-
-
-% Linearized the system around the current state
-A = [1,                                                                                        T, 0,                                                                                        0;
-     0, 1 - T*((Cd*S*rho*(Vx^2 + Vz^2)^(1/2))/(2*m) + (Cd*S*Vz^2*rho)/(2*m*(Vx^2 + Vz^2)^(1/2))), 0,                                            -(Cd*S*T*Vx*Vz*rho)/(2*m*(Vx^2 + Vz^2)^(1/2));
-     0,                                                                                        0, 1,                                                                                        T;
-     0,                                            -(Cd*S*T*Vx*Vz*rho)/(2*m*(Vx^2 + Vz^2)^(1/2)), 0, 1 - (Cd*S*T*Vx^2*rho)/(2*m*(Vx^2 + Vz^2)^(1/2)) - (Cd*S*T*rho*(Vx^2 + Vz^2)^(1/2))/(2*m)];
+% Linearize the system around the current state
+% % % A = [1,                                                                                        T, 0,                                                                                        0;
+% % %      0, 1 - T*((Cd*S*rho*(Vx^2 + Vz^2)^(1/2))/(2*m) + (Cd*S*Vz^2*rho)/(2*m*(Vx^2 + Vz^2)^(1/2))), 0,                                            -(Cd*S*T*Vx*Vz*rho)/(2*m*(Vx^2 + Vz^2)^(1/2));
+% % %      0,                                                                                        0, 1,                                                                                        T;
+% % %      0,                                            -(Cd*S*T*Vx*Vz*rho)/(2*m*(Vx^2 + Vz^2)^(1/2)), 0, 1 - (Cd*S*T*Vx^2*rho)/(2*m*(Vx^2 + Vz^2)^(1/2)) - (Cd*S*T*rho*(Vx^2 + Vz^2)^(1/2))/(2*m)];
+% % %  
+% % % B = [                                        0;
+% % %       -(Cd*T*Vz*rho*(Vx^2 + Vz^2)^(1/2))/(2*m);
+% % %                                              0;
+% % %        -(Cd*T*Vx*rho*(Vx^2 + Vz^2)^(1/2))/(2*m)];
+   
+A = [1,                                                                                        T,                                                                                        0, 0;
+     0, 1 - T*((Cd*S*rho*(Vx^2 + Vz^2)^(1/2))/(2*m) + (Cd*S*Vz^2*rho)/(2*m*(Vx^2 + Vz^2)^(1/2))),                                            -(Cd*S*T*Vx*Vz*rho)/(2*m*(Vx^2 + Vz^2)^(1/2)), 0;
+     0,                                            -(Cd*S*T*Vx*Vz*rho)/(2*m*(Vx^2 + Vz^2)^(1/2)), 1 - T*((Cd*S*rho*(Vx^2 + Vz^2)^(1/2))/(2*m) + (Cd*S*Vx^2*rho)/(2*m*(Vx^2 + Vz^2)^(1/2))), 0;
+    -1,                                                                                        0,                                                                                        0, 0];
  
-B = [                                        0;
-      -(Cd*T*Vz*rho*(Vx^2 + Vz^2)^(1/2))/(2*m);
-                                             0;
-       -(Cd*T*Vx*rho*(Vx^2 + Vz^2)^(1/2))/(2*m)];
-
-x_measured  = [z, Vz, x, Vx]';
-x_reference = [z_setpoint, Vz_setpoint, x_setpoint, Vx_setpoint]';
+B = [                                       0;
+     -(Cd*T*Vz*rho*(Vx^2 + Vz^2)^(1/2))/(2*m);
+     -(Cd*T*Vx*rho*(Vx^2 + Vz^2)^(1/2))/(2*m);
+                                            0];
+                                             
+x_measured  = [z, Vz, Vx, 0]';
+x_reference = [z_setpoint, Vz_setpoint, Vx_setpoint, 0]';
 x_error     =  x_measured - x_reference
 
 % Solve Riccati equation
@@ -134,7 +134,6 @@ U = -K*x_error
 % Debug
 J_z  = Q(1,1)*x_error(1)^2
 J_Vz = Q(2,2)*x_error(2)^2
-J_x  = Q(3,3)*x_error(3)^2
 J_Vx = Q(4,4)*x_error(4)^2
 
 J_Q = x_error'*Q*x_error
