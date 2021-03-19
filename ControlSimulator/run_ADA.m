@@ -1,4 +1,4 @@
-function [x_ada, P_ada, flag_ADA, t_ADA, count_ADA]   =  run_ADA(x_ada, P_ada, h_baro, t_baro, Q_ada, R_ada, N, count_ADA, flag_ADA, t_ADA)
+function [x_ada, P_ada, flag_ADA, t_ADA, count_ADA]   =  run_ADA(x_ada, P_ada, h_baro, t_baro, Q_ada, R_ada, count_ADA, flag_ADA, t_ADA)
 
 % Author: Alessandro Del Duca
 % Skyward Experimental Rocketry | ELC-SCS Dept | electronics@skywarder.eu
@@ -88,7 +88,6 @@ function [x_ada, P_ada, flag_ADA, t_ADA, count_ADA]   =  run_ADA(x_ada, P_ada, h
     % Prediction N state ahead and check if the apogee is reached
         if flag_ADA == false
             xapo = x;
-%            xapo = (At^N)*xapo;
             if xapo(2) < 10
                 count_ADA = count_ADA + 1;
             else

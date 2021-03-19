@@ -15,7 +15,9 @@ settings.electronics        =   false;                                     % Swi
 settings.ascentOnly         =   false;                                     % Switch on to simulate only the ascent phase untill the apogee
 settings.ballisticFligth    =   false;                                     % Switch on to simulate the balistic fligth without any parachute
 settings.dataNoise          =   true;                                      % Switch on to simulate the data acquisiton from sensors
-settings.launchWindow       =   true;                                      % switch off this to avoid pausing the launch till you press the launch button
+settings.launchWindow       =   false;                                     % Switch off this to avoid pausing the launch till you press the launch button
+settings.kalman             =   true;                                      % Switch on to run the kalman algorithm
+settings.ada                =   true;                                      % Switch on to run the apogee detection algorithm
 
 %% LAUNCH SETUP
 % launchpad for Pont De Sor
@@ -41,8 +43,8 @@ Motors      =   load(filename);
 Motors      =   [Motors.Cesaroni, Motors.Aerotech];
 
 
-name = 'M2000Rbis';
-% name = 'M2020';
+% name = 'M2000Rbis';
+name = 'M2020';
 % name = 'M1890';
 % name = 'M1800';
 
@@ -135,13 +137,13 @@ settings.sigma_w         =   10*(1000*pi/180)^2;                           % [md
 settings.sigma_beta      =   1e-2;                                         % [mdps^2]  estimated gyroscope bias variance;
 
 % Process noise covariance matrix for the linear dynamics
-settings.QLinear         =   100*...
+settings.QLinear         =   0.01*...
                                  [1     0     0      0      0      0;
                                   0     1     0      0      0      0;
                                   0     0     1      0      0      0;
-                                  0     0     0      1000   0      0;
-                                  0     0     0      0      1000   0;
-                                  0     0     0      0      0      1000];
+                                  0     0     0      1      0      0;
+                                  0     0     0      0      1      0;
+                                  0     0     0      0      0      1];
 
 % Process noise covariance matrix for the quaternion dynamics
 settings.Qq              =   [(settings.sigma_w^2*settings.dt_k+(1/3)*settings.sigma_beta^2*settings.dt_k^3)*eye(3)          0.5*settings.sigma_beta^2*settings.dt_k^2*eye(3);
@@ -209,8 +211,8 @@ settings.wind.input = true;
 
 settings.wind.input_ground  = 7;                                           % wind magnitude at the ground [m/s]
 settings.wind.input_alt     = [0 100 600 750 900 1500 2500 3000 3500];     % altitude vector [m]
-settings.wind.input_mult    = [0 0 10 15 20 30 30 30 30];                  % percentage of increasing magnitude at each altitude
-settings.wind.input_azimut  = [30 30 30 30 30 30 30 30 30];                % wind azimut angle at each altitude (toward wind incoming direction) [deg]
+settings.wind.input_mult    = [0 0 10 10 15 15 20 30 30];                  % percentage of increasing magnitude at each altitude
+settings.wind.input_azimut  = [0 0 0 0 0 0 0 0 0];                         % wind azimut angle at each altitude (toward wind incoming direction) [deg]
 
 settings.wind.input_uncertainty = [1, 1];
 % settings.wind.input_uncertainty = [a,b];      wind uncertanties:

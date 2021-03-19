@@ -47,7 +47,7 @@ initialCond = [X0; V0; W0; Q0; settings.Ixxf; settings.Iyyf; settings.Izzf];
 Y0 = initialCond;
 
 %% WIND GENERATION
-if settings.wind.input   % will be computed inside the integrations
+if settings.wind.input                                                     % will be computed inside the integrations
     uw = 0; vw = 0; ww = 0;
 else
     [uw,vw,ww,~] = wind_const_generator(settings.wind.AzMin, settings.wind.AzMax,...
@@ -60,12 +60,12 @@ else
 end
 
 if settings.wind.input && all(settings.wind.input_uncertainty ~= 0)
-    signn = randi([1, 4]); % 4 sign cases
+    signn = randi([1, 4]);                                                 % 4 sign cases
     unc = settings.wind.input_uncertainty;
     
     switch signn
         case 1
-            %                       unc = unc;
+            % unc = unc;
         case 2
             unc(1) = - unc(1);
         case 3
@@ -79,9 +79,17 @@ else
     uncert = [0,0];
 end
 
-%% KALMAN PATH 
+%% KALMAN INIT 
 addpath('../kalman');
 
+%% SENSORS INIT
+addpath('../sensors');
+addpath('../sensors/data/MS580301BA01');
+[s, c, tot] = initSensors;
+
+%% CONTROL INIT
+addpath('../control');
+csett     =   controlConfig;
 %% MAGNETIC FIELD MODEL
 hmax    =   6000;
 
@@ -98,7 +106,7 @@ magneticFieldApprox = @(zSlm) XYZ0 + (XYZh-XYZ0)./hmax.*zSlm;              % Mag
 
 %% INTEGRATION
 % setting initial condition before control phase
-dt          =       1/settings.frequencies.controlFrequency;                              % Time step of the controller
+dt          =       1/settings.frequencies.controlFrequency;               % Time step of the controller
 t0          =       0;
 t1          =       t0 + dt;
 vz          =       1;
@@ -106,7 +114,7 @@ z           =       1;
 nmax        =       10000;
 mach        =       0;
 x           =       0;
-n_old       =   1;
+n_old       =       1;
 Yf_tot      =       zeros(nmax, 16);
 Tf_tot      =       zeros(nmax, 1);
 p_tot       =       zeros(nmax, 1);
@@ -120,47 +128,10 @@ t_ada       =       0;
 count_ADA   =       0;
 
 %% Flag initializations
-flag_ADA            =   false;
-flagStopIntegration =   true;
-flagMatr            =   false(nmax, 6);
-flagAscent          =   false;
-%% SENSORS DEFINITION
-addpath('../sensors');
-addpath('../sensors/data/MS580301BA01');
-[s, c, tot] = initSensors(nmax);
-
-%%%%%%%%%%%%%%%%%%%%% VARIABLES NEEDED FOR CONTROL %%%%%%%%%%%%%%%%%%%%%%%%
-
-% Define global variables
-global data_trajectories coeff_Cd 
-
-% Load coefficients for Cd
-data = load('coeffs.mat');
-coeff_Cd = data.coeffs;
-
-% Load the trajectories
-struct_trajectories = load('Trajectories');
-data_trajectories = struct_trajectories.trajectories_saving;
-
-% Define global variables
-global Kp_1 Ki_1 Kp_2 Ki_2 Kp_3 Ki_3 I alpha_degree_prec index_min_value iteration_flag chosen_trajectory saturation
-
-% PI controler tune parameter
-Kp_1 = 30; % using Fdrag nel pid --> da migliorare (magari si può ottenere variabile controllo più smooth)
-Ki_1 = 5; % using Fdrag nel pid
-Kp_2 = 50; % using u nel pid --> da migliorare (magari si può ottenere variabile controllo più smooth)
-Ki_2 = 37; % using u nel pid
-Kp_3 = 50; % using alfa_degree nel pid --> ancora da tunare
-Ki_3 = 10; % using alfa_degree nel pid
-
-% Internal parameter of controler
-I = 0;
-alpha_degree_prec = 0;
-iteration_flag = 1;
-saturation = false;
-
-% Select the PID algorithm
-PID_flag = 1; % 1: Fdrag;  2: u;  3: alfa_degree;
+flagADA                =   false;
+flagStopIntegration     =   true;
+flagAscent              =   false;
+flagMatr                =   false(nmax, 6);
 
 index_plot = 1; % To plot
 
@@ -285,28 +256,33 @@ while flagStopIntegration || n_old < nmax
         [sp, c, tot] = acquisitionSys(sensorData, s, c, tot);
     end
   
-    if iTimes==1
-        x_prev    =  [X0; V0; Q0(2:4); Q0(1);0;0;0];
-        P_prev    =   0.01*eye(12);
+    if iTimes==1 && settings.ada
         ada_prev  =   settings.x0_ada;
         Pada_prev =   settings.P0_ada;
-    else
-        x_prev    =   x_est_tot(end,:);
-        P_prev    =   P_c(:,:,end);
+    elseif iTimes ~= 1 && settings.ada
         ada_prev  =   x_ada_tot(end,:);
         Pada_prev =   P_ada(:,:,end);
     end
-    
+   
+    if iTimes==1 && settings.kalman
+        x_prev    =  [X0; V0; Q0(2:4); Q0(1);0;0;0];
+        P_prev    =   0.01*eye(12);
+    elseif iTimes ~= 1 && settings.kalman
+        x_prev    =   x_est_tot(end,:);
+        P_prev    =   P_c(:,:,end);
+    end
 %% ADA 
-    [x_ada, P_ada, flag_ADA, t_ada, count_ADA]   =  run_ADA(ada_prev, Pada_prev,                        ...
+    if settings.ada && settings.dataNoise
+    [x_ada, P_ada, flagADA, t_ada, count_ADA]   =  run_ADA(ada_prev, Pada_prev,                        ...
                                                            -sp.h_baro, sensorData.barometer.time,       ...
                                                             settings.Q_ada, settings.R_ada,             ...
-                                                            settings.N_ada, count_ADA, flag_ADA, t_ada);
+                                                            count_ADA, flagADA, t_ada);
      x_ada_tot(c.n_ada_old:c.n_ada_old + size(x_ada(:,1),1)-1,:)  = x_ada(1:end,:);
      t_ada_tot(c.n_ada_old:c.n_ada_old + size(x_ada(:,1),1)-1)    = sensorData.barometer.time;              
      c.n_ada_old = c.n_ada_old + size(x_ada(1,:)); 
-    
+     end
 %% Navigation system
+    if settings.kalman && settings.dataNoise
     [flagGPS_fix, n_satellite] = gpsFix(sp.accel);
     [x_c,P_c]   =  run_kalman(x_prev,P_prev,...
                               sensorData.accelerometer.time, sp.accel, sp.gyro,                   ...
@@ -317,25 +293,50 @@ while flagStopIntegration || n_old < nmax
      x_est_tot(c.n_est_old:c.n_est_old + size(x_c(:,1),1)-1,:)  = x_c(1:end,:);
      t_est_tot(c.n_est_old:c.n_est_old + size(x_c(:,1),1)-1)    = sensorData.accelerometer.time;              
      c.n_est_old = c.n_est_old + size(x_c(1,:)); 
- 
+    end
 %% Control algorithm
-    if flagAeroBrakes
-%          yyy
-%          vyyy
-%          xxx
-%          vxxx
+    if flagAeroBrakes && settings.kalman
 
          tempo = index_plot*0.1 - 0.1; % Print time instant for debugging
          
          %% selection of controler type
-         if PID_flag == 1
-             [alpha_degree, Vz_setpoint, z_setpoint, pid,U_linear, Cdd, delta_S] = controlAlgorithm(-x_c(end,3), -x_c(end,6), sqrt(x_c(end,4)^2+x_c(end,5)^2+x_c(end,6)^2), dt);
-         elseif PID_flag == 2
-             [alpha_degree, Vz_setpoint, z_setpoint, pid,U_linear, Cdd, delta_S] = controlAlgorithmLinearized(-x_c(end,3), -x_c(end,6), sqrt(x_c(end,4)^2+x_c(end,5)^2+x_c(end,6)^2), dt);
-         elseif PID_flag == 3
-                 [alpha_degree, Vz_setpoint, z_setpoint] = controlAlgorithmServoDegree(-x_c(end,3), -x_c(end,6), sqrt(x_c(end,4)^2+x_c(end,5)^2+x_c(end,6)^2), dt);
+         switch csett.flagPID 
+             case 1
+             [alpha_degree, Vz_setpoint, z_setpoint, pid,U_linear, Cdd, delta_S, csett] = controlAlgorithm(-x_c(end,3), -x_c(end,6), sqrt(x_c(end,4)^2+x_c(end,5)^2+x_c(end,6)^2), dt, csett);
+             case 2
+             [alpha_degree, Vz_setpoint, z_setpoint, pid,U_linear, Cdd, delta_S] = controlAlgorithmLinearized(-x_c(end,3), -x_c(end,6), sqrt(x_c(end,4)^2+x_c(end,5)^2+x_c(end,6)^2), dt, csett);
+             case 3
+             [alpha_degree, Vz_setpoint, z_setpoint] = controlAlgorithmServoDegree(-x_c(end,3), -x_c(end,6), sqrt(x_c(end,4)^2+x_c(end,5)^2+x_c(end,6)^2), dt,  csett);
          end
-             
+         x = get_extension_from_angle(alpha_degree);
+         % Save the values to plot them
+         plot_Vz_real(index_plot) = vz;
+         plot_z_real(index_plot) = z;
+         plot_normV(index_plot) = normV;
+         plot_Vz_setpoint(index_plot) = Vz_setpoint;
+         plot_z_setpoint(index_plot) = z_setpoint;
+         plot_control_variable(index_plot) = alpha_degree;
+         if csett.flagPID ~= 3
+             plot_Cd(index_plot) = Cdd;
+             plot_pid(index_plot) = pid;
+             plot_U_linear(index_plot) = U_linear;
+             plot_delta_S(index_plot) = delta_S;
+         end
+         index_plot = index_plot + 1;
+
+    elseif flagAeroBrakes && ~settings.kalman
+        
+        tempo = index_plot*0.1 - 0.1; % Print time instant for debugging
+        
+        switch csett.flagPID 
+             case 1
+             [alpha_degree, Vz_setpoint, z_setpoint, pid,U_linear, Cdd, delta_S, csett] = controlAlgorithm(z, vz, sqrt(vxxx^2 + vyyy^2 + vz^2), dt,  csett);
+             case 2
+             [alpha_degree, Vz_setpoint, z_setpoint, pid,U_linear, Cdd, delta_S] = controlAlgorithmLinearized(z, vz, sqrt(vxxx^2 + vyyy^2 + vz^2), dt,  csett);
+             case 3
+                 [alpha_degree, Vz_setpoint, z_setpoint] = controlAlgorithmServoDegree(z, vz, sqrt(vxxx^2 + vyyy^2 + vz^2), dt,  csett);
+        end
+    
          x = get_extension_from_angle(alpha_degree);
          
          % Save the values to plot them
@@ -345,7 +346,7 @@ while flagStopIntegration || n_old < nmax
          plot_Vz_setpoint(index_plot) = Vz_setpoint;
          plot_z_setpoint(index_plot) = z_setpoint;
          plot_control_variable(index_plot) = alpha_degree;
-         if PID_flag ~= 3
+         if csett.flagPID ~= 3
              plot_Cd(index_plot) = Cdd;
              plot_pid(index_plot) = pid;
              plot_U_linear(index_plot) = U_linear;
@@ -432,9 +433,10 @@ Tf = Tf_tot(1:n_old, :);
 
 i_apo = find(Tf<24.8);
 i_apo = max(i_apo);
+if settings.kalman
 i_apo_est = find(t_est_tot<Tf(i_apo));
 i_apo_est=max(i_apo_est);
-
+end
 flagMatr = flagMatr(1:n_old, :);
 %% RETRIVE PARAMETERS FROM THE ODE
 
@@ -467,7 +469,7 @@ plot(time, plot_control_variable), grid on;
 axis([0,20, 0,60])
 xlabel('time [s]'), ylabel('Angle [deg]');
 
-if PID_flag ~= 3
+if csett.flagPID ~= 3
     % Control variable: pid vs linearization
     figure('Name','Linearization of the control variable','NumberTitle','off');
     plot(time, plot_U_linear, 'DisplayName','Linearized','LineWidth',0.8), grid on;
@@ -599,6 +601,7 @@ subplot(3,1,1);plot(tgps, tot.gpsv_tot(:,1)');grid on;xlabel('time[s]');ylabel('
 subplot(3,1,2);plot(tgps, tot.gpsv_tot(:,2)');grid on;xlabel('time[s]');ylabel('|Ve| [m/s]'); title('GPS velocity  East');
 subplot(3,1,3);plot(tgps,-tot.gpsv_tot(:,3)');grid on;xlabel('time[s]');ylabel('|Vu| [m/s]'); title('GPS velocity Upward');
 %% FIGURE: Estimated position vs ground-truth
+if settings.kalman
 figure
 subplot(3,1,1);plot(t_est_tot(1:i_apo_est),x_est_tot(1:i_apo_est,1),Tf(1:i_apo), Yf(1:i_apo,1));grid on;xlabel('time[s]');ylabel('|Pn| [m]');legend('North','Ground-truth','location','best');
 title('Estimated Northposition vs ground-truth');
@@ -624,6 +627,7 @@ subplot(4,1,3);plot(t_est_tot(1:i_apo_est),x_est_tot(1:i_apo_est,8),Tf(1:i_apo),
 legend('Estimatedq2','Ground-truth','location','northeast'); title('Estimated q2 vsground-truth');
 subplot(4,1,4);plot(t_est_tot(1:i_apo_est),x_est_tot(1:i_apo_est,9),Tf(1:i_apo),Yf(1:i_apo,13));grid on;ylabel('|q3| [-]'); 
 legend('Estimatedq3','Ground-truth','location','northeast'); title('Estimated q3 vsground-truth');
+end
 end
 end
 

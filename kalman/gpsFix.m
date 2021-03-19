@@ -6,7 +6,7 @@ function [fix, n_sat] = gpsFix(accel)
 % email: alessandro.delduca@skywarder.eu
 % Revision date: 18/03/2021
 if norm(accel)/9.81 < 2
-    if rand(1)>0.05
+    if rand(1)>0.01
         fix   = true;
         n_sat = 4;
     else
@@ -14,7 +14,7 @@ if norm(accel)/9.81 < 2
         n_sat = 0;
     end
 else
-    if rand(1)>0.95
+    if rand(1)>0.80
         fix   = true;
         n_sat = 4;
     else
