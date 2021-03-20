@@ -1,4 +1,4 @@
-function [x] = get_extension_from_angle(alpha_degree)
+function [x] = extension_From_Angle(alpha_degree)
 
 % Transform the angle in radiants
 alpha_rad = (alpha_degree*pi)/180;

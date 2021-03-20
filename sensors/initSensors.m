@@ -21,12 +21,12 @@ s.MS580301BA01 = Sensor(); % presure in mbar, temp should be in C°
 s.MS580301BA01.maxMeasurementRange  =   1100;                   % 1100, 1300 in mbar
 s.MS580301BA01.minMeasurementRange  =   300;                    % 300, 10 in mbar
 s.MS580301BA01.resolution           =   0.012;                  % 0.012, 0.018, 0.027, 0.042, 0.065 in mbar
-s.MS580301BA01.noiseVariance        =   10;                     % guess in mbar
+s.MS580301BA01.noiseVariance        =   4;                      % guess in mbar
 s.MS580301BA01.error2dOffset        =   ep_data;                % [p in mbar, T in celsius, ep in mbar]
 
 % initial accelerometer sensor from LSM9DS1
 s.ACCEL_LSM9DS1 = Sensor3D(); % acceleration in mg
-s.ACCEL_LSM9DS1.maxMeasurementRange =  16000;                   % 2000, 4000, 8000, 16000 in mg
+s.ACCEL_LSM9DS1.maxMeasurementRange =   16000;                  % 2000, 4000, 8000, 16000 in mg
 s.ACCEL_LSM9DS1.minMeasurementRange =  -16000;                  % -2000, -4000, -8000, -16000 in mg
 s.ACCEL_LSM9DS1.resolution          =   0.732;                  % 0.061, 0.122, 0.244, 0.732 in mg 
 s.ACCEL_LSM9DS1.noiseVariance       =   4;                      % guess in mg original was 4

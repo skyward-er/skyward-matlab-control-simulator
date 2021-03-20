@@ -1,4 +1,4 @@
-function [sp, c, tot] = acquisitionSys(sensorData, s, c, tot)
+function [sp, c, tot] = acquisition_Sys(sensorData, s, c, tot)
 % Routine to simulate the data acquisition from the sensors
 
 % Author: Alessandro Del Duca

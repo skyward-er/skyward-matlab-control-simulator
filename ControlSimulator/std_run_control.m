@@ -89,6 +89,7 @@ addpath('../sensors/data/MS580301BA01');
 
 %% CONTROL INIT
 addpath('../control');
+addpath('../control/Cd_rho_computation');
 csett     =   controlConfig;
 %% MAGNETIC FIELD MODEL
 hmax    =   6000;
@@ -128,7 +129,7 @@ t_ada       =       0;
 count_ADA   =       0;
 
 %% Flag initializations
-flagADA                =   false;
+flagADA                 =   false;
 flagStopIntegration     =   true;
 flagAscent              =   false;
 flagMatr                =   false(nmax, 6);
@@ -253,7 +254,7 @@ while flagStopIntegration || n_old < nmax
  
  
     if settings.dataNoise
-        [sp, c, tot] = acquisitionSys(sensorData, s, c, tot);
+        [sp, c, tot] = acquisition_Sys(sensorData, s, c, tot);
     end
   
     if iTimes==1 && settings.ada
@@ -295,20 +296,21 @@ while flagStopIntegration || n_old < nmax
      c.n_est_old = c.n_est_old + size(x_c(1,:)); 
     end
 %% Control algorithm
-    if flagAeroBrakes && settings.kalman
+    if flagAeroBrakes && settings.kalman && settings.control
 
          tempo = index_plot*0.1 - 0.1; % Print time instant for debugging
          
          %% selection of controler type
          switch csett.flagPID 
              case 1
-             [alpha_degree, Vz_setpoint, z_setpoint, pid,U_linear, Cdd, delta_S, csett] = controlAlgorithm(-x_c(end,3), -x_c(end,6), sqrt(x_c(end,4)^2+x_c(end,5)^2+x_c(end,6)^2), dt, csett);
+             [alpha_degree, Vz_setpoint, z_setpoint, pid, U_linear, Cdd, delta_S, csett] = control_PID    (-x_c(end,3), -x_c(end,6), sqrt(x_c(end,4)^2+x_c(end,5)^2+x_c(end,6)^2), csett);
              case 2
-             [alpha_degree, Vz_setpoint, z_setpoint, pid,U_linear, Cdd, delta_S] = controlAlgorithmLinearized(-x_c(end,3), -x_c(end,6), sqrt(x_c(end,4)^2+x_c(end,5)^2+x_c(end,6)^2), dt, csett);
+             [alpha_degree, Vz_setpoint, z_setpoint, pid, U_linear, Cdd, delta_S, csett] = control_Lin    (-x_c(end,3), -x_c(end,6), sqrt(x_c(end,4)^2+x_c(end,5)^2+x_c(end,6)^2), csett);
              case 3
-             [alpha_degree, Vz_setpoint, z_setpoint] = controlAlgorithmServoDegree(-x_c(end,3), -x_c(end,6), sqrt(x_c(end,4)^2+x_c(end,5)^2+x_c(end,6)^2), dt,  csett);
+             [alpha_degree, Vz_setpoint, z_setpoint, csett]                              = control_Servo  (-x_c(end,3), -x_c(end,6),  csett);
          end
-         x = get_extension_from_angle(alpha_degree);
+         x = extension_From_Angle(alpha_degree);
+         
          % Save the values to plot them
          plot_Vz_real(index_plot) = vz;
          plot_z_real(index_plot) = z;
@@ -324,20 +326,20 @@ while flagStopIntegration || n_old < nmax
          end
          index_plot = index_plot + 1;
 
-    elseif flagAeroBrakes && ~settings.kalman
+    elseif flagAeroBrakes && ~settings.kalman && settings.control
         
         tempo = index_plot*0.1 - 0.1; % Print time instant for debugging
         
         switch csett.flagPID 
              case 1
-             [alpha_degree, Vz_setpoint, z_setpoint, pid,U_linear, Cdd, delta_S, csett] = controlAlgorithm(z, vz, sqrt(vxxx^2 + vyyy^2 + vz^2), dt,  csett);
+             [alpha_degree, Vz_setpoint, z_setpoint, pid,U_linear, Cdd, delta_S, csett] =   control_PID     (z, vz, sqrt(vxxx^2 + vyyy^2 + vz^2),  csett);
              case 2
-             [alpha_degree, Vz_setpoint, z_setpoint, pid,U_linear, Cdd, delta_S] = controlAlgorithmLinearized(z, vz, sqrt(vxxx^2 + vyyy^2 + vz^2), dt,  csett);
+             [alpha_degree, Vz_setpoint, z_setpoint, pid,U_linear, Cdd, delta_S, csett] =   control_Lin     (z, vz, sqrt(vxxx^2 + vyyy^2 + vz^2),  csett);
              case 3
-                 [alpha_degree, Vz_setpoint, z_setpoint] = controlAlgorithmServoDegree(z, vz, sqrt(vxxx^2 + vyyy^2 + vz^2), dt,  csett);
+             [alpha_degree, Vz_setpoint, z_setpoint, csett]                             =   control_Servo   (z, vz,  csett);
         end
     
-         x = get_extension_from_angle(alpha_degree);
+         x = extension_From_Angle(alpha_degree);
          
          % Save the values to plot them
          plot_Vz_real(index_plot) = vz;
@@ -445,7 +447,7 @@ if not(settings.electronics)
 
     
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
+if settings.control
 %% PLOT THE RESULTS
 
 % Obtain the control variable
@@ -531,6 +533,8 @@ figure('Name','Time, Vertical Velocity','NumberTitle','off');
 plot(Tf, plot_Vz), grid on;
 xlabel('time [s]'), ylabel('Vz [m/s]');
 
+end
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % % Save to csv
@@ -551,7 +555,7 @@ end
 
 
 %% FIGURE: Barometer reads 
-if true && not(settings.electronics)
+if settings.dataNoise && not(settings.electronics)
 fbaro = settings.frequencies.barometerFrequency;
 tp = 0:1/fbaro:1/fbaro*(length(tot.pn_tot)-1);
 figure 
@@ -561,6 +565,7 @@ title('Barometer pressure reads');
 subplot(2,1,2);plot(tp,-tot.hb_tot',Tf,-Yf(:,3));grid on;xlabel('time [s]');ylabel('|h| [m]');
 legend('Altitude','Ground-truth','location','northeast');
 title('Barometer altitude reads');
+if settings.ada
 figure 
 subplot(3,1,1);plot(t_ada_tot, x_ada_tot(:,1));grid on;xlabel('time [s]');ylabel('|P| [mBar]');
 title('ADA pressure estimation');
@@ -568,6 +573,7 @@ subplot(3,1,2);plot(t_ada_tot,x_ada_tot(:,2));grid on;xlabel('time [s]');ylabel(
 title('ADA velocity estimation');
 subplot(3,1,3);plot(t_ada_tot,x_ada_tot(:,3));grid on;xlabel('time [s]');ylabel('|P_dot^2| [mBar/s^2]');
 title('ADA acceleration estimation');
+end
 %% FIGURE: Accelerometer reads
 faccel = settings.frequencies.accelerometerFrequency; 
 ta = 0:1/faccel:1/faccel*(length(tot.accel_tot)-1);

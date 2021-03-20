@@ -109,8 +109,8 @@ for i=2:length(t_v)
                                 [w_v(i-1,1),w_v(i-1,2),w_v(i-1,3)],dt_k,Qq);                   
     %Corrections
      if t_v(i)>=t_GPS(index_GPS)  %Comparison to see the there's a new measurement
-       [x_lin(i,:),P_lin(:,:,i),~]     = correctionGPS2(x_lin(i,:),P_lin(:,:,i),GPS(index_GPS,1),...
-                            GPS(index_GPS,2),GPS(index_GPS,3),vGPS(index_GPS,:),sigma_GPS,n_sats,fix);
+       [x_lin(i,:),P_lin(:,:,i),~]     = correctionGPS2(x_lin(i,:),P_lin(:,:,i),GPS(index_GPS,1:2),...
+                                                        vGPS(index_GPS,1:2),sigma_GPS,n_sats,fix);
         index_GPS   =  index_GPS + 1;
      end
     
