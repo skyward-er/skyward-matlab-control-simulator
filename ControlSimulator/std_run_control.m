@@ -307,7 +307,7 @@ while flagStopIntegration || n_old < nmax
     
     %%%%%%% kalmann filter %%%%%%%%
     n_satellite = 4;
-    flagGPS_fix = true;
+    flagGPS_fix = GPSfix(accel(ii,:));
     %Write a function to simulate fix loss during acceleration phase with %
     [x_c,P_c]   =  run_kalman(x_prev,P_prev,...
                               sensorData.accelerometer.time, accel,...
