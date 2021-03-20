@@ -1,4 +1,4 @@
-function [alpha_degree, delta_S, Vz_setpoint, z_setpoint, Vx_setpoint, Cd] = controlAlgorithm(z,Vz,x,Vx,V_mod,sample_time)
+function [alpha_degree, delta_S, Vz_setpoint, z_setpoint, Vx_setpoint, Cd] = controlAlgorithm(z,Vz,Vx,V_mod,sample_time)
 
 % Define global variables
 global data_trajectories coeff_Cd 
@@ -40,14 +40,17 @@ if iteration_flag == 1 % Choose the nearest trajectory ( only at the first itera
 else  % For the following iterations keep tracking the chosen trajectory
 
     % Select the z trajectory and the Vz trajectory 
-    % To speed up the research, I reduce the vector at each iteration (add if-else for problem in index limits)
-    z_ref  = data_trajectories(chosen_trajectory).Z_ref(index_min_value:end);  
-    Vz_ref = data_trajectories(chosen_trajectory).VZ_ref(index_min_value:end);   
-    Vx_ref = data_trajectories(chosen_trajectory).VX_ref(index_min_value:end);  
+    % To speed up the research, I reduce the vector at each iteration 
+    % Queste 3 possono essere definite globali dopo 1 iterazione:
+    z_ref  = data_trajectories(chosen_trajectory).Z_ref;  
+    Vz_ref = data_trajectories(chosen_trajectory).VZ_ref;   
+    Vx_ref = data_trajectories(chosen_trajectory).VX_ref; 
 
     % 1) Find the value of the altitude in z_reference nearer to z_misured 
-    [~, index_min_value] = min( abs(z_ref - z) );
-
+    [~, current_index_min_value] = min(abs(z_ref(index_min_value:end) - z));
+    index_min_value = index_min_value + current_index_min_value -1; % in c++ probabile diverso
+    
+    % 2) Select the setpoint
     z_setpoint  = z_ref(index_min_value);
     Vz_setpoint = Vz_ref(index_min_value);
     Vx_setpoint = Vx_ref(index_min_value);
@@ -70,54 +73,36 @@ Cd       = (S0*Cd_fake)/S;
     
 %% LQR ALGORITHM
 
-% States: z,Vz,Vx
+% States: z,Vz,Vx, integrator
 
-%% Original matrix
-Q = [0.7,    0,           0,   0;
-       0,    1,           0,   0;
-       0,    0,       0.001,   0;
-       0,    0,           0,   1];
+Q = [1,    0,           0,   0;
+     0,    2,           0,   0;
+     0,    0,       0.001,   0;
+     0,    0,           0,   5];
    
-R = 65000; 
-
-%% Test
+R = 80000; 
 % S_max_squared = 0.01^2;
-% 
-% Q = [0.7,    0,            0,           0;
-%        0,    5,            0,           0;
-%        0,    0,       0.00005,            0;
-%        0,    0,            0,      0.0001];
-%    
-% R = 0.6/S_max_squared; 
+% R = 0.05/S_max_squared;
 
 % Linearize the system around the current state
-% % % A = [1,                                                                                        T, 0,                                                                                        0;
-% % %      0, 1 - T*((Cd*S*rho*(Vx^2 + Vz^2)^(1/2))/(2*m) + (Cd*S*Vz^2*rho)/(2*m*(Vx^2 + Vz^2)^(1/2))), 0,                                            -(Cd*S*T*Vx*Vz*rho)/(2*m*(Vx^2 + Vz^2)^(1/2));
-% % %      0,                                                                                        0, 1,                                                                                        T;
-% % %      0,                                            -(Cd*S*T*Vx*Vz*rho)/(2*m*(Vx^2 + Vz^2)^(1/2)), 0, 1 - (Cd*S*T*Vx^2*rho)/(2*m*(Vx^2 + Vz^2)^(1/2)) - (Cd*S*T*rho*(Vx^2 + Vz^2)^(1/2))/(2*m)];
-% % %  
-% % % B = [                                        0;
-% % %       -(Cd*T*Vz*rho*(Vx^2 + Vz^2)^(1/2))/(2*m);
-% % %                                              0;
-% % %        -(Cd*T*Vx*rho*(Vx^2 + Vz^2)^(1/2))/(2*m)];
-   
 A = [1,                                                                                        T,                                                                                        0, 0;
      0, 1 - T*((Cd*S*rho*(Vx^2 + Vz^2)^(1/2))/(2*m) + (Cd*S*Vz^2*rho)/(2*m*(Vx^2 + Vz^2)^(1/2))),                                            -(Cd*S*T*Vx*Vz*rho)/(2*m*(Vx^2 + Vz^2)^(1/2)), 0;
      0,                                            -(Cd*S*T*Vx*Vz*rho)/(2*m*(Vx^2 + Vz^2)^(1/2)), 1 - T*((Cd*S*rho*(Vx^2 + Vz^2)^(1/2))/(2*m) + (Cd*S*Vx^2*rho)/(2*m*(Vx^2 + Vz^2)^(1/2))), 0;
-    -1,                                                                                        0,                                                                                        0, 0];
+    -T,                                                                                        0,                                                                                        0, 1];
+ 
  
 B = [                                       0;
      -(Cd*T*Vz*rho*(Vx^2 + Vz^2)^(1/2))/(2*m);
      -(Cd*T*Vx*rho*(Vx^2 + Vz^2)^(1/2))/(2*m);
-                                            0];
+                                            0];     
                                              
-x_measured  = [z, Vz, Vx, 0]';
-x_reference = [z_setpoint, Vz_setpoint, Vx_setpoint, 0]';
-x_error     =  x_measured - x_reference
+x_measured  = [z, Vz, Vx]';
+x_reference = [z_setpoint, Vz_setpoint, Vx_setpoint]';
+x_error     =  x_measured - x_reference;
 
 % Solve Riccati equation
 P       = Q;   % Initial guess for P    
-maxiter = 100;
+maxiter = 50;
 eps     = 0.01;
 
 for i=1:maxiter
@@ -129,15 +114,15 @@ for i=1:maxiter
 end
 
 K = inv(B' * P * B + R) * B' * P * A;
-U = -K*x_error
+U = -K(1:3)*x_error;
 
-% Debug
-J_z  = Q(1,1)*x_error(1)^2
-J_Vz = Q(2,2)*x_error(2)^2
-J_Vx = Q(4,4)*x_error(4)^2
-
-J_Q = x_error'*Q*x_error
-J_R = U'*R*U
+% % Debug
+% J_z  = Q(1,1)*x_error(1)^2
+% J_Vz = Q(2,2)*x_error(2)^2
+% J_Vx = Q(3,3)*x_error(3)^2
+% 
+% J_Q = J_z + J_Vz + J_Vx
+% J_R = U'*R*U
 
 % Control variable limits
 Umin = 0;     

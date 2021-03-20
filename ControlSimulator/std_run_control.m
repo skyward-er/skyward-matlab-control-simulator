@@ -203,10 +203,15 @@ while flagStopIntegration || n_old < nmax
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     if flagAeroBrakes
+        
+        xxx
+        vxxx
+        yyy
+        vyyy
 
          % tempo = index_plot*0.1 - 0.1;
          fprintf('\nCONTROL:\n');
-         [alpha_degree, delta_S, Vz_setpoint, z_setpoint, Vx_setpoint, Cdd] = controlAlgorithm(z, vz, xxx, vxxx, normV, dt);
+         [alpha_degree, delta_S, Vz_setpoint, z_setpoint, Vx_setpoint, Cdd] = controlAlgorithm(z, vz, vxxx, normV, dt);
 %          [alpha_degree, delta_S, Vz_setpoint, z_setpoint, Vx_setpoint, x_setpoint, Cdd] = controlAlgorithm(z, vz, sqrt(xxx^2 + yyy^2), sqrt(vxxx^2 + vyyy^2), normV, dt);
          x = get_extension_from_angle(alpha_degree);
          
