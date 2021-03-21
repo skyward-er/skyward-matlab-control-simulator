@@ -113,8 +113,8 @@ data = load('coeffs.mat');
 coeff_Cd = data.coeffs;
 
 % Load the trajectories
-struct_trajectories = load('Trajectories_FULL');
-data_trajectories = struct_trajectories.trajectories_saving_FULL;
+struct_trajectories = load('Trajectories_XYZ');
+data_trajectories = struct_trajectories.trajectories_saving;
 
 % Define global variables
 global delta_S_prec alpha_degree_prec index_min_value iteration_flag chosen_trajectory
@@ -203,16 +203,10 @@ while flagStopIntegration || n_old < nmax
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     if flagAeroBrakes
-        
-        xxx
-        vxxx
-        yyy
-        vyyy
 
          % tempo = index_plot*0.1 - 0.1;
          fprintf('\nCONTROL:\n');
-         [alpha_degree, delta_S, Vz_setpoint, z_setpoint, Vx_setpoint, Cdd] = controlAlgorithm(z, vz, vxxx, normV, dt);
-%          [alpha_degree, delta_S, Vz_setpoint, z_setpoint, Vx_setpoint, x_setpoint, Cdd] = controlAlgorithm(z, vz, sqrt(xxx^2 + yyy^2), sqrt(vxxx^2 + vyyy^2), normV, dt);
+         [alpha_degree, delta_S, z_setpoint, Vz_setpoint, Vy_setpoint, Vx_setpoint] = controlAlgorithm(z, vz, vxxx, vyyy, normV, dt);
          x = get_extension_from_angle(alpha_degree);
          
          % Save the values to plot them
@@ -222,15 +216,14 @@ while flagStopIntegration || n_old < nmax
          plot_x_real(index_plot) = xxx;
          plot_Vy_real(index_plot) = vyyy;
          plot_y_real(index_plot) = yyy;
-         plot_Vxy_real(index_plot) = sqrt(vxxx^2 + vyyy^2);
-         plot_xy_real(index_plot) = sqrt(xxx^2 + yyy^2);
          plot_normV(index_plot) = normV;
-         plot_Vz_setpoint(index_plot) = Vz_setpoint;
          plot_z_setpoint(index_plot) = z_setpoint;
+         plot_Vz_setpoint(index_plot) = Vz_setpoint;
          plot_Vx_setpoint(index_plot) = Vx_setpoint;
+         plot_Vy_setpoint(index_plot) = Vy_setpoint;
          plot_control_variable(index_plot) = alpha_degree;
          plot_delta_S(index_plot) = delta_S;
-         plot_Cd(index_plot) = Cdd;
+         % plot_Cd(index_plot) = Cdd;
          index_plot = index_plot + 1;
     else 
         x = 0;
@@ -374,17 +367,17 @@ legend
 % xlabel('time [s]'), ylabel('x [m]');
 % hold off
 % legend('Location','southeast')
-% 
-% % X_axis velocity real vs setpoint
-% figure('Name','X_axis velocity real vs setpoint after burning phase','NumberTitle','off');
-% plot(time, plot_Vx_real,'DisplayName','real','LineWidth',0.8), grid on;
-% hold on
-% % plot(time, plot_Vx_setpoint, 'DisplayName','setpoint', 'LineWidth',0.8), grid on;
-% % axis([0,20, -50,300])
-% xlabel('time [s]'), ylabel('Vx [m/s]');
-% hold off
-% legend
-% 
+ 
+% X_axis velocity real vs setpoint
+figure('Name','X_axis velocity real vs setpoint after burning phase','NumberTitle','off');
+plot(time, plot_Vx_real,'DisplayName','real','LineWidth',0.8), grid on;
+hold on
+plot(time, plot_Vx_setpoint, 'DisplayName','setpoint', 'LineWidth',0.8), grid on;
+% axis([0,20, -50,300])
+xlabel('time [s]'), ylabel('Vx [m/s]');
+hold off
+legend
+
 % % Y_displacement real vs setpoint
 % figure('Name','Y_displacement real vs setpoint after burning phase','NumberTitle','off');
 % plot(time, plot_y_real,'DisplayName','real','LineWidth',0.8), grid on;
@@ -394,34 +387,14 @@ legend
 % xlabel('time [s]'), ylabel('y [m]');
 % hold off
 % legend('Location','southeast')
-% 
-% % Y_axis velocity real vs setpoint
-% figure('Name','Y_axis velocity real vs setpoint after burning phase','NumberTitle','off');
-% plot(time, plot_Vy_real,'DisplayName','real','LineWidth',0.8), grid on;
-% hold on
-% % plot(time, plot_Vy_setpoint, 'DisplayName','setpoint', 'LineWidth',0.8), grid on;
-% % axis([0,20, -50,300])
-% xlabel('time [s]'), ylabel('Vy [m/s]');
-% hold off
-% legend
 
-% XY_displacement real vs setpoint
-figure('Name','XY_displacement real vs setpoint after burning phase','NumberTitle','off');
-plot(time, plot_xy_real,'DisplayName','real','LineWidth',0.8), grid on;
+% Y_axis velocity real vs setpoint
+figure('Name','Y_axis velocity real vs setpoint after burning phase','NumberTitle','off');
+plot(time, plot_Vy_real,'DisplayName','real','LineWidth',0.8), grid on;
 hold on
-% plot(time, plot_x_setpoint,'DisplayName','setpoint','LineWidth',0.8), grid on;
-% axis([0,20, 0, 3100])
-xlabel('time [s]'), ylabel('xy [m]');
-hold off
-legend('Location','southeast')
-
-% XY_axis velocity real vs setpoint
-figure('Name','XY_axis velocity real vs setpoint after burning phase','NumberTitle','off');
-plot(time, plot_Vxy_real,'DisplayName','real','LineWidth',0.8), grid on;
-hold on
-plot(time, plot_Vx_setpoint, 'DisplayName','setpoint', 'LineWidth',0.8), grid on;
+plot(time, plot_Vy_setpoint, 'DisplayName','setpoint', 'LineWidth',0.8), grid on;
 % axis([0,20, -50,300])
-xlabel('time [s]'), ylabel('Vxy [m/s]');
+xlabel('time [s]'), ylabel('Vy [m/s]');
 hold off
 legend
 
