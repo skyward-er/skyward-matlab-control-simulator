@@ -1,4 +1,4 @@
-function [x,P,y_res] = correctionGPS2(x_pred,P_pred,x_sam,y_sam,z_sam,vGPS,sigma_GPS,sats,fix)
+function [x,P,y_res] = correctionGPS2(x_pred,P_pred,pGPS,vGPS,sigma_GPS,sats,fix)
 
 % Author: Alejandro Montero
 % Co-Author: Alessandro Del Duca
@@ -41,19 +41,21 @@ function [x,P,y_res] = correctionGPS2(x_pred,P_pred,x_sam,y_sam,z_sam,vGPS,sigma
 %                       --> 1x3
 %---------------------------------------------------------------------------
 threshold      =   10e-3;
-H              =   eye(6);                 %Pre-allocation of gradient 
-                                                 %of the output function  
+H              =   [ 1 0 0 0 0 0;                                          %Pre-allocation of gradient 
+                     0 1 0 0 0 0;
+                     0 0 0 1 0 0;
+                     0 0 0 0 1 0;];                                        %of the output function  
 
-R              =   diag(sigma_GPS^2*ones(6,1)/sats); %VARIANCE MATRIX SCALED 
-                                                     %TAKING INTO ACCOUNT
-                                                     %NUMBER OF SATELITES
-                                                     %AVAILABLE
+R              =   diag(sigma_GPS^2*ones(4,1)/sats);                       %VARIANCE MATRIX SCALED 
+                                                                           %TAKING INTO ACCOUNT
+                                                                           %NUMBER OF SATELITES
+                                                                           %AVAILABLE
 
 if fix==1
 
-z              =   x_pred';
+z              =   H*x_pred';
 
-e              =   [x_sam;y_sam;z_sam;vGPS'] - z;
+e              =   [pGPS';vGPS'] - z;
 
 S              =   H*P_pred*H'+R;                    %Matrix necessary for the correction factor
 
@@ -74,7 +76,7 @@ x              =   x_pred;
 P              =   P_pred;
 end
 
-z_corr         =   [x(1);x(2);x(3);];                %Corrected output expectation
+z_corr         =   [x(1);x(2);x(4);x(5)];                %Corrected output expectation
 
-y_res          =    [x_sam;y_sam;z_sam] - z_corr;
+y_res          =    [pGPS';vGPS'] - z_corr;
 end
