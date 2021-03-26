@@ -31,15 +31,29 @@ Zmax=min([max(Z_ref);max(Z_real)]);
 z = linspace(Zmin,Zmax,200);
 
 vref = interp1(Z_ref,V_ref,z);
-figure;
-plot(Z_ref,V_ref);
 vreal = interp1(Z_real,V_real,z);
-% figure;
-% plot(z,vref,z,vreal);
-% figure;
-% plot(z,abs(vref-vreal));
-dif=trapz(z,abs(vref-vreal))
 
-y=(dif);
+figure(5);
+plot(z,vref,z,vreal);
+
+errorPenalty=trapz(z,abs(vref-vreal))
+
+load( '../control_inputs');
+
+figure(6)
+plot(control_inputs.time,control_inputs.Angle);
+
+dt=control_inputs.time(2)-control_inputs.time(1);
+controlPenalty=trapz(control_inputs.time,abs([0;diff(control_inputs.Angle)]/dt))
+% figure
+% plot(control_inputs.time,[0;diff(control_inputs.Angle)]/dt):
+
+fprintf('Actual Kp: %g\n', x(1));
+fprintf('Actual Ki: %g\n', x(2));
+fprintf('Actual errorPenalty: %g\n', errorPenalty);
+fprintf('Actual controlPenalty: %g\n', 100*controlPenalty);
+fprintf('Actual hole penalty: %g\n', errorPenalty+100*controlPenalty);
+
+y=(errorPenalty+100*controlPenalty);
 end
 

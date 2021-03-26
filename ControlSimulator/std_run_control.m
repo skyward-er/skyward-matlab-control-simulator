@@ -118,9 +118,16 @@ data_trajectories = struct_trajectories.trajectories_saving;
 
 % Define global variables
 global Kp Ki I alpha_degree_prec index_min_value iteration_flag chosen_trajectory saturation
-controlerTuneVariable=load('PIDoptimizer/interationData.mat','x');
-Kp=controlerTuneVariable.x(1);
-Ki=controlerTuneVariable.x(2);
+
+if ~settings.tuning
+    Kp = 77;
+    Ki = 1;
+else
+    controlerTuneVariable=load('PIDoptimizer/interationData.mat','x');
+    Kp=controlerTuneVariable.x(1);
+    Ki=controlerTuneVariable.x(2);
+end
+
 % Kp = 77; % using Fdrag nel pid
 % Ki = 5; % using Fdrag nel pid
 % Kp = 50; % using u nel pid
@@ -319,6 +326,7 @@ for index = 1:nStates
     plot_Vz(index) = - vels(3);
 end
 
+if ~settings.tuning
 % Control variable: servo angle
 figure('Name','Servo angle after burning phase','NumberTitle','off');
 plot(time, plot_control_variable), grid on;
@@ -384,7 +392,7 @@ xlabel('time [s]'), ylabel('z [m]');
 figure('Name','Time, Vertical Velocity','NumberTitle','off');
 plot(Tf, plot_Vz), grid on;
 xlabel('time [s]'), ylabel('Vz [m/s]');
-
+end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % % Save to csv
@@ -396,10 +404,8 @@ xlabel('time [s]'), ylabel('Vz [m/s]');
 % csvwrite('U.txt',U)
 
 altitude_velocity = struct('Z_ref',plot_z_setpoint','V_ref',plot_Vz_setpoint', 'Z_real',plot_z_real','V_real',plot_Vz_real','normV',plot_normV');
-control_inputs = struct('U',plot_pid','delta_S',plot_delta_S', 'Angle',plot_control_variable');
+control_inputs = struct('time',time','U',plot_pid','delta_S',plot_delta_S', 'Angle',plot_control_variable');
 save('altitude_velocity.mat','altitude_velocity');
 save('control_inputs.mat','control_inputs');
-
-
 end
 

@@ -9,9 +9,15 @@ Release date: 16/04/2016
 
 %}
 
+%% PID tuning (must be set true if tuning is used)
+settings.tuning = false;
+
+if ~settings.tuning
 close all
 clear 
 clc
+settings.tuning = false;
+end 
 
 path = genpath(pwd);
 addpath(path);
@@ -88,7 +94,7 @@ if not(settings.electronics)
 end
 
 %% PLOT 
-
+if ~settings.tuning
 if settings.plots && not(settings.electronics)
     
 %     % AERO FORCES
@@ -112,5 +118,5 @@ if settings.plots && not(settings.electronics)
 %     xlabel('time [s]'), ylabel('|A| [g]');
        
 end
-
+end
 clearvars -except Yf data_flight settings
