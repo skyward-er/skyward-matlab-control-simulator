@@ -1,4 +1,11 @@
 function [z_setpoint, Vz_setpoint, csett] = set_Trajectory(z, Vz, csett)
+
+% Author: Leonardo Bertelli
+% Co-Author: Alessandro Del Duca
+% Skyward Experimental Rocketry | ELC-SCS Dept | electronics@kywarder.eu
+% email: leonardo.bertelli@skywarder.eu, alessandro.delduca@skywarder.eu
+% Release date: 01/03/2021
+
 if csett.iteration_flag == 1
     
     best_min   = inf;

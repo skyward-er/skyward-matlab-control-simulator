@@ -85,7 +85,7 @@ addpath('../kalman');
 %% SENSORS INIT
 addpath('../sensors');
 addpath('../sensors/data/MS580301BA01');
-[s, c, tot] = initSensors;
+[s, c] = initSensors;
 
 %% CONTROL INIT
 addpath('../control');
@@ -125,11 +125,7 @@ cpuTimes    =       zeros(nmax,1);
 iTimes      =       0;
 g           =       settings.g0;
 
-t_ada       =       0;
-count_ADA   =       0;
-
 %% Flag initializations
-flagADA                 =   false;
 flagStopIntegration     =   true;
 flagAscent              =   false;
 flagMatr                =   false(nmax, 6);
@@ -254,49 +250,44 @@ while flagStopIntegration || n_old < nmax
  
  
     if settings.dataNoise
-        [sp, c, tot] = acquisition_Sys(sensorData, s, c, tot);
+        [sp, c] = acquisition_Sys(sensorData, s, c);
     end
   
-    if iTimes==1 && settings.ada
-        ada_prev  =   settings.x0_ada;
-        Pada_prev =   settings.P0_ada;
-    elseif iTimes ~= 1 && settings.ada
-        ada_prev  =   x_ada_tot(end,:);
+    if iTimes==1 && settings.Ada
+        ada_prev  =   settings.ada.x0;
+        Pada_prev =   settings.ada.P0;
+    elseif iTimes ~= 1 && settings.Ada
+        ada_prev  =   xp_ada_tot(end,:);
         Pada_prev =   P_ada(:,:,end);
     end
    
-    if iTimes==1 && settings.kalman
+    if iTimes==1 && settings.Kalman
         x_prev    =  [X0; V0; Q0(2:4); Q0(1);0;0;0];
         P_prev    =   0.01*eye(12);
-    elseif iTimes ~= 1 && settings.kalman
+    elseif iTimes ~= 1 && settings.Kalman
         x_prev    =   x_est_tot(end,:);
         P_prev    =   P_c(:,:,end);
     end
 %% ADA 
-    if settings.ada && settings.dataNoise
-    [x_ada, P_ada, flagADA, t_ada, count_ADA]   =  run_ADA(ada_prev, Pada_prev,                        ...
-                                                           -sp.h_baro, sensorData.barometer.time,       ...
-                                                            settings.Q_ada, settings.R_ada,             ...
-                                                            count_ADA, flagADA, t_ada);
-     x_ada_tot(c.n_ada_old:c.n_ada_old + size(x_ada(:,1),1)-1,:)  = x_ada(1:end,:);
-     t_ada_tot(c.n_ada_old:c.n_ada_old + size(x_ada(:,1),1)-1)    = sensorData.barometer.time;              
-     c.n_ada_old = c.n_ada_old + size(x_ada(1,:)); 
+    if settings.Ada && settings.dataNoise
+    [xp_ada, xv_ada, P_ada, settings.ada]   =  run_ADA(ada_prev, Pada_prev,                ...
+                                                       sp.pn, sensorData.barometer.time,   ...
+                                                       settings.ada);
+     xp_ada_tot(c.n_ada_old:c.n_ada_old + size(xp_ada(:,1),1)-1,:)  = xp_ada(1:end,:);
+     xv_ada_tot(c.n_ada_old:c.n_ada_old + size(xv_ada(:,1),1)-1,:)  = xv_ada(1:end,:);
+     t_ada_tot(c.n_ada_old:c.n_ada_old + size(xp_ada(:,1),1)-1)     = sensorData.barometer.time;              
+     c.n_ada_old = c.n_ada_old + size(xp_ada(1,:)); 
      end
 %% Navigation system
-    if settings.kalman && settings.dataNoise
-    [flagGPS_fix, n_satellite] = gpsFix(sp.accel);
-    [x_c,P_c]   =  run_kalman(x_prev,P_prev,...
-                              sensorData.accelerometer.time, sp.accel, sp.gyro,                   ...
-                              sensorData.barometer.time, sp.h_baro, settings.sigma_baro,          ...
-                              sensorData.magnetometer.time, sp.mag,settings.sigma_mag, XYZ0*0.01, ...
-                              sensorData.gps.time, sp.gps,sp.gpsv, settings.sigma_GPS,            ...
-                              n_satellite,flagGPS_fix,settings.QLinear,settings.Qq);
+    if settings.Kalman && settings.dataNoise
+
+    [x_c,P_c]   =  run_kalman(x_prev,P_prev, sp, settings.kalman, XYZ0*0.01);
      x_est_tot(c.n_est_old:c.n_est_old + size(x_c(:,1),1)-1,:)  = x_c(1:end,:);
      t_est_tot(c.n_est_old:c.n_est_old + size(x_c(:,1),1)-1)    = sensorData.accelerometer.time;              
      c.n_est_old = c.n_est_old + size(x_c(1,:)); 
     end
 %% Control algorithm
-    if flagAeroBrakes && settings.kalman && settings.control
+    if flagAeroBrakes && settings.Kalman && settings.control
 
          tempo = index_plot*0.1 - 0.1; % Print time instant for debugging
          
@@ -326,7 +317,7 @@ while flagStopIntegration || n_old < nmax
          end
          index_plot = index_plot + 1;
 
-    elseif flagAeroBrakes && ~settings.kalman && settings.control
+    elseif flagAeroBrakes && ~settings.Kalman && settings.control
         
         tempo = index_plot*0.1 - 0.1; % Print time instant for debugging
         
@@ -395,8 +386,8 @@ while flagStopIntegration || n_old < nmax
     % assemble total state
     [n, ~] = size(Yf);
     Yf_tot(n_old:n_old+n-1, :) = Yf(1:end, :);
-    Tf_tot(n_old:n_old+n-1,1) = Tf(1:end, 1);
-    p_tot(n_old:n_old+n-1,1) = p(1:end, 1);
+    Tf_tot(n_old:n_old+n-1,1)  = Tf(1:end, 1);
+    p_tot(n_old:n_old+n-1,1)   = p(1:end, 1);
     C(n_old:n_old+n-1) = x;
     
     v_NED_tot(n_old:n_old+n-1,:) = v_NED;
@@ -433,9 +424,11 @@ cpuTimes = cpuTimes(1:iTimes);
 Yf = Yf_tot(1:n_old, :);
 Tf = Tf_tot(1:n_old, :);
 
+t_ada = settings.ada.t_ada;
+
 i_apo = find(Tf<24.8);
 i_apo = max(i_apo);
-if settings.kalman
+if settings.Kalman
 i_apo_est = find(t_est_tot<Tf(i_apo));
 i_apo_est=max(i_apo_est);
 end
@@ -557,57 +550,62 @@ end
 %% FIGURE: Barometer reads 
 if settings.dataNoise && not(settings.electronics)
 fbaro = settings.frequencies.barometerFrequency;
-tp = 0:1/fbaro:1/fbaro*(length(tot.pn_tot)-1);
+tp = 0:1/fbaro:1/fbaro*(length(c.pn_tot)-1);
 figure 
-subplot(2,1,1);plot(tp,tot.pn_tot',Tf,p_tot'/100);grid on;xlabel('time [s]');ylabel('|P| [mBar]');
+subplot(2,1,1);plot(tp,c.pn_tot',Tf,p_tot');grid on;xlabel('time [s]');ylabel('|P| [mBar]');
 legend('Pressure','Ground-truth','location','southeast');
 title('Barometer pressure reads');
-subplot(2,1,2);plot(tp,-tot.hb_tot',Tf,-Yf(:,3));grid on;xlabel('time [s]');ylabel('|h| [m]');
+subplot(2,1,2);plot(tp,-c.hb_tot',Tf,-Yf(:,3));grid on;xlabel('time [s]');ylabel('|h| [m]');
 legend('Altitude','Ground-truth','location','northeast');
 title('Barometer altitude reads');
-if settings.ada
+if settings.Ada
 figure 
-subplot(3,1,1);plot(t_ada_tot, x_ada_tot(:,1));grid on;xlabel('time [s]');ylabel('|P| [mBar]');
+subplot(3,1,1);plot(t_ada_tot,xp_ada_tot(:,1));grid on;xlabel('time [s]');ylabel('|P| [mBar]');
 title('ADA pressure estimation');
-subplot(3,1,2);plot(t_ada_tot,x_ada_tot(:,2));grid on;xlabel('time [s]');ylabel('|P_dot| [mBar/s]');
+subplot(3,1,2);plot(t_ada_tot,xp_ada_tot(:,2));grid on;xlabel('time [s]');ylabel('|P_dot| [mBar/s]');
 title('ADA velocity estimation');
-subplot(3,1,3);plot(t_ada_tot,x_ada_tot(:,3));grid on;xlabel('time [s]');ylabel('|P_dot^2| [mBar/s^2]');
+subplot(3,1,3);plot(t_ada_tot,xp_ada_tot(:,3));grid on;xlabel('time [s]');ylabel('|P_dot^2| [mBar/s^2]');
 title('ADA acceleration estimation');
+figure 
+subplot(2,1,1);plot(t_ada_tot,xv_ada_tot(:,1));grid on;xlabel('time [s]');ylabel('|P| [mBar]');
+title('ADA altitude estimation');
+subplot(2,1,2);plot(t_ada_tot,xv_ada_tot(:,2));grid on;xlabel('time [s]');ylabel('|P_dot| [mBar/s]');
+title('ADA vertical velocity estimation');
 end
 %% FIGURE: Accelerometer reads
 faccel = settings.frequencies.accelerometerFrequency; 
-ta = 0:1/faccel:1/faccel*(length(tot.accel_tot)-1);
+ta = 0:1/faccel:1/faccel*(length(c.accel_tot)-1);
 figure
-subplot(3,1,1);plot(ta,tot.accel_tot(:,1)/g');grid on;xlabel('time[s]');ylabel('|ax| [g]'); title('Accelerometer reads along x');
-subplot(3,1,2);plot(ta,tot.accel_tot(:,2)/g');grid on;xlabel('time[s]');ylabel('|ay| [g]'); title('Accelerometer reads along y');
-subplot(3,1,3);plot(ta,tot.accel_tot(:,3)/g');grid on;xlabel('time[s]');ylabel('|az| [g]'); title('Accelerometer reads along z');
+subplot(3,1,1);plot(ta,c.accel_tot(:,1)/g');grid on;xlabel('time[s]');ylabel('|ax| [g]'); title('Accelerometer reads along x');
+subplot(3,1,2);plot(ta,c.accel_tot(:,2)/g');grid on;xlabel('time[s]');ylabel('|ay| [g]'); title('Accelerometer reads along y');
+subplot(3,1,3);plot(ta,c.accel_tot(:,3)/g');grid on;xlabel('time[s]');ylabel('|az| [g]'); title('Accelerometer reads along z');
 %% FIGURE: Gyroscope reads 
 figure
-subplot(3,1,1);plot(ta,tot.gyro_tot(:,1)*180/pi');grid on;xlabel('time[s]');ylabel('|wx| [°/s]'); title('Gyroscope reads along x');
-subplot(3,1,2);plot(ta,tot.gyro_tot(:,2)*180/pi');grid on;xlabel('time[s]');ylabel('|wy| [°/s]'); title('Gyroscope reads along y');
-subplot(3,1,3);plot(ta,tot.gyro_tot(:,3)*180/pi');grid on;xlabel('time[s]');ylabel('|wz| [°/s]'); title('Gyroscope reads along z'); 
+subplot(3,1,1);plot(ta,c.gyro_tot(:,1)*180/pi');grid on;xlabel('time[s]');ylabel('|wx| [°/s]'); title('Gyroscope reads along x');
+subplot(3,1,2);plot(ta,c.gyro_tot(:,2)*180/pi');grid on;xlabel('time[s]');ylabel('|wy| [°/s]'); title('Gyroscope reads along y');
+subplot(3,1,3);plot(ta,c.gyro_tot(:,3)*180/pi');grid on;xlabel('time[s]');ylabel('|wz| [°/s]'); title('Gyroscope reads along z'); 
 %% FIGURE:Magnetometer reads
 figure
-subplot(3,1,1);plot(ta,tot.mag_tot(:,1)');grid on;xlabel('time [s]');ylabel('|mx| [Gauss]'); title('Magnetometer readsalong x'); 
-subplot(3,1,2);plot(ta,tot.mag_tot(:,2)');grid on;xlabel('time[s]');ylabel('|my| [Gauss]'); title('Magnetometer reads along y');
-subplot(3,1,3);plot(ta,tot.mag_tot(:,3)');grid on;xlabel('time[s]');ylabel('|mz| [Gauss]'); title('Magnetometer reads along z'); 
+subplot(3,1,1);plot(ta,c.mag_tot(:,1)');grid on;xlabel('time [s]');ylabel('|mx| [Gauss]'); title('Magnetometer readsalong x'); 
+subplot(3,1,2);plot(ta,c.mag_tot(:,2)');grid on;xlabel('time[s]');ylabel('|my| [Gauss]'); title('Magnetometer reads along y');
+subplot(3,1,3);plot(ta,c.mag_tot(:,3)');grid on;xlabel('time[s]');ylabel('|mz| [Gauss]'); title('Magnetometer reads along z'); 
 %% FIGURE: Gps reads 
 fgps = settings.frequencies.gpsFrequency; 
-tgps = 0:1/fgps:1/fgps*(length(tot.gps_tot)-1); 
+tgps = 0:1/fgps:1/fgps*(length(c.gps_tot)-1); 
 figure 
-subplot(3,1,1);plot(tgps, tot.gps_tot(:,1)');grid on;xlabel('time [s]');ylabel('|Pn| [m]'); title('GPS position  North'); 
-subplot(3,1,2);plot(tgps, tot.gps_tot(:,2)');grid on;xlabel('time [s]');ylabel('|Pe| [m]'); title('GPS position  East');
-subplot(3,1,3);plot(tgps,-tot.gps_tot(:,3)');grid on;xlabel('time[s]');ylabel('|Pu| [m]'); title('GPS position Upward'); 
+subplot(3,1,1);plot(tgps, c.gps_tot(:,1)');grid on;xlabel('time [s]');ylabel('|Pn| [m]'); title('GPS position  North'); 
+subplot(3,1,2);plot(tgps, c.gps_tot(:,2)');grid on;xlabel('time [s]');ylabel('|Pe| [m]'); title('GPS position  East');
+subplot(3,1,3);plot(tgps,-c.gps_tot(:,3)');grid on;xlabel('time[s]');ylabel('|Pu| [m]'); title('GPS position Upward'); 
 figure
-subplot(3,1,1);plot(tgps,tot.gpsv_tot(:,1)');grid on;xlabel('time[s]');ylabel('|Velocity N| [m/s]');
-subplot(3,1,2);plot(tgps,tot.gpsv_tot(:,2)');grid on;xlabel('time[s]');ylabel('|Velocity E| [m/s]');
-subplot(3,1,3);plot(tgps,tot.gpsv_tot(:,3)');grid on;xlabel('time[s]');ylabel('|Velocity D| [m/s]');
+subplot(3,1,1);plot(tgps,c.gpsv_tot(:,1)');grid on;xlabel('time[s]');ylabel('|Velocity N| [m/s]');
+subplot(3,1,2);plot(tgps,c.gpsv_tot(:,2)');grid on;xlabel('time[s]');ylabel('|Velocity E| [m/s]');
+subplot(3,1,3);plot(tgps,c.gpsv_tot(:,3)');grid on;xlabel('time[s]');ylabel('|Velocity D| [m/s]');
 title('GPS velocity reads');
-subplot(3,1,1);plot(tgps, tot.gpsv_tot(:,1)');grid on;xlabel('time[s]');ylabel('|Vn| [m/s]'); title('GPS velocity  North');
-subplot(3,1,2);plot(tgps, tot.gpsv_tot(:,2)');grid on;xlabel('time[s]');ylabel('|Ve| [m/s]'); title('GPS velocity  East');
-subplot(3,1,3);plot(tgps,-tot.gpsv_tot(:,3)');grid on;xlabel('time[s]');ylabel('|Vu| [m/s]'); title('GPS velocity Upward');
+subplot(3,1,1);plot(tgps, c.gpsv_tot(:,1)');grid on;xlabel('time[s]');ylabel('|Vn| [m/s]'); title('GPS velocity  North');
+subplot(3,1,2);plot(tgps, c.gpsv_tot(:,2)');grid on;xlabel('time[s]');ylabel('|Ve| [m/s]'); title('GPS velocity  East');
+subplot(3,1,3);plot(tgps,-c.gpsv_tot(:,3)');grid on;xlabel('time[s]');ylabel('|Vu| [m/s]'); title('GPS velocity Upward');
 %% FIGURE: Estimated position vs ground-truth
-if settings.kalman
+if settings.Kalman
 figure
 subplot(3,1,1);plot(t_est_tot(1:i_apo_est),x_est_tot(1:i_apo_est,1),Tf(1:i_apo), Yf(1:i_apo,1));grid on;xlabel('time[s]');ylabel('|Pn| [m]');legend('North','Ground-truth','location','best');
 title('Estimated Northposition vs ground-truth');

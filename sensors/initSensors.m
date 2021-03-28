@@ -1,4 +1,4 @@
-function [s, sensorCounter, sensorProcessed]  = initSensors
+function [s, sensorTot]  = initSensors
 % Initialize all sensors
     
 % Author: Jan Hammelman
@@ -82,16 +82,16 @@ s.MAGN_IIS2MDC.dt                   =   0.01;                   % sampling time
 s.MAGN_IIS2MDC.transMatrix          =   diag([1 1 1]);          % axis transformation
 s.MAGN_IIS2MDC.transMatrix          =   diag([1 1 1]);          % axis transformation
 
-sensorCounter.np_old        =   1;
-sensorCounter.na_old        =   1;
-sensorCounter.ngps_old      =   1;
-sensorCounter.n_est_old     =   1;
-sensorCounter.n_ada_old     =   1;
+sensorTot.np_old        =   1;
+sensorTot.na_old        =   1;
+sensorTot.ngps_old      =   1;
+sensorTot.n_est_old     =   1;
+sensorTot.n_ada_old     =   1;
 
-sensorProcessed.pn_tot      =   0;
-sensorProcessed.hb_tot      =   0;
-sensorProcessed.accel_tot   =   [0, 0, 0];
-sensorProcessed.gyro_tot    =   [0, 0, 0];
-sensorProcessed.mag_tot     =   [0, 0, 0];
-sensorProcessed.gps_tot     =   [0, 0, 0];
-sensorProcessed.gpsv_tot    =   [0, 0, 0];
+sensorTot.pn_tot      =   0;
+sensorTot.hb_tot      =   0;
+sensorTot.accel_tot   =   [0, 0, 0];
+sensorTot.gyro_tot    =   [0, 0, 0];
+sensorTot.mag_tot     =   [0, 0, 0];
+sensorTot.gps_tot     =   [0, 0, 0];
+sensorTot.gpsv_tot    =   [0, 0, 0];

@@ -1,4 +1,10 @@
 function contSettings = controlConfig
+
+% Author: Alessandro Del Duca
+% Skyward Experimental Rocketry | ELC-SCS Dept | electronics@kywarder.eu
+% email: alessandro.delduca@skywarder.eu
+% Release date: 01/03/2021
+
 %{
 
 CONTROLCONFIG - This script sets up all the parameters for the control

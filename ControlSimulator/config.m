@@ -14,11 +14,11 @@ Release date: 16/04/2016
 settings.electronics        =   false;                                     % Switch on when testing with Hardware in the loop HIL
 settings.ascentOnly         =   false;                                     % Switch on to simulate only the ascent phase untill the apogee
 settings.ballisticFligth    =   false;                                     % Switch on to simulate the balistic fligth without any parachute
-settings.control            =   false;                                      % Switch on to simulate the control
-settings.dataNoise          =   false;                                      % Switch on to simulate the data acquisiton from sensors
+settings.control            =   true;                                      % Switch on to simulate the control
+settings.dataNoise          =   true;                                      % Switch on to simulate the data acquisiton from sensors
 settings.launchWindow       =   false;                                     % Switch off this to avoid pausing the launch till you press the launch button
-settings.kalman             =   false;                                      % Switch on to run the kalman algorithm
-settings.ada                =   false;                                      % Switch on to run the apogee detection algorithm
+settings.Kalman             =   true;                                      % Switch on to run the kalman algorithm
+settings.Ada                =   true;                                      % Switch on to run the apogee detection algorithm
 
 %% LAUNCH SETUP
 % launchpad for Pont De Sor
@@ -130,15 +130,15 @@ settings.frequencies.gpsFrequency               =   10;                    % [hz
 settings.frequencies.barometerFrequency         =   20;                    % [hz] control action frequency 
 
 %% KALMAN TUNING PARAMETERS
-settings.dt_k            =   0.01;                                         % [s]       kalman time step
-settings.sigma_baro      =   4;                                            % [mbar^2]   estimated barometer variance    
-settings.sigma_mag       =   0.5;                                          % [mgauss^2] estimated magnetometer variance    
-settings.sigma_GPS       =   2;                                            % [mg^2]     estimated GPS variance
-settings.sigma_w         =   10*(1000*pi/180)^2;                           % [mdps^2]  estimated gyroscope variance;
-settings.sigma_beta      =   1e-2;                                         % [mdps^2]  estimated gyroscope bias variance;
+settings.kalman.dt_k          =   0.01;                                    % [s]        kalman time step
+settings.kalman.sigma_baro    =   4;                                       % [mbar^2]   estimated barometer variance    
+settings.kalman.sigma_mag     =   0.5;                                     % [mgauss^2] estimated magnetometer variance    
+settings.kalman.sigma_GPS     =   2;                                       % [mg^2]     estimated GPS variance
+settings.kalman.sigma_w       =   10*(1000*pi/180)^2;                      % [mdps^2]   estimated gyroscope variance;
+settings.kalman.sigma_beta    =   1e-2;                                    % [mdps^2]   estimated gyroscope bias variance;
 
 % Process noise covariance matrix for the linear dynamics
-settings.QLinear         =   0.01*...
+settings.kalman.QLinear       =   0.01*...
                                  [1     0     0      0      0      0;
                                   0     1     0      0      0      0;
                                   0     0     1      0      0      0;
@@ -147,26 +147,33 @@ settings.QLinear         =   0.01*...
                                   0     0     0      0      0      1];
 
 % Process noise covariance matrix for the quaternion dynamics
-settings.Qq              =   [(settings.sigma_w^2*settings.dt_k+(1/3)*settings.sigma_beta^2*settings.dt_k^3)*eye(3)          0.5*settings.sigma_beta^2*settings.dt_k^2*eye(3);
-                              0.5*settings.sigma_beta^2*settings.dt_k^2*eye(3)                                                   settings.sigma_beta^2*settings.dt_k*eye(3)];
+settings.kalman.Qq              =   [(settings.kalman.sigma_w^2*settings.kalman.dt_k+(1/3)*settings.kalman.sigma_beta^2*settings.kalman.dt_k^3)*eye(3)          0.5*settings.kalman.sigma_beta^2*settings.kalman.dt_k^2*eye(3);
+                                      0.5*settings.kalman.sigma_beta^2*settings.kalman.dt_k^2*eye(3)                                              settings.kalman.sigma_beta^2*settings.kalman.dt_k*eye(3)];
 %% ADA TUNING PARAMETER
-alfa  = 10;
 
-settings.Q_ada           =  alfa*[1/3000     0           0;                % Process noise covariance matrix
-                                  0          1/300       0;
-                                  0          0           1/300;];
-settings.R_ada           =   1000;                                         % Measurement noise covariance matrix
-settings.P0_ada          =   [  0.1    0     0;                            % Initial condition fo the 
+settings.ada.Q           =   [1     0       0;                         % Process noise covariance matrix
+                              0     10      0;
+                              0     0     100;];
+settings.ada.R           =   800;                                          % Measurement noise covariance matrix
+settings.ada.P0          =   [  0.1    0     0;                            % Initial condition fo the 
                                 0      0     0;                            % state covariance matrix 
                                 0      0     0;];
+[settings.ada.temp_ref, ~,...
+ settings.ada.p_ref, ~]  =   atmosisa(0);                                  % Reference temperature in kelvin and pressure in Pa 
 
-settings.v0              =   0;                                            % Vertical velocity initial condition
-settings.a0              =   0;                                            % Acceleration velocity initial condition
-settings.x0_ada          =  [0, settings.v0, settings.a0];                 % Ada initial condition
+settings.ada.v0          =   0;                                            % Vertical velocity initial condition
+settings.ada.a0          =   -500;                                         % Acceleration velocity initial condition
+settings.ada.x0          =  [settings.ada.p_ref, settings.ada.v0, settings.ada.a0];         
+                                                                           % Ada initial condition
 
-settings.N_ada           =   5;                                            % Consecutive apogee detection before
-                                                                           % actually send the event
-    
+settings.ada.v_thr       =   5;                                            % Velocity threshold for the detected apogee
+settings.ada.count_thr   =   5;                                            % If the apogee is detected count_thr time, the algorithm will return the apogee event
+settings.ada.counter     =   0;
+
+settings.ada.t_ada       =   -1;                                           % Apogee detection timestamp
+settings.ada.flag_ada    =   false;                                        % True when the apogee is detected
+
+
 %% CONTROL SETTINGS 
 
 settings.Mach_control    =   0.7;                                          % Mach of activation of aerobrakes 

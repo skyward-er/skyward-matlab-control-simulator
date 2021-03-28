@@ -1,19 +1,27 @@
 function [alpha_degree, Vz_setpoint, z_setpoint, csett] = control_Servo(z, Vz, csett)
-%CONTROL_ALGORITHM_SERVO_DEGREE  Finds trejectory (z-Vz) to follow and uses a PI controler to follow the trejectory
-%
-%   INPUTS:
-%   z               acutal hight of the rocket
-%   Vz              actual vertical velocity of the rocket
-%   V_mod           actual roket velocity in the direction of the main axis
-%   sample_time     sample time of the control system
-%
-%   OUTPUTS:
-%   alpha_degree    output angle for servo
-%   Vz_setpoint     setpoint vertical velocity from trejectory
-%   z_setpoint      setpoint hight
-%   Cd              resulting drag coefficiant 
-%   delta_S         resulting force
 
+% Author: Leonardo Bertelli
+% Co-Author: Alessandro Del Duca
+% Skyward Experimental Rocketry | ELC-SCS Dept | electronics@kywarder.eu
+% email: leonardo.bertelli@skywarder.eu, alessandro.delduca@skywarder.eu
+% Release date: 01/03/2021
+
+%{
+CONTROL_ALGORITHM_SERVO_DEGREE  Finds trejectory (z-Vz) to follow and uses a PI controler to follow the trejectory
+
+  INPUTS:
+  z               acutal hight of the rocket
+  Vz              actual vertical velocity of the rocket
+  V_mod           actual roket velocity in the direction of the main axis
+  sample_time     sample time of the control system
+
+  OUTPUTS:
+  alpha_degree    output angle for servo
+  Vz_setpoint     setpoint vertical velocity from trejectory
+  z_setpoint      setpoint hight
+  Cd              resulting drag coefficiant 
+  delta_S         resulting force
+%}
 
 %%%%%%%%%%%%%%%%%%%% TRAJECTORY SELECTION and REFERENCES COMPUTATION %%%%%%%%%%%%%%%%%%%%
 %% Choose the nearest trajectory ( only at the first iteration )
