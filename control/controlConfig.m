@@ -31,6 +31,9 @@ contSettings.Ki_2    =   37;                                               % usi
 contSettings.Kp_3    =   50;                                               % using alfa_degree nel pid --> ancora da tunare
 contSettings.Ki_3    =   20;                                               % using alfa_degree nel pid
 
+% Select the PID algorithm
+contSettings.flagPID           =    3;                                     % 1: control_PID (Fdrag);  2: control_LIN (u);  3: control_Servo (alfa_degree);
+
 % Internal parameter of controler
 contSettings.I                   =   0;
 contSettings.alpha_degree_prec   =   0;
@@ -53,5 +56,3 @@ contSettings.filter_coeff      =    0.9;
 % Possible range of values for the control variable
 contSettings.delta_S_available = (0.0:0.001/2:0.01)'; 
 
-% Select the PID algorithm
-contSettings.flagPID           =    3;                                     % 1: Fdrag;  2: u;  3: alfa_degree;
