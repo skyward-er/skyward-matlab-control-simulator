@@ -1,4 +1,4 @@
-function [Yf, Tf, t_ada, cpuTimes, flagMatr, dataBallisticFlight] = std_run_control(settings)
+function [Yf, Tf, t_ada, t_kalman, cpuTimes, flagMatr, dataBallisticFlight] = std_run_control(settings)
 %{
 
 STD_RUN_BALLISTIC - This function runs a standard ballistic (non-stochastic) simulation
@@ -90,14 +90,14 @@ addpath('../sensors/data/MS580301BA01');
 %% CONTROL INIT
 addpath('../control');
 addpath('../control/Cd_rho_computation');
-csett     =   controlConfig;
+csett  = controlConfig;
 %% MAGNETIC FIELD MODEL
-hmax    =   6000;
+hmax   =   6000;
 
 %Use this lines if your MATLAB version is up to 2020
-dy      =    decyear(settings.launchDate);
-XYZ0    =    wrldmagm(0, settings.lat0, settings.lon0, dy, '2020');        % World magnetic map at h = 0
-XYZh    =    wrldmagm(hmax, settings.lat0, settings.lon0, dy, '2020');     % World magnetic map at h = 6000
+dy     =    decyear(settings.launchDate);
+XYZ0   =    wrldmagm(0, settings.lat0, settings.lon0, dy, '2020');        % World magnetic map at h = 0
+XYZh   =    wrldmagm(hmax, settings.lat0, settings.lon0, dy, '2020');     % World magnetic map at h = 6000
 
 % %Use this next line if your MATLAB version is previous to 2020
 % load('magn_field.mat');
@@ -118,19 +118,16 @@ x           =       0;
 n_old       =       1;
 Yf_tot      =       zeros(nmax, 16);
 Tf_tot      =       zeros(nmax, 1);
-p_tot       =       zeros(nmax, 1);
 C           =       zeros(nmax, 1);
-
 cpuTimes    =       zeros(nmax,1);
 iTimes      =       0;
-g           =       settings.g0;
+c.ctr_start =      -1;
+i           =       1;
 
 %% Flag initializations
 flagStopIntegration     =   true;
 flagAscent              =   false;
 flagMatr                =   false(nmax, 6);
-
-index_plot = 1; % To plot
 
 if settings.launchWindow
     launchWindow;
@@ -176,7 +173,7 @@ while flagStopIntegration || n_old < nmax
         flagFligth = true;
     end
     
-    if vz >= 0 && launchFlag
+    if vz(end) >= 0 && launchFlag
         flagAscent = true;
     else
         flagAscent = false;
@@ -221,32 +218,9 @@ while flagStopIntegration || n_old < nmax
         Tf = [t0, t1];
         Yf = [initialCond'; initialCond'];
     end
-
-    
-    %rotation of velocity to inertial axis
-    A = zeros(3,3,size(Yf,1));
-    v_NED = zeros(size(Yf,1),3);
-     for ii=1:size(Yf,1)
-         
-         q               = [Yf(ii,11:13),Yf(ii,10)];        %composition of the quaternion in the form [q,q0]
-
-         v_b             = Yf(ii,4:6)';                     %Velocity in body axis (column vector)
-         
-         q_mat           =  [0      -q(3)      q(2);        %Matrix needed for the
-                             q(3)    0        -q(1);        %definition of rotation
-                            -q(2)    q(1)      0   ;];      %matrix
-                   
-         A(:,:,ii)       =   (q(4)^2-q(1:3)*q(1:3)')*eye(3) + 2*q(1:3)'*q(1:3) - 2*q(4)*q_mat;               
-                                                            %Rotation matrix to
-                                                            %body axis from inertial
-                                                            
-         v_NED(ii,:)     = (A(:,:,ii)'*v_b)';               %Matrix with the velocity components in NED;
-                                                            %each column is a velocity component
-     end
-   
      
     [sensorData] = manageSignalFrequencies(magneticFieldApprox, flagAscent, settings, Yf, Tf, x, uw, vw, ww, uncert);
-    [~, ~, p, ~]  = atmosisa(-Yf(:,3)) ; 
+    [~, ~, p, ~] = atmosisa(-Yf(:,3)) ; 
  
  
     if settings.dataNoise
@@ -273,103 +247,95 @@ while flagStopIntegration || n_old < nmax
     [xp_ada, xv_ada, P_ada, settings.ada]   =  run_ADA(ada_prev, Pada_prev,                ...
                                                        sp.pn, sensorData.barometer.time,   ...
                                                        settings.ada);
-     xp_ada_tot(c.n_ada_old:c.n_ada_old + size(xp_ada(:,1),1)-1,:)  = xp_ada(1:end,:);
+                                                   
+     xp_ada_tot(c.n_ada_old:c.n_ada_old + size(xp_ada(:,1),1) -1,:)  = xp_ada(1:end,:);
      xv_ada_tot(c.n_ada_old:c.n_ada_old + size(xv_ada(:,1),1)-1,:)  = xv_ada(1:end,:);
      t_ada_tot(c.n_ada_old:c.n_ada_old + size(xp_ada(:,1),1)-1)     = sensorData.barometer.time;              
-     c.n_ada_old = c.n_ada_old + size(xp_ada(1,:)); 
+     c.n_ada_old = c.n_ada_old + size(xp_ada,1); 
+     
      end
 %% Navigation system
     if settings.Kalman && settings.dataNoise
 
-    [x_c,P_c]   =  run_kalman(x_prev,P_prev, sp, settings.kalman, XYZ0*0.01);
+    [x_c,P_c,settings.kalman]   =  run_kalman(x_prev,P_prev, sp, settings.kalman, XYZ0*0.01);
+    
      x_est_tot(c.n_est_old:c.n_est_old + size(x_c(:,1),1)-1,:)  = x_c(1:end,:);
      t_est_tot(c.n_est_old:c.n_est_old + size(x_c(:,1),1)-1)    = sensorData.accelerometer.time;              
-     c.n_est_old = c.n_est_old + size(x_c(1,:)); 
+     c.n_est_old = c.n_est_old + size(x_c,1); 
+     
     end
 %% Control algorithm
     if flagAeroBrakes && settings.Kalman && settings.control
-
-         tempo = index_plot*0.1 - 0.1; % Print time instant for debugging
-         
+         if c.ctr_start == -1
+            c.ctr_start = 0.1*(n - 1);
+         end
          %% selection of controler type
          switch csett.flagPID 
              case 1
-             [alpha_degree, Vz_setpoint, z_setpoint, pid, U_linear, Cdd, delta_S, csett] = control_PID    (-x_c(end,3), -x_c(end,6), sqrt(x_c(end,4)^2+x_c(end,5)^2+x_c(end,6)^2), csett);
+             [alpha_degree, vz_setpoint, z_setpoint, pid, U_linear, Cdd, delta_S, csett] = control_PID    (-x_c(end,3), -x_c(end,6), sqrt(x_c(end,4)^2+x_c(end,5)^2+x_c(end,6)^2), csett);
              case 2
-             [alpha_degree, Vz_setpoint, z_setpoint, pid, U_linear, Cdd, delta_S, csett] = control_Lin    (-x_c(end,3), -x_c(end,6), sqrt(x_c(end,4)^2+x_c(end,5)^2+x_c(end,6)^2), csett);
+             [alpha_degree, vz_setpoint, z_setpoint, pid, U_linear, Cdd, delta_S, csett] = control_Lin    (-x_c(end,3), -x_c(end,6), sqrt(x_c(end,4)^2+x_c(end,5)^2+x_c(end,6)^2), csett);
              case 3
-             [alpha_degree, Vz_setpoint, z_setpoint, csett]                              = control_Servo  (-x_c(end,3), -x_c(end,6),  csett);
+             [alpha_degree, vz_setpoint, z_setpoint, csett]                              = control_Servo  (-x_c(end,3), -x_c(end,6),  csett);
          end
          x = extension_From_Angle(alpha_degree);
-         
-         % Save the values to plot them
-         plot_Vz_real(index_plot) = vz;
-         plot_z_real(index_plot) = z;
-         plot_normV(index_plot) = normV;
-         plot_Vz_setpoint(index_plot) = Vz_setpoint;
-         plot_z_setpoint(index_plot) = z_setpoint;
-         plot_control_variable(index_plot) = alpha_degree;
-         if csett.flagPID ~= 3
-             plot_Cd(index_plot) = Cdd;
-             plot_pid(index_plot) = pid;
-             plot_U_linear(index_plot) = U_linear;
-             plot_delta_S(index_plot) = delta_S;
-         end
-         index_plot = index_plot + 1;
-
+         i = i + 1; 
     elseif flagAeroBrakes && ~settings.Kalman && settings.control
-        
-        tempo = index_plot*0.1 - 0.1; % Print time instant for debugging
-        
+         if c.ctr_start == -1
+            c.ctr_start = 0.1*(n - 1);
+         end
         switch csett.flagPID 
              case 1
-             [alpha_degree, Vz_setpoint, z_setpoint, pid,U_linear, Cdd, delta_S, csett] =   control_PID     (z, vz, sqrt(vxxx^2 + vyyy^2 + vz^2),  csett);
+             [alpha_degree, vz_setpoint, z_setpoint, pid,U_linear, Cdd, delta_S, csett] =   control_PID     (z, vz, sqrt(vxxx^2 + vyyy^2 + vz^2),  csett);
              case 2
-             [alpha_degree, Vz_setpoint, z_setpoint, pid,U_linear, Cdd, delta_S, csett] =   control_Lin     (z, vz, sqrt(vxxx^2 + vyyy^2 + vz^2),  csett);
+             [alpha_degree, vz_setpoint, z_setpoint, pid,U_linear, Cdd, delta_S, csett] =   control_Lin     (z, vz, sqrt(vxxx^2 + vyyy^2 + vz^2),  csett);
              case 3
-             [alpha_degree, Vz_setpoint, z_setpoint, csett]                             =   control_Servo   (z, vz,  csett);
+             [alpha_degree, vz_setpoint, z_setpoint, csett]                             =   control_Servo   (z, vz(end),  csett);
         end
     
          x = extension_From_Angle(alpha_degree);
-         
-         % Save the values to plot them
-         plot_Vz_real(index_plot) = vz;
-         plot_z_real(index_plot) = z;
-         plot_normV(index_plot) = normV;
-         plot_Vz_setpoint(index_plot) = Vz_setpoint;
-         plot_z_setpoint(index_plot) = z_setpoint;
-         plot_control_variable(index_plot) = alpha_degree;
-         if csett.flagPID ~= 3
-             plot_Cd(index_plot) = Cdd;
-             plot_pid(index_plot) = pid;
-             plot_U_linear(index_plot) = U_linear;
-             plot_delta_S(index_plot) = delta_S;
-         end
-         index_plot = index_plot + 1;
+         i = i + 1; 
     else 
         x = 0;
     end    
+    
+    if flagAeroBrakes
+         % Save the values to plot them
+         c.vz_tot(i)    =  vz;
+         c.z_tot(i)     =  z;
+         c.vz_setpoint_tot(i)  =  vz_setpoint;
+         c.z_setpoint_tot(i)   =  z_setpoint;
+         c.alpha_degree_tot(i) =  alpha_degree;
+         if csett.flagPID ~= 3
+             c.Cd_tot(i)    =  Cdd;
+             c.pid_tot(i)   =  pid;
+             c.U_lin_tot(i) =  U_linear;
+             c.dS_tot(i)    =  delta_S;
+         end
+    end
 
     % vertical velocity and position
     if flagAscent || (not(flagAscent) && settings.ballisticFligth)
-        Q = Yf(end, 10:13);
-        vels = quatrotate(quatconj(Q), Yf(end, 4:6)); 
-        vz = - vels(3);   % down
-        vxxx = vels(2);   % north
-        vyyy = vels(1);   % east
+        Q    =   Yf(end, 10:13);
+        vels =   quatrotate(quatconj(Q), Yf(:, 4:6)); 
+        vz   = - vels(end,3);   % down
+        vxxx =   vels(end,2);   % north
+        vyyy =   vels(end,1);   % east
     else
-        vz = -Yf(end, 6);  
+        vz   = - Yf(end, 6);  
 %         vx = Yf(end, 5); 
 %         vy = Yf(end, 4); 
     end
-    z = -Yf(end, 3);
+    
+    v_ned = quatrotate(quatconj(Yf(:, 10:13)), Yf(:, 4:6)); 
 
-    xxx = Yf(end, 2);
-    yyy = Yf(end, 1);
+    z    = -Yf(end, 3);
+    xxx  =  Yf(end, 2); 
+    yyy  =  Yf(end, 1); 
     
 
     if lastFlagAscent && not(flagAscent)
-        Y0 = [Yf(end, 1:3), vels, Yf(end, 7:end)];
+        Y0 = [Yf(end, 1:3), vels(end,:), Yf(end, 7:end)];
     else
         Y0 = Yf(end, :);
     end
@@ -385,12 +351,13 @@ while flagStopIntegration || n_old < nmax
     
     % assemble total state
     [n, ~] = size(Yf);
-    Yf_tot(n_old:n_old+n-1, :) = Yf(1:end, :);
-    Tf_tot(n_old:n_old+n-1,1)  = Tf(1:end, 1);
-    p_tot(n_old:n_old+n-1,1)   = p(1:end, 1);
+    Yf_tot(n_old:n_old+n-1, :)   =  Yf(1:end, :);
+    Tf_tot(n_old:n_old+n-1, 1)   =  Tf(1:end, 1);
+    c.Yf_tot(n_old:n_old+n-1, :) =  Yf(1:end, :);
+    c.Tf_tot(n_old:n_old+n-1, 1) =  Tf(1:end, 1);
+    c.p_tot(n_old:n_old+n-1, 1)  =  p(1:end, 1);
     C(n_old:n_old+n-1) = x;
-    
-    v_NED_tot(n_old:n_old+n-1,:) = v_NED;
+    c.v_ned_tot(n_old:n_old+n-1,:) = v_ned;  
     
     n_old = n_old + n -1;
    
@@ -424,215 +391,43 @@ cpuTimes = cpuTimes(1:iTimes);
 Yf = Yf_tot(1:n_old, :);
 Tf = Tf_tot(1:n_old, :);
 
-t_ada = settings.ada.t_ada;
-
-i_apo = find(Tf<24.8);
+t_ada    = settings.ada.t_ada;
+t_kalman = settings.kalman.t_kalman;
+i_apo = find(Tf < 24.8);
 i_apo = max(i_apo);
 if settings.Kalman
-i_apo_est = find(t_est_tot<Tf(i_apo));
-i_apo_est=max(i_apo_est);
+i_apo_est = find(t_est_tot < Tf(i_apo));
+i_apo_est = max(i_apo_est);
 end
 flagMatr = flagMatr(1:n_old, :);
+
+%% SAVE THE VARIABLES FOR PLOT PURPOSE
+% kalman state plot
+c.x_est_tot    =  x_est_tot;
+c.t_est_tot    =  t_est_tot;
+c.i_apo        =  i_apo;
+c.i_apo_est    =  i_apo_est; 
+c.plot_kalman  =  settings.Kalman;
+
+% ada state for plot
+c.xp_ada_tot   =  xp_ada_tot;
+c.xv_ada_tot   =  xv_ada_tot;  
+c.t_ada_tot    =  t_ada_tot;
+c.plot_ada     =  settings.Ada;
+c.plot_sensors =  true;
+
+% control
+c.plot_control =  true;
+c.flagPID      =  csett.flagPID;
 %% RETRIVE PARAMETERS FROM THE ODE
 
 if not(settings.electronics)
     dataBallisticFlight = RecallOdeFcn(@ascent, Tf(flagMatr(:, 2)), Yf(flagMatr(:, 2), :), settings, C, uw, vw, ww, uncert, tLaunch);
-
-    
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-if settings.control
-%% PLOT THE RESULTS
-
-% Obtain the control variable
-time = 0:dt:(length(plot_control_variable)-1)*dt;                 
-                     
-% Obtain the total altitude
-plot_z = -Yf(:,3);
-
-% Obtain the total vertical velocity
-nStates = length(Yf);
-plot_Vz = zeros(nStates, 1);
-for index = 1:nStates
-    Q = Yf(index,10:13);
-    vels = quatrotate(quatconj(Q), Yf(index,4:6));
-    plot_Vz(index) = - vels(3);
+end
+if ~settings.electronics 
+    plot_all(c)
 end
 
-% Control variable: servo angle
-figure('Name','Servo angle after burning phase','NumberTitle','off');
-plot(time, plot_control_variable), grid on;
-axis([0,20, 0,60])
-xlabel('time [s]'), ylabel('Angle [deg]');
-
-if csett.flagPID ~= 3
-    % Control variable: pid vs linearization
-    figure('Name','Linearization of the control variable','NumberTitle','off');
-    plot(time, plot_U_linear, 'DisplayName','Linearized','LineWidth',0.8), grid on;
-    hold on
-    plot(time, plot_pid, 'DisplayName','PID','LineWidth',0.8), grid on;
-    xlabel('time [s]'), ylabel('U [N]');
-    hold off
-    legend('Location','northeast')
-
-    % delta_S
-    figure('Name','Delta_S','NumberTitle','off');
-    plot(time, plot_delta_S), grid on;
-    xlabel('time [s]'), ylabel('A [m^2]');
-
-    % Cd
-    figure('Name','Cd','NumberTitle','off');
-    plot(time, plot_Cd), grid on;
-    xlabel('time [s]'), ylabel('Cd []');
-end
-
-% Altitude real vs setpoint
-figure('Name','Altitude real vs setpoint after burning phase','NumberTitle','off');
-plot(time, plot_z_real,'DisplayName','real','LineWidth',0.8), grid on;
-hold on
-plot(time, plot_z_setpoint,'DisplayName','setpoint','LineWidth',0.8), grid on;
-axis([0,20, 0, 3100])
-xlabel('time [s]'), ylabel('z [m]');
-hold off
-legend('Location','southeast')
-
-% Vertical velocity real vs setpoint
-figure('Name','Vertical velocity real vs setpoint after burning phase','NumberTitle','off');
-plot(time, plot_Vz_real,'DisplayName','real','LineWidth',0.8), grid on;
-hold on
-plot(time, plot_Vz_setpoint, 'DisplayName','setpoint', 'LineWidth',0.8), grid on;
-axis([0,20, -50,300])
-xlabel('time [s]'), ylabel('Vz [m/s]');
-hold off
-legend
-
-% V(z) real vs setpoint
-figure('Name','V(z) real vs setpoint after burning phase','NumberTitle','off');
-plot(plot_z_real, plot_Vz_real,'DisplayName','real','LineWidth',0.8), grid on;
-hold on
-plot(plot_z_setpoint, plot_Vz_setpoint, 'DisplayName','setpoint', 'LineWidth',0.8), grid on;
-axis([1100,3200, -50, 250])
-xlabel('z [m]'), ylabel('Vz [m/s]');
-hold off
-legend
-
-% Total altitude
-figure('Name','Time, Altitude','NumberTitle','off');
-plot(Tf, plot_z), grid on;
-axis([0,50, 0, 3100])
-xlabel('time [s]'), ylabel('z [m]');
-
-% Total vertical velocity
-figure('Name','Time, Vertical Velocity','NumberTitle','off');
-plot(Tf, plot_Vz), grid on;
-xlabel('time [s]'), ylabel('Vz [m/s]');
-
-end
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% % Save to csv
-% in = [plot_z_real',plot_Vz_real',plot_normV' ];
-% out = [plot_delta_S', plot_control_variable'];
-% setpoint = [plot_z_setpoint',plot_Vz_setpoint'];
-% U = [plot_pid'];
-% csvwrite('setpoint.txt',setpoint)
-% csvwrite('U.txt',U)
-
-% altitude_velocity = struct('Z_ref',plot_z_setpoint','V_ref',plot_Vz_setpoint', 'Z_real',plot_z_real','V_real',plot_Vz_real','normV',plot_normV');
-% control_inputs = struct('U',plot_pid','delta_S',plot_delta_S', 'Angle',plot_control_variable');
-% save('altitude_velocity.mat','altitude_velocity');
-% save('control_inputs.mat','control_inputs');
-
-
-end
-
-
-%% FIGURE: Barometer reads 
-if settings.dataNoise && not(settings.electronics)
-fbaro = settings.frequencies.barometerFrequency;
-tp = 0:1/fbaro:1/fbaro*(length(c.pn_tot)-1);
-figure 
-subplot(2,1,1);plot(tp,c.pn_tot',Tf,p_tot');grid on;xlabel('time [s]');ylabel('|P| [mBar]');
-legend('Pressure','Ground-truth','location','southeast');
-title('Barometer pressure reads');
-subplot(2,1,2);plot(tp,-c.hb_tot',Tf,-Yf(:,3));grid on;xlabel('time [s]');ylabel('|h| [m]');
-legend('Altitude','Ground-truth','location','northeast');
-title('Barometer altitude reads');
-if settings.Ada
-figure 
-subplot(3,1,1);plot(t_ada_tot,xp_ada_tot(:,1));grid on;xlabel('time [s]');ylabel('|P| [mBar]');
-title('ADA pressure estimation');
-subplot(3,1,2);plot(t_ada_tot,xp_ada_tot(:,2));grid on;xlabel('time [s]');ylabel('|P_dot| [mBar/s]');
-title('ADA velocity estimation');
-subplot(3,1,3);plot(t_ada_tot,xp_ada_tot(:,3));grid on;xlabel('time [s]');ylabel('|P_dot^2| [mBar/s^2]');
-title('ADA acceleration estimation');
-figure 
-subplot(2,1,1);plot(t_ada_tot,xv_ada_tot(:,1));grid on;xlabel('time [s]');ylabel('|P| [mBar]');
-title('ADA altitude estimation');
-subplot(2,1,2);plot(t_ada_tot,xv_ada_tot(:,2));grid on;xlabel('time [s]');ylabel('|P_dot| [mBar/s]');
-title('ADA vertical velocity estimation');
-end
-%% FIGURE: Accelerometer reads
-faccel = settings.frequencies.accelerometerFrequency; 
-ta = 0:1/faccel:1/faccel*(length(c.accel_tot)-1);
-figure
-subplot(3,1,1);plot(ta,c.accel_tot(:,1)/g');grid on;xlabel('time[s]');ylabel('|ax| [g]'); title('Accelerometer reads along x');
-subplot(3,1,2);plot(ta,c.accel_tot(:,2)/g');grid on;xlabel('time[s]');ylabel('|ay| [g]'); title('Accelerometer reads along y');
-subplot(3,1,3);plot(ta,c.accel_tot(:,3)/g');grid on;xlabel('time[s]');ylabel('|az| [g]'); title('Accelerometer reads along z');
-%% FIGURE: Gyroscope reads 
-figure
-subplot(3,1,1);plot(ta,c.gyro_tot(:,1)*180/pi');grid on;xlabel('time[s]');ylabel('|wx| [°/s]'); title('Gyroscope reads along x');
-subplot(3,1,2);plot(ta,c.gyro_tot(:,2)*180/pi');grid on;xlabel('time[s]');ylabel('|wy| [°/s]'); title('Gyroscope reads along y');
-subplot(3,1,3);plot(ta,c.gyro_tot(:,3)*180/pi');grid on;xlabel('time[s]');ylabel('|wz| [°/s]'); title('Gyroscope reads along z'); 
-%% FIGURE:Magnetometer reads
-figure
-subplot(3,1,1);plot(ta,c.mag_tot(:,1)');grid on;xlabel('time [s]');ylabel('|mx| [Gauss]'); title('Magnetometer readsalong x'); 
-subplot(3,1,2);plot(ta,c.mag_tot(:,2)');grid on;xlabel('time[s]');ylabel('|my| [Gauss]'); title('Magnetometer reads along y');
-subplot(3,1,3);plot(ta,c.mag_tot(:,3)');grid on;xlabel('time[s]');ylabel('|mz| [Gauss]'); title('Magnetometer reads along z'); 
-%% FIGURE: Gps reads 
-fgps = settings.frequencies.gpsFrequency; 
-tgps = 0:1/fgps:1/fgps*(length(c.gps_tot)-1); 
-figure 
-subplot(3,1,1);plot(tgps, c.gps_tot(:,1)');grid on;xlabel('time [s]');ylabel('|Pn| [m]'); title('GPS position  North'); 
-subplot(3,1,2);plot(tgps, c.gps_tot(:,2)');grid on;xlabel('time [s]');ylabel('|Pe| [m]'); title('GPS position  East');
-subplot(3,1,3);plot(tgps,-c.gps_tot(:,3)');grid on;xlabel('time[s]');ylabel('|Pu| [m]'); title('GPS position Upward'); 
-figure
-subplot(3,1,1);plot(tgps,c.gpsv_tot(:,1)');grid on;xlabel('time[s]');ylabel('|Velocity N| [m/s]');
-subplot(3,1,2);plot(tgps,c.gpsv_tot(:,2)');grid on;xlabel('time[s]');ylabel('|Velocity E| [m/s]');
-subplot(3,1,3);plot(tgps,c.gpsv_tot(:,3)');grid on;xlabel('time[s]');ylabel('|Velocity D| [m/s]');
-title('GPS velocity reads');
-subplot(3,1,1);plot(tgps, c.gpsv_tot(:,1)');grid on;xlabel('time[s]');ylabel('|Vn| [m/s]'); title('GPS velocity  North');
-subplot(3,1,2);plot(tgps, c.gpsv_tot(:,2)');grid on;xlabel('time[s]');ylabel('|Ve| [m/s]'); title('GPS velocity  East');
-subplot(3,1,3);plot(tgps,-c.gpsv_tot(:,3)');grid on;xlabel('time[s]');ylabel('|Vu| [m/s]'); title('GPS velocity Upward');
-%% FIGURE: Estimated position vs ground-truth
-if settings.Kalman
-figure
-subplot(3,1,1);plot(t_est_tot(1:i_apo_est),x_est_tot(1:i_apo_est,1),Tf(1:i_apo), Yf(1:i_apo,1));grid on;xlabel('time[s]');ylabel('|Pn| [m]');legend('North','Ground-truth','location','best');
-title('Estimated Northposition vs ground-truth');
-subplot(3,1,2);plot(t_est_tot(1:i_apo_est),x_est_tot(1:i_apo_est,2),Tf(1:i_apo), Yf(1:i_apo,2));grid on;xlabel('time[s]');ylabel('|Pe| [m]');legend('East','Ground-truth','location','best'); 
-title('Estimated East position vs ground-truth'); 
-subplot(3,1,3);plot(t_est_tot(1:i_apo_est),-x_est_tot(1:i_apo_est,3),Tf(1:i_apo), -Yf(1:i_apo,3));grid on;xlabel('time [s]');ylabel('|Pu| [m]');legend('Upward','Ground-truth','location','best'); 
-title('Estimated Upward position vs ground-truth'); 
-%% FIGURE: Estimated velocities vs ground-truth 
-figure 
-subplot(3,1,1);plot(t_est_tot(1:i_apo_est),x_est_tot(1:i_apo_est,4),Tf(1:i_apo), v_NED_tot(1:i_apo,1));grid on;xlabel('time [s]');ylabel('|Vn| [m/s]');
-legend('North','Ground-truth','location','best'); title('Estimated North velocity vs ground-truth'); 
-subplot(3,1,2);plot(t_est_tot(1:i_apo_est),x_est_tot(1:i_apo_est,5),Tf(1:i_apo), v_NED_tot(1:i_apo,2));grid on;xlabel('time [s]');ylabel('|Ve| [m/s]');
-legend('East','Ground-truth','location','best'); title('Estimated Eastvelocity vs ground-truth');
-subplot(3,1,3);plot(t_est_tot(1:i_apo_est+1),-x_est_tot(1:i_apo_est+1,6),Tf(1:i_apo),-v_NED_tot(1:i_apo,3));grid on;xlabel('time [s]');ylabel('|Vu| [m/s]');
-legend('Upward','Ground-truth','location','best'); title('EstimatedUpward velocity vs ground-truth'); 
-%% FIGURE: Estimated quaternions vs ground-truth 
-figure
-subplot(4,1,1);plot(t_est_tot(1:i_apo_est),x_est_tot(1:i_apo_est,10),Tf(1:i_apo),Yf(1:i_apo,10));grid on;ylabel('|q0| [-]'); 
-legend('Estimatedq0','Ground-truth','location','northeast'); title('Estimated q0 vsground-truth');
-subplot(4,1,2);plot(t_est_tot(1:i_apo_est),x_est_tot(1:i_apo_est,7),Tf(1:i_apo),Yf(1:i_apo,11));grid on;ylabel('|q1| [-]'); 
-legend('Estimatedq1','Ground-truth','location','northeast'); title('Estimated q1 vsground-truth');
-subplot(4,1,3);plot(t_est_tot(1:i_apo_est),x_est_tot(1:i_apo_est,8),Tf(1:i_apo),Yf(1:i_apo,12));grid on;ylabel('|q2| [-]'); 
-legend('Estimatedq2','Ground-truth','location','northeast'); title('Estimated q2 vsground-truth');
-subplot(4,1,4);plot(t_est_tot(1:i_apo_est),x_est_tot(1:i_apo_est,9),Tf(1:i_apo),Yf(1:i_apo,13));grid on;ylabel('|q3| [-]'); 
-legend('Estimatedq3','Ground-truth','location','northeast'); title('Estimated q3 vsground-truth');
-end
-end
 end
 
 

@@ -36,7 +36,7 @@ INPUTS:
 
         - R:          [1x1] COVARIANCE MATRIX OF OBSERVATION NOISE
 
-        - flag_ada:   BOOLEAN VARIABLE THAT BECOME TRUE AFTER THE APOGEE IS
+        - flag_apo:   BOOLEAN VARIABLE THAT BECOME TRUE AFTER THE APOGEE IS
                       DETECTED count_threshold TIMES
 
         - t_ada:      TIME OF THE PREDICTED APOGEE 
@@ -94,7 +94,7 @@ INPUTS:
         xv(ii,1)  =   getaltitude(xp(ii,1),ada.temp_ref, ada.p_ref);
         xv(ii,2)  =   getvelocity(xp(ii,1),xp(ii,2),ada.temp_ref, ada.p_ref);
         
-        if ada.flag_ada  == false
+        if ada.flag_apo  == false
             if xv(ii,2) < ada.v_thr
                 ada.counter = ada.counter + 1;
             else
@@ -102,7 +102,7 @@ INPUTS:
             end
             if ada.counter >= ada.count_thr
             	ada.t_ada = t_baro(ii);
-                ada.flag_ada = true;
+                ada.flag_apo = true;
             end
         end
     end

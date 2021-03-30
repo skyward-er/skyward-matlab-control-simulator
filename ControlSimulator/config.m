@@ -137,6 +137,14 @@ settings.kalman.sigma_GPS     =   2;                                       % [mg
 settings.kalman.sigma_w       =   10*(1000*pi/180)^2;                      % [mdps^2]   estimated gyroscope variance;
 settings.kalman.sigma_beta    =   1e-2;                                    % [mdps^2]   estimated gyroscope bias variance;
 
+settings.kalman.t_kalman      =   0;
+settings.kalman.v_thr         =   2.5;                                     % Velocity threshold for the detected apogee
+settings.kalman.count_thr     =   5;                                       % If the apogee is detected count_thr time, the algorithm will return the apogee event
+settings.kalman.counter       =   0;
+
+settings.kalman.t_kalman      =   -1;                                      % Apogee detection timestamp
+settings.kalman.flag_apo      =   false;                                   % True when the apogee is detected
+
 % Process noise covariance matrix for the linear dynamics
 settings.kalman.QLinear       =   0.01*...
                                  [1     0     0      0      0      0;
@@ -166,12 +174,12 @@ settings.ada.a0          =   -500;                                         % Acc
 settings.ada.x0          =  [settings.ada.p_ref, settings.ada.v0, settings.ada.a0];         
                                                                            % Ada initial condition
 
-settings.ada.v_thr       =   5;                                            % Velocity threshold for the detected apogee
+settings.ada.v_thr       =   2.5;                                          % Velocity threshold for the detected apogee
 settings.ada.count_thr   =   5;                                            % If the apogee is detected count_thr time, the algorithm will return the apogee event
 settings.ada.counter     =   0;
 
 settings.ada.t_ada       =   -1;                                           % Apogee detection timestamp
-settings.ada.flag_ada    =   false;                                        % True when the apogee is detected
+settings.ada.flag_apo    =   false;                                        % True when the apogee is detected
 
 
 %% CONTROL SETTINGS 

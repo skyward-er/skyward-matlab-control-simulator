@@ -29,9 +29,9 @@ run('config.m');
 % Y = State = ( x y z | u v w | p q r | q0 q1 q2 q3 | thetax thetay thetaz | ) also for Ya,Yf corresponding to T
 
 if settings.electronics
-    [Yf, Tf, t_ada, cpuTimes, flagMatr] = std_run_control(settings);
+    [Yf, Tf, t_ada, t_kalman, cpuTimes, flagMatr] = std_run_control(settings);
 else
-    [Yf, Tf, t_ada, cpuTimes, flagMatr, data_flight] = std_run_control(settings);
+    [Yf, Tf, t_ada, t_kalman, cpuTimes, flagMatr, data_flight] = std_run_control(settings);
 end
 
 %% DATA-PRINTING
@@ -90,8 +90,9 @@ if not(settings.electronics)
     fprintf('@velocity: %g [m/s] \n', abs_V(imax_a))
     fprintf('@time: %g [sec] \n\n', Tf(imax_a))
 
-%% ADA detection time
-    fprintf('ADA detection time: %g [sec] \n', t_ada)
+%% Apogee detection time
+    fprintf('ADA apogee detection time: %g [sec] \n', t_ada)
+    fprintf('Kalman apogee detection time: %g [sec] \n', t_kalman)
     fprintf('Simulated apogee time : %g [sec] \n', T_apo)
 end
 
