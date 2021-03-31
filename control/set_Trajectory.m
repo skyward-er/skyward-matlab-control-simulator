@@ -38,7 +38,8 @@ if csett.iteration_flag == 1
     
     % Just for plot
     csett.starting_index = best_index;
-
+    disp('trajectory chosen:')
+    disp(csett.chosen_trajectory)
     
 %% For the following iterations keep tracking the chosen trajectory
 else

@@ -266,17 +266,20 @@ while flagStopIntegration || n_old < nmax
     end
 %% Control algorithm
     if flagAeroBrakes && settings.Kalman && settings.control
+         zc    =    exp_mean(-x_c(:,3),0.8);
+         vzc   =    exp_mean(-x_c(:,6),0.8);
+         vc    =    exp_mean(sqrt(x_c(:,4).^2+x_c(:,5).^2+x_c(:,6).^2),0.8);
          if c.ctr_start == -1
             c.ctr_start = 0.1*(n - 1);
          end
          %% selection of controler type
          switch csett.flagPID 
              case 1
-             [alpha_degree, vz_setpoint, z_setpoint, pid, U_linear, Cdd, delta_S, csett] = control_PID    (-x_c(end,3), -x_c(end,6), sqrt(x_c(end,4)^2+x_c(end,5)^2+x_c(end,6)^2), csett);
+             [alpha_degree, vz_setpoint, z_setpoint, pid, U_linear, Cdd, delta_S, csett] = control_PID    (zc, vzc, vc, csett);
              case 2
-             [alpha_degree, vz_setpoint, z_setpoint, pid, U_linear, Cdd, delta_S, csett] = control_Lin    (-x_c(end,3), -x_c(end,6), sqrt(x_c(end,4)^2+x_c(end,5)^2+x_c(end,6)^2), csett);
+             [alpha_degree, vz_setpoint, z_setpoint, pid, U_linear, Cdd, delta_S, csett] = control_Lin    (zc, vzc, vc, csett);
              case 3
-             [alpha_degree, vz_setpoint, z_setpoint, csett]                              = control_Servo  (-x_c(end,3), -x_c(end,6),  csett);
+             [alpha_degree, vz_setpoint, z_setpoint, csett]                              = control_Servo  (zc, vzc,  csett);
          end
          x = extension_From_Angle(alpha_degree);
          i = i + 1; 

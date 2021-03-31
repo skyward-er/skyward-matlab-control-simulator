@@ -5,12 +5,13 @@ function [fix, n_sat] = gpsFix(accel)
 % Skyward Experimental Rocketry | ELC-SCS Dept
 % email: alessandro.delduca@skywarder.eu
 % Revision date: 18/03/2021
-if norm(accel)/9.81 < 2
-        fix   = true;
+a = mean(accel,1);
+if norm(a)/9.81 < 2
+        fix   = 1;
         n_sat = 4;
 else
-    if rand(1)>0.80
-        fix   = true;
+    if rand(1) < 0.98
+        fix   = 1;
         n_sat = 4;
     else
         fix   = 0;

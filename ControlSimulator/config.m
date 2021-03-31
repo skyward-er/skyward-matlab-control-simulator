@@ -51,7 +51,7 @@ name = 'M2020';
 
 n_name = [Motors.MotorName] == name;
 settings.motor.exp_time     =    Motors(n_name).t;
-settings.motor.exp_thrust   =    Motors(n_name).T;
+settings.motor.exp_thrust   =    0.95*Motors(n_name).T;
 settings.motor.exp_m        =    Motors(n_name).m;
 settings.mp                 =    Motors(n_name).mp;                        % [kg]   Propellant Mass                                                
 settings.tb                 =    Motors(n_name).t(end) ;                   % [s]    Burning time
@@ -131,9 +131,9 @@ settings.frequencies.barometerFrequency         =   20;                    % [hz
 
 %% KALMAN TUNING PARAMETERS
 settings.kalman.dt_k          =   0.01;                                    % [s]        kalman time step
-settings.kalman.sigma_baro    =   3;                                       % [mbar^2]   estimated barometer variance    
+settings.kalman.sigma_baro    =   4;                                       % [mbar^2]   estimated barometer variance    
 settings.kalman.sigma_mag     =   0.1;                                     % [mgauss^2] estimated magnetometer variance    
-settings.kalman.sigma_GPS     =   1;                                       % [mg^2]     estimated GPS variance
+settings.kalman.sigma_GPS     =   4;                                       % [mg^2]     estimated GPS variance
 settings.kalman.sigma_w       =   10*(1000*pi/180)^2;                      % [mdps^2]   estimated gyroscope variance;
 settings.kalman.sigma_beta    =   1e-2;                                    % [mdps^2]   estimated gyroscope bias variance;
 
@@ -146,12 +146,12 @@ settings.kalman.flag_apo      =   false;                                   % Tru
 
 % Process noise covariance matrix for the linear dynamics
 settings.kalman.QLinear       =   1*...
-                                 [0.1     0       0        0        0       0;
-                                  0       0.1     0        0        0       0;
-                                  0       0       0.1      0        0       0;
+                                 [1       0       0        0        0       0;
+                                  0       1       0        0        0       0;
+                                  0       0       1        0        0       0;
                                   0       0       0        0.1      0       0;
                                   0       0       0        0        0.1     0;
-                                  0       0       0        0        0       0.5];
+                                  0       0       0        0        0       0.1];
 
 % Process noise covariance matrix for the quaternion dynamics
 settings.kalman.Qq              =   [(settings.kalman.sigma_w^2*settings.kalman.dt_k+(1/3)*settings.kalman.sigma_beta^2*settings.kalman.dt_k^3)*eye(3)          0.5*settings.kalman.sigma_beta^2*settings.kalman.dt_k^2*eye(3);
