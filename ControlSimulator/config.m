@@ -15,10 +15,10 @@ settings.electronics        =   false;                                     % Swi
 settings.ascentOnly         =   false;                                     % Switch on to simulate only the ascent phase untill the apogee
 settings.ballisticFligth    =   false;                                     % Switch on to simulate the balistic fligth without any parachute
 settings.control            =   true;                                      % Switch on to simulate the control
-settings.dataNoise          =   true;                                      % Switch on to simulate the data acquisiton from sensors
+settings.dataNoise          =   false;                                      % Switch on to simulate the data acquisiton from sensors
 settings.launchWindow       =   false;                                     % Switch off this to avoid pausing the launch till you press the launch button
-settings.Kalman             =   true;                                      % Switch on to run the kalman algorithm
-settings.Ada                =   true;                                      % Switch on to run the apogee detection algorithm
+settings.Kalman             =   false;                                      % Switch on to run the kalman algorithm
+settings.Ada                =   false;                                      % Switch on to run the apogee detection algorithm
 
 %% LAUNCH SETUP
 % launchpad for Pont De Sor
@@ -227,7 +227,7 @@ settings.wind.input = true;
 
 settings.wind.input_ground  = 7;                                           % wind magnitude at the ground [m/s]
 settings.wind.input_alt     = [0 100 600 750 900 1500 2500 3000 3500];     % altitude vector [m]
-settings.wind.input_mult    = [0 0 10 10 15 15 20 30 30];                  % percentage of increasing magnitude at each altitude
+settings.wind.input_mult    = [0 0 5 5 10 10 15 15 15];                  % percentage of increasing magnitude at each altitude
 settings.wind.input_azimut  = [0 0 0 0 0 0 0 0 0];                         % wind azimut angle at each altitude (toward wind incoming direction) [deg]
 
 settings.wind.input_uncertainty = [1, 1];

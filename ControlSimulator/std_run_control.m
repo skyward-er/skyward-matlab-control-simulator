@@ -403,29 +403,37 @@ flagMatr = flagMatr(1:n_old, :);
 
 %% SAVE THE VARIABLES FOR PLOT PURPOSE
 % kalman state plot
-c.x_est_tot    =  x_est_tot;
-c.t_est_tot    =  t_est_tot;
-c.i_apo        =  i_apo;
-c.i_apo_est    =  i_apo_est; 
-c.plot_kalman  =  settings.Kalman;
+if settings.Kalman
+    c.x_est_tot    =  x_est_tot;
+    c.t_est_tot    =  t_est_tot;
+    c.i_apo        =  i_apo;
+    c.i_apo_est    =  i_apo_est; 
+end
 
 % ada state for plot
-c.xp_ada_tot   =  xp_ada_tot;
-c.xv_ada_tot   =  xv_ada_tot;  
-c.t_ada_tot    =  t_ada_tot;
-c.plot_ada     =  settings.Ada;
-c.plot_sensors =  true;
+if settings.Ada
+    c.xp_ada_tot   =  xp_ada_tot;
+    c.xv_ada_tot   =  xv_ada_tot;  
+    c.t_ada_tot    =  t_ada_tot;
+end
 
 % control
+if settings.control
+    c.flagPID      =  csett.flagPID;
+end
+
+c.plot_ada     =  false; 
+c.plot_sensors =  false; 
+c.plot_kalman  =  false;
 c.plot_control =  true;
-c.flagPID      =  csett.flagPID;
+
 %% RETRIVE PARAMETERS FROM THE ODE
 
 if not(settings.electronics)
     dataBallisticFlight = RecallOdeFcn(@ascent, Tf(flagMatr(:, 2)), Yf(flagMatr(:, 2), :), settings, C, uw, vw, ww, uncert, tLaunch);
 end
 if ~settings.electronics 
-    plot_all(c)
+    plot_all(c, csett)
 end
 
 end

@@ -26,17 +26,17 @@ controler to follow the trejectory and then transfere it with a to a force
   Cd              resulting drag coefficiant 
   delta_S         resulting force
 %}
-%% Choose the nearest trajectory ( only at the first iteration )
+
+%% CHOOSE THE SETPOINTS
 
 [z_setpoint, Vz_setpoint, csett] = set_Trajectory(z, Vz, csett);
 
-%%%%%%%%%%%%%%%%%%%% PI ALGORITHM %%%%%%%%%%%%%%%%%%%%
+%% PI ALGORITHM 
 
 % If e>0 the rocket is too fast. I slow it down with Fx>0 --> open aerobrakes
 % If e<0 the rocket is too slow. I speed it up with Fx<0 --> close aerobrakes
 
 % Parameters
-
 ro = getRho(z);
 
 % Control variable limits
@@ -60,9 +60,7 @@ U = P + csett.I;
 % Anti-windup
 [U, csett.saturation] = Saturation(U, Umin, Umax);
 
-
-%%%%%%%%%%%%%%%%%%%% TRANSFORMATION FROM U to delta_S %%%%%%%%%%%%%%%%%%%%
-
+%% TRANSFORMATION FROM U to delta_S 
 
 % Get the Cd for each possible aerobrake surface
 Cd_available = 1:length(csett.delta_S_available);
@@ -81,21 +79,20 @@ pid = U;
 U_linear = 0.5*ro*csett.S0*Cd_available(index_minimum)*Vz*V_mod;
 Cd = Cd_available(index_minimum);
 
-
-
-%%%%%%%%%%%%%%%%%%%% TRANSFORMATION FROM delta_S to SERVOMOTOR ANGLE DEGREES %%%%%%%%%%%%%%%%%%%%
+%% TRANSFORMATION FROM delta_S to SERVOMOTOR ANGLE DEGREES 
 
 alpha_rad      = (-csett.b + sqrt(csett.b^2 + 4*csett.a*delta_S)) / (2*csett.a);
 
-% Alpha saturation ( possibili problemi per azione integrale ? )
+% Alpha saturation 
 [alpha_rad, ~] = Saturation(alpha_rad, 0, 0.89);
 
 alpha_degree   = (alpha_rad*180)/pi;
 
-%%%%%%%%%%%%%%%%%%%% LIMIT THE RATE OF THE CONTROL VARIABLE %%%%%%%%%%%%%%%%%%%%
+%% LIMIT THE RATE OF THE CONTROL VARIABLE 
 
 alpha_degree = rate_Limiter(alpha_degree, csett.alpha_degree_prec, csett.rate_limiter, csett.sample_time);
 
 alpha_degree = smooth_Control(alpha_degree, csett.alpha_degree_prec, csett.filter_coeff);
 csett.alpha_degree_prec = alpha_degree;
+
 end

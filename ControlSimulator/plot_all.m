@@ -1,9 +1,11 @@
-function plot_all(c)
+function plot_all(c, csett)
 
 if c.plot_control
-%% PLOT THE RESULTS
+%% PLOT THE RESULTS  
 c.ctr_end = 0.1*(length(c.alpha_degree_tot) - 1) + c.ctr_start;
 time = c.ctr_start:0.1:c.ctr_end;
+time_setpoint = 0:0.05:0.05*(length(csett.data_trajectories(csett.chosen_trajectory).V_ref(csett.starting_index:end))-1); % 0.05 discretization step fro trajectory generation
+
 %% Control variable: servo angle
 figure('Name','Servo angle after burning phase');
 plot(time, c.alpha_degree_tot);grid on;xlabel('time [s]');ylabel('|alfa| [°]');
@@ -35,15 +37,17 @@ figure('Name','Altitude real vs setpoint after burning phase');
 plot(time, c.z_tot,'DisplayName','real','LineWidth',0.8), grid on;
 hold on
 plot(time, c.z_setpoint_tot,'DisplayName','setpoint','LineWidth',0.8), grid on;
+plot(time_setpoint, csett.data_trajectories(csett.chosen_trajectory).Z_ref(csett.starting_index:end),'DisplayName','setpoint choosen trajectory','LineWidth',0.8), grid on;
 xlabel('time [s]'), ylabel('z [m]');
 hold off
 legend('Location','southeast')
-
+    
 % Vertical velocity real vs setpoint
 figure('Name','Vertical velocity real vs setpoint after burning phase');
 plot(time, c.vz_tot,'DisplayName','real','LineWidth',0.8), grid on;
 hold on
 plot(time, c.vz_setpoint_tot, 'DisplayName','setpoint', 'LineWidth',0.8), grid on;xlabel('time [s]'), ylabel('Vz [m/s]');
+plot(time_setpoint, csett.data_trajectories(csett.chosen_trajectory).V_ref(csett.starting_index:end),'DisplayName','setpoint choosen trajectory','LineWidth',0.8), grid on;
 hold off
 legend
 
