@@ -106,7 +106,7 @@ iTimes = 0;
 %%%%%%%%%%%%%%%%%%%%% VARIABLES NEEDED FOR CONTROL %%%%%%%%%%%%%%%%%%%%%%%%
 
 % Define global variables
-global data_trajectories coeff_Cd 
+global data_trajectories coeff_Cd starting_index
 
 % Load coefficients for Cd
 data = load('coeffs.mat');
@@ -218,7 +218,7 @@ while flagStopIntegration || n_old < nmax
          plot_y_real(index_plot) = yyy;
          plot_normV(index_plot) = normV;
          plot_z_setpoint(index_plot) = z_setpoint;
-         plot_Vz_setpoint(index_plot) = Vz_setpoint;
+         plot_Vz_setpoint(index_plot) = Vz_setpoint; 
          plot_Vx_setpoint(index_plot) = Vx_setpoint;
          plot_Vy_setpoint(index_plot) = Vy_setpoint;
          plot_control_variable(index_plot) = alpha_degree;
@@ -328,11 +328,16 @@ xlabel('time [s]'), ylabel('Angle [deg]');
 % plot(time, plot_Cd), grid on;
 % xlabel('time [s]'), ylabel('Cd []');
 
+plot_z_setpoint_choosen_trajectory = data_trajectories(chosen_trajectory).Z_ref(starting_index:end);
+plot_Vz_setpoint_choosen_trajectory = data_trajectories(chosen_trajectory).VZ_ref(starting_index:end);
+plot_time_setpoint_choosen_trajectory = 0:0.05:0.05*(length(plot_z_setpoint_choosen_trajectory)-1);
+
 % Altitude real vs setpoint
 figure('Name','Altitude real vs setpoint after burning phase','NumberTitle','off');
 plot(time, plot_z_real,'DisplayName','real','LineWidth',0.8), grid on;
 hold on
 plot(time, plot_z_setpoint,'DisplayName','setpoint','LineWidth',0.8), grid on;
+plot(plot_time_setpoint_choosen_trajectory, plot_z_setpoint_choosen_trajectory,'DisplayName','setpoint choosen trajectory','LineWidth',0.8), grid on;
 axis([0,20, 0, 3100])
 xlabel('time [s]'), ylabel('z [m]');
 hold off
@@ -343,6 +348,7 @@ figure('Name','Vertical velocity real vs setpoint after burning phase','NumberTi
 plot(time, plot_Vz_real,'DisplayName','real','LineWidth',0.8), grid on;
 hold on
 plot(time, plot_Vz_setpoint, 'DisplayName','setpoint', 'LineWidth',0.8), grid on;
+plot(plot_time_setpoint_choosen_trajectory, plot_Vz_setpoint_choosen_trajectory,'DisplayName','setpoint choosen trajectory','LineWidth',0.8), grid on;
 axis([0,20, -50,300])
 xlabel('time [s]'), ylabel('Vz [m/s]');
 hold off

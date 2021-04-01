@@ -1,7 +1,7 @@
 function [alpha_degree, delta_S, z_setpoint, Vz_setpoint, Vy_setpoint, Vx_setpoint] = controlAlgorithm(z,Vz,Vx,Vy,V_mod,sample_time)
 
 % Define global variables
-global data_trajectories coeff_Cd 
+global data_trajectories coeff_Cd starting_index
 global delta_S_prec alpha_degree_prec index_min_value iteration_flag chosen_trajectory 
 
 %% TRAJECTORY SELECTION and REFERENCES COMPUTATION
@@ -37,6 +37,9 @@ if iteration_flag == 1 % Choose the nearest trajectory ( only at the first itera
     Vz_setpoint =  data_trajectories(chosen_trajectory).VZ_ref(index_min_value);
     Vy_setpoint =  data_trajectories(chosen_trajectory).VY_ref(index_min_value);
     Vx_setpoint =  data_trajectories(chosen_trajectory).VX_ref(index_min_value);
+    
+    % Just for plot
+    starting_index = best_index;
       
 else  % For the following iterations keep tracking the chosen trajectory
 
@@ -48,11 +51,15 @@ else  % For the following iterations keep tracking the chosen trajectory
     Vy_ref =  data_trajectories(chosen_trajectory).VY_ref;
     Vx_ref = data_trajectories(chosen_trajectory).VX_ref; 
     
-
-    % 1) Find the value of the altitude in z_reference nearer to z_misured 
-    [~, current_index_min_value] = min(abs(z_ref(index_min_value:end) - z));
-    index_min_value = index_min_value + current_index_min_value -1; % in c++ probabile diverso
+    % 1a) Find the value of the altitude in z_reference nearer to z_misured (z-axis method)
+%     [~, current_index_min_value] = min(abs(z_ref(index_min_value:end) - z));
+%     index_min_value = index_min_value + current_index_min_value -1; 
     
+    % 1b) Find the value of the altitude in z_reference nearer to z_misured (Euclidean method)
+    distances_from_current_state = (z_ref(index_min_value:end)-z).^2 + (Vz_ref(index_min_value:end)-Vz).^2; 
+    [~, current_index_min_value] = min( distances_from_current_state ); 
+    index_min_value = index_min_value + current_index_min_value -1; 
+
     % 2) Select the setpoint
     z_setpoint  = z_ref(index_min_value);
     Vz_setpoint = Vz_ref(index_min_value);
@@ -78,13 +85,13 @@ Cd       = (S0*Cd_fake)/S;
 
 % States: z,Vz,Vx, integrator
 
-Q = [1,    0,        0,  0,     0;
-     0,    2,        0,  0,     0;
-     0,    0,    0.001,  0,     0;
-     0,    0,        0,  0.001, 0;
-     0,    0,        0,  0,     7];
+Q = [0.2,      0,         0,       0,     0;
+       0,    0.3,         0,       0,     0;
+       0,      0,    0.0001,       0,     0;
+       0,      0,         0,  0.0001,     0;
+       0,      0,         0,       0,     7];
    
-R = 55000; 
+R = 30000; 
 % S_max_squared = 0.01^2;
 % R = 0.05/S_max_squared;
 
@@ -102,9 +109,9 @@ R = 55000;
       -(Cd*T*Vx*rho*(Vx^2 + Vy^2 + Vz^2)^(1/2))/(2*m);
                                                     0];
                                              
-x_measured  = [z, Vz, Vy, Vx]';
+x_measured  = [z, Vz, Vy, Vx]'; % 4x1
 x_reference = [z_setpoint, Vz_setpoint, Vy_setpoint, Vx_setpoint]';
-x_error     =  x_measured - x_reference
+x_error     =  x_measured - x_reference;
 
 % Solve Riccati equation
 P       = Q;   % Initial guess for P    
@@ -113,23 +120,24 @@ eps     = 0.01;
 
 for i=1:maxiter
     Pn = A' * P * A - A' * P * B * inv(R + B' * P * B) * B' * P * A + Q;
-    if (max(max((abs(Pn - P))))) < eps % Continue to compute P until the actual and previous solution are almost equal
-        break
-    end
+%     if (max(max((abs(Pn - P))))) < eps % Continue to compute P until the actual and previous solution are almost equal
+%         break
+%     end
     P = Pn;
 end
 
-K = inv(B' * P * B + R) * B' * P * A;
-U = -K(1:4)*x_error % U negativa: dire che se indice(i) < indice(i-1) --> indice(i)=indice(i-1) 
+K = inv(B' * P * B + R) * B' * P * A; %5x1
+U = -K(1:4)*x_error; % U negativa: dire che se indice(i) < indice(i-1) --> indice(i)=indice(i-1) 
 
-% Debug
-J_z  = Q(1,1)*x_error(1)^2
-J_Vz = Q(2,2)*x_error(2)^2
-J_Vy = Q(3,3)*x_error(3)^2
-J_Vx = Q(4,4)*x_error(4)^2
-
-J_Q = J_z + J_Vz + J_Vy + J_Vx
-J_R = U'*R*U
+%%%%%% Debug %%%%%%
+% J_z  = Q(1,1)*x_error(1)^2
+% J_Vz = Q(2,2)*x_error(2)^2
+% J_Vy = Q(3,3)*x_error(3)^2
+% J_Vx = Q(4,4)*x_error(4)^2
+% 
+% J_Q = J_z + J_Vz + J_Vy + J_Vx
+% J_R = U'*R*U
+%%%%%%%%%%%%%%%%%%%
 
 % Control variable limits
 Umin = 0;     
@@ -141,8 +149,7 @@ elseif ( U > Umax)
     U = Umax; % fully open                       
 end
 
-filter_coeff = 0.9;
-delta_S = filter_coeff*U + (1-filter_coeff)*delta_S_prec;
+delta_S = U;
 
 %% TRANSFORMATION FROM delta_S to SERVOMOTOR ANGLE DEGREES
 
@@ -173,29 +180,3 @@ alpha_rad    = (alpha_degree*pi)/180;
 delta_S_prec = a * alpha_rad^2 + b * alpha_rad;
 
 end
-
-
-
-
-
-%%%%%%%%%%%%%%%%%%%%%% Matrici con stati: z, Vz, Vx, integ
-
-% % Q = [1,    0,        0,       0;
-% %      0,    2,        0,      0;
-% %      0,    0,    0.001,       0;
-% % 
-% %      0,    0,        0,      10];
-% %    
-% % R = 69000; 
-
-% % A = [1,                                                                                        T,                                                                                        0, 0;
-% %      0, 1 - T*((Cd*S*rho*(Vx^2 + Vz^2)^(1/2))/(2*m) + (Cd*S*Vz^2*rho)/(2*m*(Vx^2 + Vz^2)^(1/2))),                                            -(Cd*S*T*Vx*Vz*rho)/(2*m*(Vx^2 + Vz^2)^(1/2)), 0;
-% %      0,                                            -(Cd*S*T*Vx*Vz*rho)/(2*m*(Vx^2 + Vz^2)^(1/2)), 1 - T*((Cd*S*rho*(Vx^2 + Vz^2)^(1/2))/(2*m) + (Cd*S*Vx^2*rho)/(2*m*(Vx^2 + Vz^2)^(1/2))), 0;
-% %     -T,                                                                                        0,                                                                                        0, 1];
-% %  
-% %  
-% % B = [                                       0;
-% %      -(Cd*T*Vz*rho*(Vx^2 + Vz^2)^(1/2))/(2*m);
-% %      -(Cd*T*Vx*rho*(Vx^2 + Vz^2)^(1/2))/(2*m);
-% %                                             0];   
-%%%%%%%%%%%%%%%%%%%%%%
