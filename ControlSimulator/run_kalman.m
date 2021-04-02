@@ -1,6 +1,7 @@
 function [x_c,P_c]=run_kalman(x_prev,P_prev,t_v,a_v,w_v,t_baro,baro,sigma_baro,...
                               t_mag,mag,sigma_mag,mag_NED,...
-                              t_GPS,GPS,vGPS,sigma_GPS,n_sats,fix,QLinear,Qq)
+                              t_GPS,GPS,vGPS,sigma_GPS,n_sats,fix,vert_vel,...
+                              sigma_vv,QLinear,Qq)
 
 % Author: Alejandro Montero
 % Co-Author: Alessandro Del Duca
@@ -116,6 +117,7 @@ for i=2:length(t_v)
     
     if t_v(i)>=t_baro(index_bar) %Comparison to see the there's a new measurement
        [x_lin(i,:),P_lin(:,:,i),~]     = correctionBarometer(x_lin(i,:),P_lin(:,:,i),baro(index_bar),sigma_baro);
+       [x_lin(i,:),P_lin(:,:,i),~]     = correctionVirtualVel(x_lin(i,:),P_lin(:,:,i),vert_vel(index_bar),sigma_vv);
         index_bar   =  index_bar + 1;     
    end
      

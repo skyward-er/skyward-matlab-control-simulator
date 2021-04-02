@@ -219,22 +219,36 @@ while flagStopIntegration || n_old < nmax
  
     if settings.dataNoise
         
-    pn      = zeros(1,length(sensorData.barometer.time));
-    h_baro  = zeros(1,length(sensorData.barometer.time));
-    accel   = zeros(length(sensorData.accelerometer.time),3);
-    gyro    = zeros(length(sensorData.gyro.time),3);
-    mag     = zeros(length(sensorData.magnetometer.time),3);
-    gps     = zeros(length(sensorData.gps.time),3);
-    gpsv    = zeros(length(sensorData.gps.time),3);
+    pn       = zeros(1,length(sensorData.barometer.time));
+    h_baro   = zeros(1,length(sensorData.barometer.time));
+    vert_vel = zeros(1,length(sensorData.barometer.time));
+    accel    = zeros(length(sensorData.accelerometer.time),3);
+    gyro     = zeros(length(sensorData.gyro.time),3);
+    mag      = zeros(length(sensorData.magnetometer.time),3);
+    gps      = zeros(length(sensorData.gps.time),3);
+    gpsv     = zeros(length(sensorData.gps.time),3);
         
         % Baro Acquisition loop
         for ii=1:length(sensorData.barometer.time)
                 pn(ii)        = MS580301BA01.sens(sensorData.barometer.measures(ii)/100,...
                                                   sensorData.barometer.temperature(ii) - 273.15);  
                 h_baro(ii)    = -atmospalt(pn(ii)*100,'None');
-        end 
+             %Virtual velocity computation
+             if ii==1 
+                 if iTimes==1 
+                    vert_vel(ii)=0;
+                 else
+                     vert_vel(ii)=(h_baro(ii)-h_prev)/dt;
+                 end
+             else
+                 vert_vel(ii)=(h_baro(ii)-h_baro(ii-1))/dt;
+             end
+        end
+        h_prev=h_baro(end);
+        tbaro_tot(np_old:np_old + size(pn,2) -1,1)=sensorData.barometer.time;
         pn_tot(np_old:np_old + size(pn,2) - 1,1) = pn(1:end);
         hb_tot(np_old:np_old + size(pn,2) - 1,1) = h_baro(1:end);
+        vert_vel_tot(np_old:np_old + size(pn,2) - 1,1)=vert_vel(1:end);
         np_old = np_old + size(pn,2);
         
         % IMU Acquisition loop
@@ -285,7 +299,8 @@ while flagStopIntegration || n_old < nmax
     end
   
     if iTimes==1
-        x_prev    =  [X0+[100;100;100]; V0+[10;10;10]; Q0(2:4); Q0(1);0;0;0];
+%         x_prev    =  [X0+[100;100;100]; V0+[10;10;10]; Q0(2:4); Q0(1);0;0;0];
+        x_prev    =  [X0; V0; Q0(2:4); Q0(1);0;0;0];
         P_prev    =   0.01*eye(12);
         ada_prev  =   settings.x_ada0;
         Pada_prev =   settings.P_ada0;
@@ -307,8 +322,8 @@ while flagStopIntegration || n_old < nmax
     
     %%%%%%% kalmann filter %%%%%%%%
     n_satellite = 4;
-%     flagGPS_fix = GPSfix(accel(ii,:));
-    flagGPS_fix=1;
+    flagGPS_fix = GPSfix(accel(ii,:));
+%     flagGPS_fix=1;
     %Write a function to simulate fix loss during acceleration phase with %
     [x_c,P_c]   =  run_kalman(x_prev,P_prev,...
                               sensorData.accelerometer.time, accel,...
@@ -316,7 +331,7 @@ while flagStopIntegration || n_old < nmax
                               sensorData.barometer.time, h_baro, settings.sigma_baro,...
                               sensorData.magnetometer.time, mag,settings.sigma_mag, XYZ0*0.01,...
                               sensorData.gps.time, gps,gpsv, settings.sigma_GPS,...
-                              n_satellite,flagGPS_fix,settings.QLinear,settings.Qq);
+                              n_satellite,flagGPS_fix,vert_vel,settings.sigmavv,settings.QLinear,settings.Qq);
      x_est_tot(n_est_old:n_est_old + size(x_c(:,1),1)-1,:)  = x_c(1:end,:);
      t_est_tot(n_est_old:n_est_old + size(x_c(:,1),1)-1) = sensorData.accelerometer.time;              
      n_est_old = n_est_old + size(x_c(1,:)); 
@@ -372,7 +387,6 @@ while flagStopIntegration || n_old < nmax
     C(n_old:n_old+n-1) = x;
     
     v_NED_tot(n_old:n_old+n-1,:) = v_NED;
-    
     n_old = n_old + n -1;
    
     cpuTimes(iTimes) = toc;
@@ -500,8 +514,8 @@ legend('Estimated q3','Ground-truth','location','northeast');
 title('Estimated q3 vs ground-truth');
 %% FIGURE: Vertical velocity only
 figure
-plot(t_est_tot(1:i_apo_est+3),-x_est_tot(1:i_apo_est+3,6),Tf(1:i_apo+40),-v_NED_tot(1:i_apo+40,3));grid on;xlabel('time [s]');ylabel('|Vu| [m/s]');
-legend('Upward','Ground-truth','location','best');
+plot(t_est_tot(1:i_apo_est+50),-x_est_tot(1:i_apo_est+50,6),Tf(1:i_apo+50),-v_NED_tot(1:i_apo+50,3),tbaro_tot,vert_vel_tot);grid on;xlabel('time [s]');ylabel('|Vu| [m/s]');
+legend('Upward','Ground-truth','BDF','location','best');
 title('Estimated Upward velocity vs ground-truth');
 
 end

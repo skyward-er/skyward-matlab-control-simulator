@@ -124,19 +124,20 @@ settings.frequencies.gpsFrequency = 10;                                     % [h
 settings.frequencies.barometerFrequency = 20;                               % [hz] control action frequency 
 
 %% KALMAN TUNING PARAMETERS
-settings.sigma_baro =   4;                                                  % [mbar^2]   estimated barometer variance    
-settings.sigma_mag  =   0.5;                                                % [mgauss^2] estimated magnetometer variance    
+settings.sigma_baro =   5*4;                                                  % [mbar^2]   estimated barometer variance    
+settings.sigma_mag  =   4*0.5;                                                % [mgauss^2] estimated magnetometer variance    
 settings.sigma_GPS  =   2;                                                  % [mg^2]     estimated GPS variance
+settings.sigmavv     =   4;
 settings.QLinear    =        0.1*...
                                  [1     0     0      0      0      0;       % Noise covariance matrix
                                   0     1     0      0      0      0;       % for the linear dynamics
-                                  0     0     1      0      0      0;
-                                  0     0     0      0.1    0      0;
-                                  0     0     0      0      0.1    0;
-                                  0     0     0      0      0      0.1];
+                                  0     0     1      0      0      0.01;
+                                  0     0     0      0.05    0      0;
+                                  0     0     0      0      0.05    0;
+                                  0     0     0.01      0      0      0.05];
 settings.dt_k       =   0.01;                                               % [s]       kalman time step
-settings.sigma_w    =   100*(1000*pi/180)^2;                                % [mdps^2]  estimated gyroscope variance;
-settings.sigma_beta =   1e-2;                                               % [mdps^2]  estimated gyroscope bias variance;
+settings.sigma_w    =   3*100*(1000*pi/180)^2;                                % [mdps^2]  estimated gyroscope variance;
+settings.sigma_beta =   3*1e-2;                                               % [mdps^2]  estimated gyroscope bias variance;
 settings.Qq         =  [(settings.sigma_w^2*settings.dt_k+(1/3)*settings.sigma_beta^2*settings.dt_k^3)*eye(3)     0.5*settings.sigma_beta^2*settings.dt_k^2*eye(3);
                                 0.5*settings.sigma_beta^2*settings.dt_k^2*eye(3)                settings.sigma_beta^2*settings.dt_k*eye(3)];
 %% ADA TUNING PARAMETER
