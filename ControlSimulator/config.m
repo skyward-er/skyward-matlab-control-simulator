@@ -121,7 +121,7 @@ settings.frequencies.accelerometerFrequency = 100;                          % [h
 settings.frequencies.gyroFrequency = 100;                                   % [hz] control action frequency 
 settings.frequencies.magnetometerFrequency = 100;                           % [hz] control action frequency 
 settings.frequencies.gpsFrequency = 10;                                     % [hz] control action frequency 
-settings.frequencies.barometerFrequency = 20;                               % [hz] control action frequency 
+settings.frequencies.barometerFrequency = 50;                               % [hz] control action frequency 
 
 %% KALMAN TUNING PARAMETERS
 settings.sigma_baro =   5*4;                                                  % [mbar^2]   estimated barometer variance    

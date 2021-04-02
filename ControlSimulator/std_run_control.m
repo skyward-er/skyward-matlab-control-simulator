@@ -125,6 +125,7 @@ P_ada       =   settings.P_ada0;
 flag_ADA    =   false;
 count_ADA   =   0;
 t_ada       =   0;
+fbaro = settings.frequencies.barometerFrequency;
 while flagStopIntegration || n_old < nmax
     tic 
     iTimes = iTimes + 1;
@@ -230,6 +231,7 @@ while flagStopIntegration || n_old < nmax
         
         % Baro Acquisition loop
         for ii=1:length(sensorData.barometer.time)
+%             sensorData.barometer.time(ii)
                 pn(ii)        = MS580301BA01.sens(sensorData.barometer.measures(ii)/100,...
                                                   sensorData.barometer.temperature(ii) - 273.15);  
                 h_baro(ii)    = -atmospalt(pn(ii)*100,'None');
@@ -238,13 +240,15 @@ while flagStopIntegration || n_old < nmax
                  if iTimes==1 
                     vert_vel(ii)=0;
                  else
-                     vert_vel(ii)=(h_baro(ii)-h_prev)/dt;
+                     vert_vel(ii)=vel_prev;
                  end
              else
-                 vert_vel(ii)=(h_baro(ii)-h_baro(ii-1))/dt;
+                 vert_vel(ii)=(h_baro(ii)-h_baro(ii-1))*fbaro;
              end
         end
         h_prev=h_baro(end);
+        tbaro_prev=sensorData.barometer.time(end);
+        vel_prev=vert_vel(end);
         tbaro_tot(np_old:np_old + size(pn,2) -1,1)=sensorData.barometer.time;
         pn_tot(np_old:np_old + size(pn,2) - 1,1) = pn(1:end);
         hb_tot(np_old:np_old + size(pn,2) - 1,1) = h_baro(1:end);
@@ -253,6 +257,7 @@ while flagStopIntegration || n_old < nmax
         
         % IMU Acquisition loop
         for ii=1:length(sensorData.accelerometer.time)
+%             sensorData.accelerometer.time(ii)
                 [accel(ii,1),accel(ii,2),accel(ii,3)] = ACCEL_LSM9DS1.sens(...
                                                  sensorData.accelerometer.measures(ii,1)*1000/g,...
                                                  sensorData.accelerometer.measures(ii,2)*1000/g,...
@@ -514,7 +519,7 @@ legend('Estimated q3','Ground-truth','location','northeast');
 title('Estimated q3 vs ground-truth');
 %% FIGURE: Vertical velocity only
 figure
-plot(t_est_tot(1:i_apo_est+50),-x_est_tot(1:i_apo_est+50,6),Tf(1:i_apo+50),-v_NED_tot(1:i_apo+50,3),tbaro_tot,vert_vel_tot);grid on;xlabel('time [s]');ylabel('|Vu| [m/s]');
+plot(t_est_tot(1:i_apo_est+50),-x_est_tot(1:i_apo_est+50,6),Tf(1:i_apo+50),-v_NED_tot(1:i_apo+50,3),tbaro_tot,-vert_vel_tot);grid on;xlabel('time [s]');ylabel('|Vu| [m/s]');
 legend('Upward','Ground-truth','BDF','location','best');
 title('Estimated Upward velocity vs ground-truth');
 

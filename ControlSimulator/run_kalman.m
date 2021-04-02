@@ -117,7 +117,7 @@ for i=2:length(t_v)
     
     if t_v(i)>=t_baro(index_bar) %Comparison to see the there's a new measurement
        [x_lin(i,:),P_lin(:,:,i),~]     = correctionBarometer(x_lin(i,:),P_lin(:,:,i),baro(index_bar),sigma_baro);
-       [x_lin(i,:),P_lin(:,:,i),~]     = correctionVirtualVel(x_lin(i,:),P_lin(:,:,i),vert_vel(index_bar),sigma_vv);
+%        [x_lin(i,:),P_lin(:,:,i),~]     = correctionVirtualVel(x_lin(i,:),P_lin(:,:,i),vert_vel(index_bar),sigma_vv);
         index_bar   =  index_bar + 1;     
    end
      
