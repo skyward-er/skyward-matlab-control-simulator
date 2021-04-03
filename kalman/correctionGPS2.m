@@ -40,7 +40,7 @@ function [x,P,y_res] = correctionGPS2(x_pred,P_pred,pGPS,vGPS,sigma_GPS,sats,fix
 %                       OF THE OUTPUT AND THE MEASSURE; ONLY FOR CHECKING
 %                       --> 1x3
 %---------------------------------------------------------------------------
-threshold      =   10e-3;
+threshold      =   10e-11;
 H              =   [ 1 0 0 0 0 0;                                          %Pre-allocation of gradient 
                      0 1 0 0 0 0;
                      0 0 0 1 0 0;

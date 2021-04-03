@@ -39,7 +39,7 @@ function [x,P,y_res] = correctionGPS(x_pred,P_pred,x_sam,y_sam,z_sam,sigma_GPS,s
 %                       OF THE OUTPUT AND THE MEASSURE; ONLY FOR CHECKING
 %                       --> 1x3
 %---------------------------------------------------------------------------
-threshold      =   10e-3;
+threshold      =   10e-11;
 H              =   sparse(3,6);                 %Pre-allocation of gradient 
                                                  %of the output function 
 H(1,1)         =   1;
