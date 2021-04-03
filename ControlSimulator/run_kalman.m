@@ -101,6 +101,10 @@ P_c(:,:,1)  = P_prev;
 index_GPS=1;
 index_bar=1;
 index_mag=1;
+% Time vectors agumentation
+t_gpstemp  = [t_GPS   t_v(end) + dt_k];
+t_barotemp = [t_baro  t_v(end) + dt_k];
+t_magtemp  = [t_mag   t_v(end) + dt_k];
 for i=2:length(t_v)
     %Prediction part
     [x_lin(i,:),P_lin(:,:,i)] = predictorLinear(x_lin(i-1,:),dt_k,...
@@ -109,19 +113,19 @@ for i=2:length(t_v)
     [xq(i,:),P_q(:,:,i)]       = predictorQuat(xq(i-1,:),P_q(:,:,i-1),...
                                 [w_v(i-1,1),w_v(i-1,2),w_v(i-1,3)],dt_k,Qq);                   
     %Corrections
-     if t_v(i)>=t_GPS(index_GPS)  %Comparison to see the there's a new measurement
+     if t_v(i)>=t_gpstemp(index_GPS)  %Comparison to see the there's a new measurement
        [x_lin(i,:),P_lin(:,:,i),~]     = correctionGPS2_no_vert(x_lin(i,:),P_lin(:,:,i),GPS(index_GPS,1),...
                             GPS(index_GPS,2),GPS(index_GPS,3),vGPS(index_GPS,:),sigma_GPS,n_sats,fix);
         index_GPS   =  index_GPS + 1;
      end
     
-    if t_v(i)>=t_baro(index_bar) %Comparison to see the there's a new measurement
+    if t_v(i)>=t_barotemp(index_bar) %Comparison to see the there's a new measurement
        [x_lin(i,:),P_lin(:,:,i),~]     = correctionBarometer(x_lin(i,:),P_lin(:,:,i),baro(index_bar),sigma_baro);
 %        [x_lin(i,:),P_lin(:,:,i),~]     = correctionVirtualVel(x_lin(i,:),P_lin(:,:,i),vert_vel(index_bar),sigma_vv);
         index_bar   =  index_bar + 1;     
    end
      
-    if t_v(i)>=t_mag(index_mag) %Comparison to see the there's a new measurement
+    if t_v(i)>=t_magtemp(index_mag) %Comparison to see the there's a new measurement
        [xq(i,:),P_q(:,:,i),~,~]    = correctorQuat(xq(i,:),P_q(:,:,i),mag(index_mag,:),sigma_mag,mag_NED);
        index_mag    =  index_mag + 1;  
     end
