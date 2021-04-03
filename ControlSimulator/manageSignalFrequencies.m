@@ -100,7 +100,7 @@ if freq.magnetometerFrequency > freq.controlFrequency
     if N ~= round(N)
         error('the sensor frequency must be a multiple of the control frequency');
     end
-    sensorData.magnetometer.time = linspace(T(1), T(end), N);
+    sensorData.magnetometer.time = linspace(T(1), T(end) - 1/freq.magnetometerFrequency, N);
     Q = zeros(N, 4);
     z = zeros(1, N);
     if settings.ballisticFligth || (not(settings.ballisticFligth) && flagAscent)
@@ -144,7 +144,7 @@ if freq.gpsFrequency > freq.controlFrequency
     if N ~= round(N)
         error('the sensor frequency must be a multiple of the control frequency');
     end
-    sensorData.gps.time = linspace(T(1), T(end), N);
+    sensorData.gps.time = linspace(T(1), T(end) - freq.gpsFrequency, N);
     if settings.ballisticFligth || (not(settings.ballisticFligth) && flagAscent)
         for i = 1:N
             iTimegps = sensorData.gps.time(i);
@@ -220,7 +220,7 @@ if freq.barometerFrequency > freq.controlFrequency
     if N ~= round(N)
         error('the sensor frequency must be a multiple of the control frequency');
     end
-    sensorData.barometer.time = linspace(T(1), T(end), N);
+    sensorData.barometer.time = linspace(T(1), T(end) - 1/freq.barometerFrequency, N);
     for i = 1:N
         iTimeBarometer = sensorData.barometer.time(i);
         if all(iTimeBarometer ~= T)
