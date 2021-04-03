@@ -51,7 +51,7 @@ name = 'M2020';
 
 n_name = [Motors.MotorName] == name;
 settings.motor.exp_time     =    Motors(n_name).t;
-settings.motor.exp_thrust   =    0.95*Motors(n_name).T;
+settings.motor.exp_thrust   =    Motors(n_name).T;
 settings.motor.exp_m        =    Motors(n_name).m;
 settings.mp                 =    Motors(n_name).mp;                        % [kg]   Propellant Mass                                                
 settings.tb                 =    Motors(n_name).t(end) ;                   % [s]    Burning time
