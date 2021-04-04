@@ -1,7 +1,7 @@
 function [x_c,P_c]=run_kalman(x_prev,P_prev,t_v,a_v,w_v,t_baro,baro,sigma_baro,...
                               t_mag,mag,sigma_mag,mag_NED,...
                               t_GPS,GPS,vGPS,sigma_GPS,n_sats,fix,vert_vel,...
-                              sigma_vv,QLinear,Qq)
+                              t_vert_vel,sigma_vv,QLinear,Qq)
 
 % Author: Alejandro Montero
 % Co-Author: Alessandro Del Duca
@@ -100,11 +100,13 @@ P_q(:,:,1)  = P_prev(7:12,7:12);
 P_c(:,:,1)  = P_prev;
 index_GPS=1;
 index_bar=1;
+index_bar2=1;
 index_mag=1;
 % Time vectors agumentation
 t_gpstemp  = [t_GPS   t_v(end) + dt_k];
 t_barotemp = [t_baro  t_v(end) + dt_k];
 t_magtemp  = [t_mag   t_v(end) + dt_k];
+t_barotemp2 = [t_vert_vel  t_v(end) + dt_k];
 for i=2:length(t_v)
     %Prediction part
     [x_lin(i,:),P_lin(:,:,i)] = predictorLinear(x_lin(i-1,:),dt_k,...
@@ -121,10 +123,17 @@ for i=2:length(t_v)
     
     if t_v(i)>=t_barotemp(index_bar) %Comparison to see the there's a new measurement
        [x_lin(i,:),P_lin(:,:,i),~]     = correctionBarometer(x_lin(i,:),P_lin(:,:,i),baro(index_bar),sigma_baro);
-%        [x_lin(i,:),P_lin(:,:,i),~]     = correctionVirtualVel(x_lin(i,:),P_lin(:,:,i),vert_vel(index_bar),sigma_vv);
+
         index_bar   =  index_bar + 1;     
-   end
+    end
+    
+    if t_v(i)>=t_barotemp2(index_bar2) %Comparison to see the there's a new measurement
+        [x_lin(i,:),P_lin(:,:,i),~]     = correctionVirtualVel(x_lin(i,:),P_lin(:,:,i),vert_vel(index_bar2),sigma_vv);
+
+        index_bar2   =  index_bar2 + 1;     
+    end
      
+             
     if t_v(i)>=t_magtemp(index_mag) %Comparison to see the there's a new measurement
        [xq(i,:),P_q(:,:,i),~,~]    = correctorQuat(xq(i,:),P_q(:,:,i),mag(index_mag,:),sigma_mag,mag_NED);
        index_mag    =  index_mag + 1;  

@@ -127,7 +127,7 @@ settings.frequencies.barometerFrequency = 50;                               % [h
 settings.sigma_baro =   5*4;                                                  % [mbar^2]   estimated barometer variance    
 settings.sigma_mag  =   4*0.5;                                                % [mgauss^2] estimated magnetometer variance    
 settings.sigma_GPS  =   2;                                                  % [mg^2]     estimated GPS variance
-settings.sigmavv     =   4;
+settings.sigmavv     =  4;
 settings.QLinear    =        0.1*...
                                  [1     0     0      0      0      0;       % Noise covariance matrix
                                   0     1     0      0      0      0;       % for the linear dynamics

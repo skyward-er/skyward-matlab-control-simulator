@@ -20,7 +20,8 @@ MS580301BA01=Sensor(); % presure in mbar, temp should be in C°
 MS580301BA01.maxMeasurementRange=1100; % 1100, 1300 in mbar
 MS580301BA01.minMeasurementRange=300; % 300, 10 in mbar
 MS580301BA01.resolution=0.065; % 0.012, 0.018, 0.027, 0.042, 0.065 in mbar
-MS580301BA01.noiseVariance= 10; % guess in mbar
+% MS580301BA01.noiseVariance= 10; % guess in mbar
+MS580301BA01.noiseVariance= 0; % guess in mbar
 MS580301BA01.error2dOffset=ep_data; % [p in mbar, T in celsius, ep in mbar]
 
 % initial accelerometer sensor from LSM9DS1

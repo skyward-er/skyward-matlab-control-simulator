@@ -125,7 +125,9 @@ P_ada       =   settings.P_ada0;
 flag_ADA    =   false;
 count_ADA   =   0;
 t_ada       =   0;
-fbaro = settings.frequencies.barometerFrequency;
+tbaro_tot(1)=   0;
+vert_vel_tot(1)=0;
+kk=1;
 while flagStopIntegration || n_old < nmax
     tic 
     iTimes = iTimes + 1;
@@ -236,23 +238,26 @@ while flagStopIntegration || n_old < nmax
                                                   sensorData.barometer.temperature(ii) - 273.15);  
                 h_baro(ii)    = -atmospalt(pn(ii)*100,'None');
              %Virtual velocity computation
-             if ii==1 
-                 if iTimes==1 
-                    vert_vel(ii)=0;
-                 else
-                     vert_vel(ii)=vel_prev;
-                 end
-             else
-                 vert_vel(ii)=(h_baro(ii)-h_baro(ii-1))*fbaro;
-             end
+%              if ii==1 
+%                  if iTimes==1 
+%                     vert_vel(ii)=0;
+%                  else
+%                      vert_vel(ii)=(h_baro(ii)-h_prev)/(sensorData.barometer.time(ii)-tbaro_prev);
+%                  end
+%              else
+%                  vert_vel(ii)=(h_baro(ii)-h_baro(ii-1))/(sensorData.barometer.time(ii)-sensorData.barometer.time(ii-1));
+%              end
         end
-        h_prev=h_baro(end);
-        tbaro_prev=sensorData.barometer.time(end);
-        vel_prev=vert_vel(end);
-        tbaro_tot(np_old:np_old + size(pn,2) -1,1)=sensorData.barometer.time;
+%         h_prev=h_baro(end);
+%         tbaro_prev=sensorData.barometer.time(end);
+
+        kk=kk+1;
+        vert_vel_tot(kk,1)=(h_baro(end)-h_baro(1))/(sensorData.barometer.time(end)-sensorData.barometer.time(1));
+        tbaro_tot(kk,1)=(sensorData.barometer.time(end)+sensorData.barometer.time(1))/2;
+        
         pn_tot(np_old:np_old + size(pn,2) - 1,1) = pn(1:end);
         hb_tot(np_old:np_old + size(pn,2) - 1,1) = h_baro(1:end);
-        vert_vel_tot(np_old:np_old + size(pn,2) - 1,1)=vert_vel(1:end);
+%         vert_vel_tot(np_old:np_old + size(pn,2) - 1,1)=vert_vel(1:end);
         np_old = np_old + size(pn,2);
         
         % IMU Acquisition loop
@@ -336,7 +341,7 @@ while flagStopIntegration || n_old < nmax
                               sensorData.barometer.time, h_baro, settings.sigma_baro,...
                               sensorData.magnetometer.time, mag,settings.sigma_mag, XYZ0*0.01,...
                               sensorData.gps.time, gps,gpsv, settings.sigma_GPS,...
-                              n_satellite,flagGPS_fix,vert_vel,settings.sigmavv,settings.QLinear,settings.Qq);
+                              n_satellite,flagGPS_fix,vert_vel_tot(kk),tbaro_tot(kk),settings.sigmavv,settings.QLinear,settings.Qq);
      x_est_tot(n_est_old:n_est_old + size(x_c(:,1),1)-1,:)  = x_c(1:end,:);
      t_est_tot(n_est_old:n_est_old + size(x_c(:,1),1)-1) = sensorData.accelerometer.time;              
      n_est_old = n_est_old + size(x_c(1,:)); 
@@ -519,7 +524,8 @@ legend('Estimated q3','Ground-truth','location','northeast');
 title('Estimated q3 vs ground-truth');
 %% FIGURE: Vertical velocity only
 figure
-plot(t_est_tot(1:i_apo_est+50),-x_est_tot(1:i_apo_est+50,6),Tf(1:i_apo+50),-v_NED_tot(1:i_apo+50,3),tbaro_tot,-vert_vel_tot);grid on;xlabel('time [s]');ylabel('|Vu| [m/s]');
+plot(t_est_tot(1:i_apo_est+50),-x_est_tot(1:i_apo_est+50,6),Tf(1:i_apo+50),-v_NED_tot(1:i_apo+50,3),tbaro_tot,-vert_vel_tot);
+grid on;xlabel('time [s]');ylabel('|Vu| [m/s]');
 legend('Upward','Ground-truth','BDF','location','best');
 title('Estimated Upward velocity vs ground-truth');
 
