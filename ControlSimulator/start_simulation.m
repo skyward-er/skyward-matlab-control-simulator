@@ -135,6 +135,22 @@ if settings.plots && not(settings.electronics)
     subplot(3, 1, 3)
     plot(Tf(flagMatr(:, 2)), Yf(flagMatr(:, 2), 9)*180/pi), grid on;
     xlabel('time [s]'), ylabel('p [deg/s]');
+    
+    % BODY FRAME VELOCITIES
+    
+    figure('Name', 'Body frame Velocities - ascent Phase', 'NumberTitle', 'off');
+    subplot(3, 1, 1)
+    plot(Tf(flagMatr(:, 2)), Yf(flagMatr(:, 2), 4)), grid on;
+    xlabel('time [s]'), ylabel('v [m/s]');
+    
+    subplot(3, 1, 2)
+    plot(Tf(flagMatr(:, 2)), Yf(flagMatr(:, 2), 5)), grid on;
+    xlabel('time [s]'), ylabel('v [m/s]');
+        
+    subplot(3, 1, 3)
+    plot(Tf(flagMatr(:, 2)), Yf(flagMatr(:, 2), 6)), grid on;
+    xlabel('time [s]'), ylabel('v [m/s]');
+       
        
 end
 

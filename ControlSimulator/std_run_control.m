@@ -123,7 +123,7 @@ cpuTimes    =       zeros(nmax,1);
 iTimes      =       0;
 c.ctr_start =      -1;
 i           =       1;
-
+settings.kalman.pn_prec  =       settings.ada.p_ref;
 %% Flag initializations
 flagStopIntegration     =   true;
 flagAscent              =   false;
@@ -257,7 +257,7 @@ while flagStopIntegration || n_old < nmax
 %% Navigation system
     if settings.Kalman && settings.dataNoise
 
-    [x_c,P_c,settings.kalman]   =  run_kalman(x_prev,P_prev, sp, settings.kalman, XYZ0*0.01);
+    [x_c,P_c,settings.kalman]   =  run_kalman(x_prev, P_prev, sp, xv_ada, settings.kalman, XYZ0*0.01);
     
      x_est_tot(c.n_est_old:c.n_est_old + size(x_c(:,1),1)-1,:)  = x_c(1:end,:);
      t_est_tot(c.n_est_old:c.n_est_old + size(x_c(:,1),1)-1)    = sensorData.accelerometer.time;              
@@ -302,7 +302,7 @@ while flagStopIntegration || n_old < nmax
         x = 0;
     end    
     
-    if flagAeroBrakes
+    if settings.control == true      
          % Save the values to plot them
          c.vz_tot(i)    =  vz;
          c.z_tot(i)     =  z;
@@ -428,7 +428,7 @@ end
 c.plot_ada     =  true; 
 c.plot_sensors =  false; 
 c.plot_kalman  =  true;
-c.plot_control =  true;
+c.plot_control =  false;
 
 %% RETRIVE PARAMETERS FROM THE ODE
 

@@ -12,9 +12,9 @@ Release date: 16/04/2016
 
 %% SIMULATION SETTINGS
 settings.electronics        =   false;                                     % Switch on when testing with Hardware in the loop HIL
-settings.ascentOnly         =   true;                                      % Switch on to simulate only the ascent phase untill the apogee
+settings.ascentOnly         =   false;                                      % Switch on to simulate only the ascent phase untill the apogee
 settings.ballisticFligth    =   true;                                     % Switch on to simulate the balistic fligth without any parachute
-settings.control            =   true;                                      % Switch on to simulate the control
+settings.control            =   false;                                      % Switch on to simulate the control
 settings.dataNoise          =   true;                                      % Switch on to simulate the data acquisiton from sensors
 settings.launchWindow       =   false;                                     % Switch off this to avoid pausing the launch till you press the launch button
 settings.Kalman             =   true;                                      % Switch on to run the kalman algorithm
@@ -131,9 +131,9 @@ settings.frequencies.barometerFrequency         =   20;                    % [hz
 
 %% KALMAN TUNING PARAMETERS
 settings.kalman.dt_k          =   0.01;                                    % [s]        kalman time step
-settings.kalman.sigma_baro    =   4;                                       % [mbar^2]   estimated barometer variance    
+settings.kalman.sigma_baro    =   100;                                       % [m/2]   estimated barometer variance    
 settings.kalman.sigma_mag     =   0.1;                                     % [mgauss^2] estimated magnetometer variance    
-settings.kalman.sigma_GPS     =   4;                                       % [mg^2]     estimated GPS variance
+settings.kalman.sigma_GPS     =   5;                                       % [mg^2]     estimated GPS variance
 settings.kalman.sigma_w       =   10*(1000*pi/180)^2;                      % [mdps^2]   estimated gyroscope variance;
 settings.kalman.sigma_beta    =   1e-2;                                    % [mdps^2]   estimated gyroscope bias variance;
 
@@ -159,17 +159,17 @@ settings.kalman.Qq              =   [(settings.kalman.sigma_w^2*settings.kalman.
 %% ADA TUNING PARAMETER
 
 settings.ada.Q           =   [1     0       0;                             % Process noise covariance matrix
-                              0     2       0;
-                              0     0       2;];
-settings.ada.R           =   800;                                          % Measurement noise covariance matrix
-settings.ada.P0          =   [  0.1    0      0;                            % Initial condition fo the 
-                                0      0.01   0;                            % state covariance matrix 
-                                0      0      0.01;];
+                              0     1       0;
+                              0     0       1;];
+settings.ada.R           =   0.1;                                            % Measurement noise covariance matrix
+settings.ada.P0          =   [  10    0      0;                            % Initial condition fo the 
+                                0      10     0;                            % state covariance matrix 
+                                0      0      10;];
 [settings.ada.temp_ref, ~,...
  settings.ada.p_ref, ~]  =   atmosisa(0);                                  % Reference temperature in kelvin and pressure in Pa 
 
 settings.ada.v0          =   0;                                            % Vertical velocity initial condition
-settings.ada.a0          =   -500;                                         % Acceleration velocity initial condition
+settings.ada.a0          =   -100;                                         % Acceleration velocity initial condition
 settings.ada.x0          =  [settings.ada.p_ref, settings.ada.v0, settings.ada.a0];         
                                                                            % Ada initial condition
 
@@ -253,4 +253,4 @@ settings.wind.AzMax     =  (360)*pi/180;                                   % [ra
 % 270 deg                       -> West
 
 %% PLOT DETAILS
-settings.plots   =   false;
+settings.plots   =   true;
