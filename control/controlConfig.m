@@ -27,15 +27,15 @@ contSettings.starting_index = 0;
 contSettings.sample_time         =  0.1;
 
 % PI controler tune parameter
-contSettings.Kp_1    =   10;                                               % using Fdrag nel pid --> da migliorare (magari si può ottenere variabile controllo più smooth)
-contSettings.Ki_1    =   10;                                               % using Fdrag nel pid
+contSettings.Kp_1    =   50;                                               % using Fdrag nel pid --> da migliorare (magari si può ottenere variabile controllo più smooth)
+contSettings.Ki_1    =   40;                                               % using Fdrag nel pid
 contSettings.Kp_2    =   50;                                               % using u nel pid --> da migliorare (magari si può ottenere variabile controllo più smooth)
 contSettings.Ki_2    =   40;                                               % using u nel pid
-contSettings.Kp_3    =   50;                                               % using alfa_degree nel pid --> ancora da tunare
+contSettings.Kp_3    =   20;                                               % using alfa_degree nel pid --> ancora da tunare
 contSettings.Ki_3    =   20;                                               % using alfa_degree nel pid
 
 % Select the PID algorithm
-contSettings.flagPID           =    1;                                     % 1: control_PID (Fdrag);  2: control_LIN (u);  3: control_Servo (alfa_degree);
+contSettings.flagPID           =    3;                                     % 1: control_PID (Fdrag);  2: control_LIN (u);  3: control_Servo (alfa_degree);
 
 % Internal parameter of controler
 contSettings.I                   =   0;

@@ -1,4 +1,4 @@
-function [x,P,y_res] = correctionGPS_ada(x_pred, P_pred, pGPS, vGPS, z_ada, vz_ada, sigma_GPS, sats, fix)
+function [x,P,y_res] = correctionGPS_ada(x_pred, P_pred, pGPS, vGPS, z_ada, vz_ada, sigma_GPS, sigma_baro, sats, fix)
 
 % Author: Alejandro Montero
 % Co-Author: Alessandro Del Duca
@@ -44,7 +44,8 @@ threshold      =   10e-11;
 H              =   eye(6);                                                 %Pre-allocation of gradient 
                                                                            %of the output function  
 
-R              =   diag(sigma_GPS^2/sats*ones(1,6));                       %VARIANCE MATRIX SCALED 
+R              =   diag([sigma_GPS^2/sats, sigma_GPS^2/sats, sigma_baro, ...
+                         sigma_GPS^2/sats, sigma_GPS^2/sats, sigma_baro]);                       %VARIANCE MATRIX SCALED 
                                                                            %TAKING INTO ACCOUNT
                                                                            %NUMBER OF SATELITES
                                                                            %AVAILABLE

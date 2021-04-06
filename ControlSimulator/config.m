@@ -12,9 +12,9 @@ Release date: 16/04/2016
 
 %% SIMULATION SETTINGS
 settings.electronics        =   false;                                     % Switch on when testing with Hardware in the loop HIL
-settings.ascentOnly         =   false;                                      % Switch on to simulate only the ascent phase untill the apogee
+settings.ascentOnly         =   true;                                      % Switch on to simulate only the ascent phase untill the apogee
 settings.ballisticFligth    =   true;                                     % Switch on to simulate the balistic fligth without any parachute
-settings.control            =   false;                                      % Switch on to simulate the control
+settings.control            =   true;                                      % Switch on to simulate the control
 settings.dataNoise          =   true;                                      % Switch on to simulate the data acquisiton from sensors
 settings.launchWindow       =   false;                                     % Switch off this to avoid pausing the launch till you press the launch button
 settings.Kalman             =   true;                                      % Switch on to run the kalman algorithm
@@ -51,7 +51,7 @@ name = 'M2020';
 
 n_name = [Motors.MotorName] == name;
 settings.motor.exp_time     =    Motors(n_name).t;
-settings.motor.exp_thrust   =    Motors(n_name).T;
+settings.motor.exp_thrust   =    0.97*Motors(n_name).T;
 settings.motor.exp_m        =    Motors(n_name).m;
 settings.mp                 =    Motors(n_name).mp;                        % [kg]   Propellant Mass                                                
 settings.tb                 =    Motors(n_name).t(end) ;                   % [s]    Burning time
@@ -131,7 +131,7 @@ settings.frequencies.barometerFrequency         =   20;                    % [hz
 
 %% KALMAN TUNING PARAMETERS
 settings.kalman.dt_k          =   0.01;                                    % [s]        kalman time step
-settings.kalman.sigma_baro    =   100;                                       % [m/2]   estimated barometer variance    
+settings.kalman.sigma_baro    =   10;                                       % [m/2]   estimated barometer variance    
 settings.kalman.sigma_mag     =   0.1;                                     % [mgauss^2] estimated magnetometer variance    
 settings.kalman.sigma_GPS     =   5;                                       % [mg^2]     estimated GPS variance
 settings.kalman.sigma_w       =   10*(1000*pi/180)^2;                      % [mdps^2]   estimated gyroscope variance;
@@ -161,7 +161,7 @@ settings.kalman.Qq              =   [(settings.kalman.sigma_w^2*settings.kalman.
 settings.ada.Q           =   [1     0       0;                             % Process noise covariance matrix
                               0     1       0;
                               0     0       1;];
-settings.ada.R           =   0.1;                                            % Measurement noise covariance matrix
+settings.ada.R           =   1;                                            % Measurement noise covariance matrix
 settings.ada.P0          =   [  10    0      0;                            % Initial condition fo the 
                                 0      10     0;                            % state covariance matrix 
                                 0      0      10;];

@@ -302,7 +302,7 @@ while flagStopIntegration || n_old < nmax
         x = 0;
     end    
     
-    if settings.control == true      
+    if settings.control == true  && flagAeroBrakes == 1    
          % Save the values to plot them
          c.vz_tot(i)    =  vz;
          c.z_tot(i)     =  z;
@@ -428,7 +428,7 @@ end
 c.plot_ada     =  true; 
 c.plot_sensors =  false; 
 c.plot_kalman  =  true;
-c.plot_control =  false;
+c.plot_control =  true;
 
 %% RETRIVE PARAMETERS FROM THE ODE
 

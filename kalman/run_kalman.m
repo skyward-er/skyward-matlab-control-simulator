@@ -130,20 +130,24 @@ for i=2:length(tv)
                                                 P_lin(:,:,i-1),sp.accel(i-1,:),xq(i-1,1:4),kalman.QLinear);
     
     [xq(i,:),P_q(:,:,i)]       = predictorQuat(xq(i-1,:),P_q(:,:,i-1),...
-                                               sp.gyro(i-1,:),dt_k,kalman.Qq);                   
+                                               sp.gyro(i-1,:),dt_k,kalman.Qq);            
+                                           
+                                           
+     if tv(i) > 10
     %Corrections
      if tv(i) >= t_gpstemp(index_GPS)              %Comparison to see the there's a new measurement
        [x_lin(i,:),P_lin(:,:,i),~]     = correctionGPS_ada(x_lin(i,:),P_lin(:,:,i),sp.gps(index_GPS,1:2),...
-                                                        sp.gpsv(index_GPS,1:2),-xv_ada(end,1),-xv_ada(end,2),kalman.sigma_GPS,nsat,1);
+                                                        sp.gpsv(index_GPS,1:2),-xv_ada(end,1),-xv_ada(end,2),kalman.sigma_GPS,kalman.sigma_baro,nsat,1);
         index_GPS   =  index_GPS + 1;
      end
-
+     else 
     %Corrections
-%      if tv(i) >= t_gpstemp(index_GPS)              %Comparison to see the there's a new measurement
-%        [x_lin(i,:),P_lin(:,:,i),~]     = correctionGPS2(x_lin(i,:),P_lin(:,:,i),sp.gps(index_GPS,1:2),...
-%                                                         sp.gpsv(index_GPS,1:2),kalman.sigma_GPS,nsat,fix);
-%         index_GPS   =  index_GPS + 1;
-%      end
+     if tv(i) >= t_gpstemp(index_GPS)              %Comparison to see the there's a new measurement
+       [x_lin(i,:),P_lin(:,:,i),~]     = correctionGPS2(x_lin(i,:),P_lin(:,:,i),sp.gps(index_GPS,1:2),...
+                                                        sp.gpsv(index_GPS,1:2),kalman.sigma_GPS,nsat,fix);
+        index_GPS   =  index_GPS + 1;
+     end
+     end
     
     if tv(i) >= t_barotemp(index_bar)              %Comparison to see the there's a new measurement
        [x_lin(i,:),P_lin(:,:,i),~]     = correctionBarometer(x_lin(i,:),P_lin(:,:,i),sp.h_baro(index_bar),kalman.sigma_baro);
