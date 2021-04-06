@@ -425,10 +425,10 @@ if settings.control
     c.flagPID      =  csett.flagPID;
 end
 
-c.plot_ada     =  true; 
-c.plot_sensors =  false; 
-c.plot_kalman  =  true;
-c.plot_control =  true;
+c.plot_ada     =  settings.Ada && true; 
+c.plot_sensors =  settings.dataNoise && false; 
+c.plot_kalman  =  settings.Kalman && true;
+c.plot_control =  settings.control && false;
 
 %% RETRIVE PARAMETERS FROM THE ODE
 

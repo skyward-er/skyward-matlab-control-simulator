@@ -35,7 +35,7 @@ contSettings.Kp_3    =   20;                                               % usi
 contSettings.Ki_3    =   20;                                               % using alfa_degree nel pid
 
 % Select the PID algorithm
-contSettings.flagPID           =    3;                                     % 1: control_PID (Fdrag);  2: control_LIN (u);  3: control_Servo (alfa_degree);
+contSettings.flagPID           =    1;                                     % 1: control_PID (Fdrag);  2: control_LIN (u);  3: control_Servo (alfa_degree);
 
 % Internal parameter of controler
 contSettings.I                   =   0;

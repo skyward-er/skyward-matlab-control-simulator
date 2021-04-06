@@ -44,8 +44,8 @@ threshold      =   10e-11;
 H              =   eye(6);                                                 %Pre-allocation of gradient 
                                                                            %of the output function  
 
-R              =   diag([sigma_GPS^2/sats, sigma_GPS^2/sats, sigma_baro, ...
-                         sigma_GPS^2/sats, sigma_GPS^2/sats, sigma_baro]);                       %VARIANCE MATRIX SCALED 
+R              =   diag([sigma_GPS^2/sats, sigma_GPS^2/sats, 2*sigma_baro, ...
+                         sigma_GPS^2/sats, sigma_GPS^2/sats, 2*sigma_baro]);                       %VARIANCE MATRIX SCALED 
                                                                            %TAKING INTO ACCOUNT
                                                                            %NUMBER OF SATELITES
                                                                            %AVAILABLE
