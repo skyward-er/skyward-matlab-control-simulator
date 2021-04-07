@@ -14,7 +14,7 @@ Release date: 16/04/2016
 settings.electronics        =   false;                                     % Switch on when testing with Hardware in the loop HIL
 settings.ascentOnly         =   true;                                      % Switch on to simulate only the ascent phase untill the apogee
 settings.ballisticFligth    =   true;                                     % Switch on to simulate the balistic fligth without any parachute
-settings.control            =   false;                                      % Switch on to simulate the control
+settings.control            =   true;                                      % Switch on to simulate the control
 settings.dataNoise          =   true;                                      % Switch on to simulate the data acquisiton from sensors
 settings.launchWindow       =   false;                                     % Switch off this to avoid pausing the launch till you press the launch button
 settings.Kalman             =   true;                                      % Switch on to run the kalman algorithm
@@ -168,7 +168,7 @@ settings.ada.P0          =   [  10    0      0;                            % Ini
 [settings.ada.temp_ref, ~,...
  settings.ada.p_ref, ~]  =   atmosisa(0);                                  % Reference temperature in kelvin and pressure in Pa 
 
-settings.ada.v0          =   -100;                                         % Vertical velocity initial condition
+settings.ada.v0          =   -10;                                         % Vertical velocity initial condition
 settings.ada.a0          =   -100;                                         % Acceleration velocity initial condition
 settings.ada.x0          =  [settings.ada.p_ref, settings.ada.v0, settings.ada.a0];         
                                                                            % Ada initial condition
