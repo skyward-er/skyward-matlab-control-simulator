@@ -231,17 +231,20 @@ while flagStopIntegration || n_old < nmax
     %[~, ~, p, ~]  = atmosisa(-Yf(:,3)) ; 
  
     if settings.dataNoise
-        % QUA  MI SERVE CHE IL NOISE VENGA APPLICATO AI DATI DENTRO A
-        % SENSOR DATA ALTRIMENTI NON POSSO MANDARLI SU SERIALE
+        [sp, c] = acquisition_Sys(sensorData, s, c);
     end
     
     %%%%%%%%%%%
     % TEMPORARY SOLUTION UNTIL WE DON'T HAVE THE OBSW KALMAN
-    if flagAeroBrakes
+    if flagAeroBrakes && settings.dataNoise
+         sp.kalman.z    = z;
+         sp.kalman.vz   = vz;
+         sp.kalman.vMod = normV;
+    elseif flagAeroBrakes && ~settings.dataNoise
          sensorData.kalman.z    = z;
          sensorData.kalman.vz   = vz;
          sensorData.kalman.vMod = normV;
-    else 
+    else
         sensorData.kalman.z    = 0;
         sensorData.kalman.vz   = 0;
         sensorData.kalman.vMod = 0;
@@ -250,9 +253,14 @@ while flagStopIntegration || n_old < nmax
     
     flagsArray = [flagFligth, flagAscent, flagBurning, flagAeroBrakes, flagPara1, flagPara2];
     
-    sendDataOverSerial(sensorData, flagsArray);
+    if settings.dataNoise == true
+        sendDataOverSerial(sp, flagsArray);   
+    else
+        sendDataOverSerial(sensorData, flagsArray);
+    end
+    
     alpha_degree = readControlOutputFromSerial();
-    alpha_degree = 25;
+%     alpha_degree = 25;
          
     if flagAeroBrakes
          x = get_extension_from_angle(alpha_degree);
