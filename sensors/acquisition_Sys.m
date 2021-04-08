@@ -34,6 +34,7 @@ OUTPUT:
         end 
         c.pn_tot(c.np_old:c.np_old + size(sp.pn,2) - 1,1)    = sp.pn(1:end);
         c.hb_tot(c.np_old:c.np_old + size(sp.pn,2) - 1,1)    = sp.h_baro(1:end);
+        c.time_baro(c.np_old:c.np_old + size(sp.pn,2) - 1)    =  sp.t_baro;
         c.np_old = c.np_old + size(sp.pn,2);      
       
 %% IMU Acquisition loop
@@ -67,6 +68,7 @@ OUTPUT:
         c.accel_tot(c.na_old:c.na_old + size(sp.accel,1) - 1,:) = sp.accel(1:end,:) ;
         c.gyro_tot(c.na_old:c.na_old + size(sp.gyro,1) - 1,:)   = sp.gyro(1:end,:) ;
         c.mag_tot(c.na_old:c.na_old + size(sp.mag,1) - 1,:)     = sp.mag(1:end,:) ;
+        c.time_imu(c.na_old:c.na_old + size(sp.accel,1) - 1)   =  sp.t_acc;
         c.na_old = c.na_old + size(sp.accel,1);
         
 
@@ -90,5 +92,6 @@ OUTPUT:
         end
         c.gps_tot(c.ngps_old:c.ngps_old + size(sp.gps,1) - 1,:)   =  sp.gps(1:end,:) ;
         c.gpsv_tot(c.ngps_old:c.ngps_old + size(sp.gpsv,1) - 1,:) =  sp.gpsv(1:end,:) ;
+        c.time_gps(c.ngps_old:c.ngps_old + size(sp.gpsv,1) - 1)   =  sp.t_gps;
         c.ngps_old = c.ngps_old + size(sp.gps,1);
 end
