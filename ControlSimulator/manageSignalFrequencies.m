@@ -144,7 +144,7 @@ if freq.gpsFrequency > freq.controlFrequency
     if N ~= round(N)
         error('the sensor frequency must be a multiple of the control frequency');
     end
-    sensorData.gps.time = linspace(T(1), T(end) - freq.gpsFrequency, N);
+    sensorData.gps.time = linspace(T(1), T(end) - 1/freq.gpsFrequency, N);
     if settings.ballisticFligth || (not(settings.ballisticFligth) && flagAscent)
         for i = 1:N
             iTimegps = sensorData.gps.time(i);

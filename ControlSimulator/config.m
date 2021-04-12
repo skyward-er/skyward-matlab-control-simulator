@@ -17,8 +17,8 @@ settings.ballisticFligth    =   true;                                     % Swit
 settings.control            =   false;                                      % Switch on to simulate the control
 settings.dataNoise          =   true;                                      % Switch on to simulate the data acquisiton from sensors
 settings.launchWindow       =   false;                                     % Switch off this to avoid pausing the launch till you press the launch button
-settings.Kalman             =   false;                                      % Switch on to run the kalman algorithm
-settings.Ada                =   false;                                      % Switch on to run the apogee detection algorithm
+settings.Kalman             =   true;                                      % Switch on to run the kalman algorithm
+settings.Ada                =   true;                                      % Switch on to run the apogee detection algorithm
 
 %% LAUNCH SETUP
 % launchpad for Pont De Sor
@@ -126,12 +126,12 @@ settings.frequencies.controlFrequency           =   10;                    % [hz
 settings.frequencies.accelerometerFrequency     =   100;                   % [hz] control action frequency 
 settings.frequencies.gyroFrequency              =   100;                   % [hz] control action frequency 
 settings.frequencies.magnetometerFrequency      =   100;                   % [hz] control action frequency 
-settings.frequencies.gpsFrequency               =   10;                    % [hz] control action frequency 
-settings.frequencies.barometerFrequency         =   20;                    % [hz] control action frequency 
+settings.frequencies.gpsFrequency               =   100;                    % [hz] control action frequency 
+settings.frequencies.barometerFrequency         =   100;                    % [hz] control action frequency 
 
 %% KALMAN TUNING PARAMETERS
 settings.kalman.dt_k          =   0.01;                                    % [s]        kalman time step
-settings.kalman.sigma_baro    =   10;                                       % [m/2]   estimated barometer variance    
+settings.kalman.sigma_baro    =   5;                                       % [m/2]   estimated barometer variance    
 settings.kalman.sigma_mag     =   0.1;                                     % [mgauss^2] estimated magnetometer variance    
 settings.kalman.sigma_GPS     =   5;                                       % [mg^2]     estimated GPS variance
 settings.kalman.sigma_w       =   10*(1000*pi/180)^2;                      % [mdps^2]   estimated gyroscope variance;
@@ -161,7 +161,7 @@ settings.kalman.Qq              =   [(settings.kalman.sigma_w^2*settings.kalman.
 settings.ada.Q           =   [1     0       0;                             % Process noise covariance matrix
                               0     1       0;
                               0     0       1;];
-settings.ada.R           =   1;                                            % Measurement noise covariance matrix
+settings.ada.R           =   5;                                            % Measurement noise covariance matrix
 settings.ada.P0          =   [  10    0      0;                            % Initial condition fo the 
                                 0      10     0;                            % state covariance matrix 
                                 0      0      10;];

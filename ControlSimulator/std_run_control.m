@@ -85,6 +85,7 @@ addpath('../kalman');
 %% SENSORS INIT
 addpath('../sensors');
 addpath('../sensors/data/MS580301BA01');
+addpath('../simulationData');
 [s, c] = initSensors;
 
 %% CONTROL INIT
@@ -437,6 +438,12 @@ if not(settings.electronics)
 end
 if ~settings.electronics 
     plot_all(c, csett)
+end
+if true
+save('../simulationData/Ground_truth.mat','sensorData');
+if settings.dataNoise 
+save('../simulationData/Sensors.mat','c');
+end
 end
 
 end
