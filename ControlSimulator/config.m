@@ -41,8 +41,8 @@ Motors = load(filename);
 Motors = [Motors.Cesaroni, Motors.Aerotech];
 
 
-% name = 'M2020';
-name = 'M2000Rbis';
+name = 'M2020';
+% name = 'M2000Rbis';
 % name = 'M1890';
 % name = 'M1800';
 

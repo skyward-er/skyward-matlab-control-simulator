@@ -1,4 +1,4 @@
-function [Yf, Tf, cpuTimes, flagMatr] = std_run_HIL(settings)
+function [Yf, Tf, cpuTimes, flagMatr, otherData] = std_run_HIL(settings)
 %{
 
 STD_RUN_HIL - This function runs a hardware-in-the-loop simulation
@@ -104,6 +104,7 @@ magneticFieldApprox = @(zSlm) XYZ0 + (XYZh-XYZ0)./hmax.*zSlm;
 
 %% INTEGRATION
 % setting initial condition before control phase
+otherData.z_aerobrakeOn = 0;
 dt = 1/settings.frequencies.controlFrequency;
 t0 = 0;
 t1 = t0 + dt;
@@ -139,7 +140,7 @@ flagPara2 = false;
 
 if settings.launchWindow
     launchWindow;
-    pause(0.01);
+    pause(0.1);
     launchFlag = false;
     lastLaunchflag = true;
 else
@@ -200,7 +201,6 @@ while flagStopIntegration || n_old < nmax
     end
     
     % dynamics
-    % dynamics
     if flagFligth
         if settings.ballisticFligth
             [Tf, Yf] = ode45(@ascent, [t0, t1], Y0, [], settings, x, uw, vw, ww, uncert, tLaunch);
@@ -237,7 +237,7 @@ while flagStopIntegration || n_old < nmax
     
     %%%%%%%%%%%
     % TEMPORARY SOLUTION UNTIL WE DON'T HAVE THE OBSW KALMAN
-    if flagAeroBrakes
+    if flagFligth
          sensorData.kalman.z    = z;
          sensorData.kalman.vz   = vz;
          sensorData.kalman.vMod = normV;
@@ -252,15 +252,18 @@ while flagStopIntegration || n_old < nmax
     
     sendDataOverSerial(sensorData, flagsArray);
     alpha_degree = readControlOutputFromSerial();
-    alpha_degree = 25;
-         
+
+    x = get_extension_from_angle(alpha_degree);
+    
     if flagAeroBrakes
-         x = get_extension_from_angle(alpha_degree);
-    else 
-        x = 0;
-    end 
-
-
+        if otherData.z_aerobrakeOn == 0
+            otherData.z_aerobrakeOn = z;
+            otherData.vz_aerobrakeOn = vz;
+        end
+        plot_control_variable(index_plot) = alpha_degree;
+        index_plot = index_plot + 1;
+    end
+    
     % vertical velocity and position
     if flagAscent || (not(flagAscent) && settings.ballisticFligth)
         Q = Yf(end, 10:13);
@@ -301,8 +304,6 @@ while flagStopIntegration || n_old < nmax
     
     n_old = n_old + n -1;
    
-    cpuTimes(iTimes) = toc;
-    
     if settings.launchWindow
         lastLaunchflag = launchFlag;
         pause(1e-6);
@@ -311,20 +312,21 @@ while flagStopIntegration || n_old < nmax
         end
     end
     
-     if settings.ascentOnly
-         flagStopIntegration = flagAscent;
-     else
-         flagStopIntegration = flagFligth;
-     end        
+    if settings.ascentOnly
+        flagStopIntegration = flagAscent;
+    else
+        flagStopIntegration = flagFligth;
+    end        
         
-     flagsArray = [flagFligth, flagAscent, flagBurning, flagAeroBrakes, flagPara1, flagPara2];
-     flagMatr(n_old:n_old+n-1, :) = repmat(flagsArray, n, 1);
-     toc
+    flagsArray = [flagFligth, flagAscent, flagBurning, flagAeroBrakes, flagPara1, flagPara2];
+    flagMatr(n_old:n_old+n-1, :) = repmat(flagsArray, n, 1);
+
+    cpuTimes(iTimes) = toc;
+    toc
 end
 
 if settings.launchWindow
     fclose('all');
-%     delete('launchFlag.txt');
 end
 
 cpuTimes = cpuTimes(1:iTimes);
@@ -339,6 +341,17 @@ flagMatr = flagMatr(1:n_old, :);
 %if not(settings.electronics)
 %    dataBallisticFlight = RecallOdeFcn(@ascent, Tf(flagMatr(:, 2)), Yf(flagMatr(:, 2), :), settings, C, uw, vw, ww, uncert);
 %end
+
+%% PLOT THE RESULTS
+
+% Obtain the control variable
+time = 0:dt:(length(plot_control_variable)-1)*dt;  
+
+% Control variable: servo angle
+figure('Name','Servo angle after burning phase','NumberTitle','off');
+plot(time, plot_control_variable), grid on;
+axis([0,20, 0,60])
+xlabel('time [s]'), ylabel('Angle [deg]');
 
 end
 

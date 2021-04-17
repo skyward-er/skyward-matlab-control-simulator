@@ -29,7 +29,7 @@ if settings.electronics
     addpath('../hardware_in_the_loop/serialbridge');
     run('HILconfig.m');
     serialbridge("Open", hil_settings.serial_port, hil_settings.baudrate); % Initialization of the serial port
-    [Yf, Tf, cpuTimes, flagMatr] = std_run_HIL(settings);
+    [Yf, Tf, cpuTimes, flagMatr, otherData] = std_run_HIL(settings);
 else
     [Yf, Tf, t_ada, cpuTimes, flagMatr, data_flight] = std_run_control(settings);
 end
@@ -61,7 +61,7 @@ abs_V = vecnorm(Va');
 [max_v, imax_v] = max(abs_V);
 
 % DATA RECORD (display)
-fprintf('OUTCOMES:\n\n\n')
+fprintf('OUTCOMES:\n\n')
 
 fprintf('total computational Time: %.3f [s]: \n', sum(cpuTimes))
 fprintf('mean step computational Time: %.3f [s]: \n', mean(cpuTimes))
@@ -73,6 +73,10 @@ fprintf('@time: %g [sec] \n\n', T_apo)
 fprintf('max speed reached: %g [m/s] \n', max_v)
 fprintf('@altitude: %g [m] \n', za(imax_v))
 fprintf('@time: %g [sec] \n\n', Tf(imax_v))
+
+fprintf('activation airbrakes (end burning phase):\n');
+fprintf("@altitude: %g [m] \n", otherData.z_aerobrakeOn);
+fprintf("@velocity: %g [m/s] \n", otherData.vz_aerobrakeOn);
 
 if not(settings.electronics)
     M = data_flight.interp.M;
