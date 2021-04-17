@@ -84,7 +84,7 @@ addpath('../kalman');
 %% SENSORS DEFINITION
 addpath('../sensors');
 addpath('../sensors/data/MS580301BA01');
-initSensors;
+[s, c] = initSensors;
 
 %% MAGNETIC FIELD MODEL
 hmax = 6000;
@@ -231,26 +231,41 @@ while flagStopIntegration || n_old < nmax
     %[~, ~, p, ~]  = atmosisa(-Yf(:,3)) ; 
  
     if settings.dataNoise
-        % QUA  MI SERVE CHE IL NOISE VENGA APPLICATO AI DATI DENTRO A
-        % SENSOR DATA ALTRIMENTI NON POSSO MANDARLI SU SERIALE
+        [sp, c] = acquisition_Sys(sensorData, s, c);
     end
     
     %%%%%%%%%%%
     % TEMPORARY SOLUTION UNTIL WE DON'T HAVE THE OBSW KALMAN
+
     if flagFligth
-         sensorData.kalman.z    = z;
-         sensorData.kalman.vz   = vz;
-         sensorData.kalman.vMod = normV;
-    else 
+        sensorData.kalman.z    = z;
+        sensorData.kalman.vz   = vz;
+        sensorData.kalman.vMod = normV;
+        if settings.dataNoise
+            sp.kalman.z    = z;
+            sp.kalman.vz   = vz;
+            sp.kalman.vMod = normV;
+        end
+    else
         sensorData.kalman.z    = 0;
         sensorData.kalman.vz   = 0;
         sensorData.kalman.vMod = 0;
-    end 
+        if settings.dataNoise
+            sp.kalman.z    = 0;
+            sp.kalman.vz   = 0;
+            sp.kalman.vMod = 0;
+        end
+    end
     %%%%%%%%%%
     
     flagsArray = [flagFligth, flagAscent, flagBurning, flagAeroBrakes, flagPara1, flagPara2];
     
-    sendDataOverSerial(sensorData, flagsArray);
+    if settings.dataNoise == true
+        sendDataOverSerial(sp, flagsArray);   
+    else
+        sendDataOverSerial(sensorData, flagsArray);
+    end
+    
     alpha_degree = readControlOutputFromSerial();
 
     x = get_extension_from_angle(alpha_degree);

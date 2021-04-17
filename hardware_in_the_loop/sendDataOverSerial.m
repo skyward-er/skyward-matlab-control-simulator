@@ -11,16 +11,38 @@ Release date: 10/03/2021
 %}
 
 function [] = sendDataOverSerial(data, flags)
+if(isfield(data, 'h_baro'))
+    data = rmfield(data, 'h_baro');
+end
 
-data.barometer = rmfield(data.barometer, 'temperature');
+if(isfield(data.barometer, 'temperature'))
+    data.barometer = rmfield(data.barometer, 'temperature');
+end
 
-data.flags.flagFligth = cast(flags(1), "double");
-data.flags.flagAscent = cast(flags(2), "double");
-data.flags.flagBurning = cast(flags(3), "double");
-data.flags.flagAeroBrakes = cast(flags(4), "double");
-data.flags.flagPara1 = cast(flags(5), "double");
-data.flags.flagPara2 = cast(flags(6), "double");
+dataToBeSent.accelerometer = data.accelerometer;
 
-serialbridge("Write", structToSingles(data));
+dataToBeSent.gyro = data.gyro;
+
+dataToBeSent.magnetometer = data.magnetometer;
+
+dataToBeSent.gps.positionMeasures = data.gps.positionMeasures;
+dataToBeSent.gps.velocityMeasures = data.gps.velocityMeasures;
+
+dataToBeSent.barometer = data.barometer;
+
+dataToBeSent.kalman.z = data.kalman.z;
+dataToBeSent.kalman.vz = data.kalman.vz;
+dataToBeSent.kalman.vMod = data.kalman.vMod;
+
+
+
+dataToBeSent.flags.flagFligth = cast(flags(1), "double");
+dataToBeSent.flags.flagAscent = cast(flags(2), "double");
+dataToBeSent.flags.flagBurning = cast(flags(3), "double");
+dataToBeSent.flags.flagAeroBrakes = cast(flags(4), "double");
+dataToBeSent.flags.flagPara1 = cast(flags(5), "double");
+dataToBeSent.flags.flagPara2 = cast(flags(6), "double");
+
+serialbridge("Write", structToSingles(dataToBeSent));
 
 end
