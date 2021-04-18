@@ -15,7 +15,7 @@ if csett.iteration_flag == 1
        
         % Select a z trajectory and a Vz trajectory (to speed up select only the first values, not ALL)
         z_ref  = csett.data_trajectories(ind).Z_ref(1:150); 
-        Vz_ref = csett.data_trajectories(ind).V_ref(1:150); 
+        Vz_ref = csett.data_trajectories(ind).VZ_ref(1:150); 
         err    = (z_ref-z).^2 + (Vz_ref-Vz).^2; 
 
         % Find the nearest point to the current trajectory
@@ -34,7 +34,7 @@ if csett.iteration_flag == 1
     
     % I select the reference altitude and the reference vertical velocity
     z_setpoint  =  csett.data_trajectories(csett.chosen_trajectory).Z_ref(csett.index_min_value);
-    Vz_setpoint =  csett.data_trajectories(csett.chosen_trajectory).V_ref(csett.index_min_value);
+    Vz_setpoint =  csett.data_trajectories(csett.chosen_trajectory).VZ_ref(csett.index_min_value);
     
     % Just for plot
     csett.starting_index = best_index;
@@ -47,7 +47,7 @@ else
     % Select the z trajectory and the Vz trajectory 
     % To speed up the research, I reduce the vector at each iteration (add if-else for problem in index limits)
     z_ref  = csett.data_trajectories(csett.chosen_trajectory).Z_ref;  
-    Vz_ref = csett.data_trajectories(csett.chosen_trajectory).V_ref;  
+    Vz_ref = csett.data_trajectories(csett.chosen_trajectory).VZ_ref;  
 
     % 1) Find the value of the altitude in z_reference nearer to z_misured 
     [~, current_index_min_value] = min(abs(z_ref(csett.index_min_value:end) - z));
