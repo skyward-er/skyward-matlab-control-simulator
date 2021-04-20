@@ -14,7 +14,7 @@ Release date: 16/04/2016
 settings.electronics        =   false;                                     % Switch on when testing with Hardware in the loop HIL
 settings.ascentOnly         =   true;                                      % Switch on to simulate only the ascent phase untill the apogee
 settings.ballisticFligth    =   true;                                     % Switch on to simulate the balistic fligth without any parachute
-settings.control            =   true;                                      % Switch on to simulate the control
+settings.control            =   false;                                      % Switch on to simulate the control
 settings.dataNoise          =   true;                                      % Switch on to simulate the data acquisiton from sensors
 settings.launchWindow       =   false;                                     % Switch off this to avoid pausing the launch till you press the launch button
 settings.Kalman             =   true;                                      % Switch on to run the kalman algorithm
@@ -126,8 +126,8 @@ settings.frequencies.controlFrequency           =   10;                    % [hz
 settings.frequencies.accelerometerFrequency     =   100;                   % [hz] control action frequency 
 settings.frequencies.gyroFrequency              =   100;                   % [hz] control action frequency 
 settings.frequencies.magnetometerFrequency      =   100;                   % [hz] control action frequency 
-settings.frequencies.gpsFrequency               =   100;                    % [hz] control action frequency 
-settings.frequencies.barometerFrequency         =   100;                    % [hz] control action frequency 
+settings.frequencies.gpsFrequency               =   10;                    % [hz] control action frequency 
+settings.frequencies.barometerFrequency         =   20;                    % [hz] control action frequency 
 
 %% KALMAN TUNING PARAMETERS
 settings.kalman.dt_k          =   0.01;                                    % [s]        kalman time step
@@ -161,10 +161,10 @@ settings.kalman.Qq              =   [(settings.kalman.sigma_w^2*settings.kalman.
 settings.ada.Q           =   [1     0       0;                             % Process noise covariance matrix
                               0     1       0;
                               0     0       1;];
-settings.ada.R           =   5;                                            % Measurement noise covariance matrix
-settings.ada.P0          =   [  10    0      0;                            % Initial condition fo the 
-                                0      10     0;                            % state covariance matrix 
-                                0      0      10;];
+settings.ada.R           =   10;                                            % Measurement noise covariance matrix
+settings.ada.P0          =   [  0.1    0      0;                            % Initial condition fo the 
+                                0      0.1     0;                            % state covariance matrix 
+                                0      0      0.1;];
 [settings.ada.temp_ref, ~,...
  settings.ada.p_ref, ~]  =   atmosisa(0);                                  % Reference temperature in kelvin and pressure in Pa 
 

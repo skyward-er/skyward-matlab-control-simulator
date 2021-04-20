@@ -305,8 +305,8 @@ while flagStopIntegration || n_old < nmax
     
     if settings.control == true  && flagAeroBrakes == 1    
          % Save the values to plot them
-         c.vz_tot(i)    =  vz;
-         c.z_tot(i)     =  z;
+         c.vz_tot(i)    =  vzc;
+         c.z_tot(i)     =  zc;
          c.vz_setpoint_tot(i)  =  vz_setpoint;
          c.z_setpoint_tot(i)   =  z_setpoint;
          c.alpha_degree_tot(i) =  alpha_degree;
@@ -427,8 +427,8 @@ if settings.control
 end
 
 c.plot_ada     =  settings.Ada && false; 
-c.plot_sensors =  settings.dataNoise && false; 
-c.plot_kalman  =  settings.Kalman && false;
+c.plot_sensors =  settings.dataNoise && true; 
+c.plot_kalman  =  settings.Kalman && true;
 c.plot_control =  settings.control && true;
 
 %% RETRIVE PARAMETERS FROM THE ODE

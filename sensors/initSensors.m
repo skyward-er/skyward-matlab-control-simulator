@@ -29,11 +29,11 @@ s.ACCEL_LSM9DS1 = Sensor3D(); % acceleration in mg
 s.ACCEL_LSM9DS1.maxMeasurementRange =   16000;                  % 2000, 4000, 8000, 16000 in mg
 s.ACCEL_LSM9DS1.minMeasurementRange =  -16000;                  % -2000, -4000, -8000, -16000 in mg
 s.ACCEL_LSM9DS1.resolution          =   0.732;                  % 0.061, 0.122, 0.244, 0.732 in mg 
-s.ACCEL_LSM9DS1.noiseVariance       =   4;                      % guess in mg original was 4
+s.ACCEL_LSM9DS1.noiseVariance       =   0;                      % guess in mg original was 4
 s.ACCEL_LSM9DS1.offsetX             =   0;                      % +-90 in mg
 s.ACCEL_LSM9DS1.offsetY             =   0;                      % +-90 in mg
 s.ACCEL_LSM9DS1.offsetZ             =   0;                      % +-90 in mg
-s.ACCEL_LSM9DS1.walkDiffusionCoef   =   1;                      % guess
+s.ACCEL_LSM9DS1.walkDiffusionCoef   =   0;                      % guess
 s.ACCEL_LSM9DS1.dt                  =   0.01;                   % sampling time
 
 % initial gyroscope sensor from LSM9DS1
@@ -41,11 +41,11 @@ s.GYRO_LSM9DS1 = Sensor3D(); % angular rate in mdps
 s.GYRO_LSM9DS1.maxMeasurementRange  =   245e3;                  % 245e3, 500e3, 2000e3 in mdps
 s.GYRO_LSM9DS1.minMeasurementRange  =  -245e3;                  % -245e3, -500e3, -2000e3 in mdps
 s.GYRO_LSM9DS1.resolution           =   8.75;                   % 8.75, 17.5, 70 in mdps
-s.GYRO_LSM9DS1.noiseVariance        =   100;                    % guess in mdps    100 was original
+s.GYRO_LSM9DS1.noiseVariance        =   0;                      % guess in mdps    100 was original
 s.GYRO_LSM9DS1.offsetX              =   0;                      % +-30e3 in mdps
 s.GYRO_LSM9DS1.offsetY              =   0;                      % +-30e3 in mdps
 s.GYRO_LSM9DS1.offsetZ              =   0;                      % +-30e3 in mdps
-s.GYRO_LSM9DS1.walkDiffusionCoef    =   1;                      % guess
+s.GYRO_LSM9DS1.walkDiffusionCoef    =   0;                      % guess
 s.GYRO_LSM9DS1.dt                   =   0.01;                   % sampling time
 s.GYRO_LSM9DS1.transMatrix          =   diag([1 1 1]);          % axis transformation
 

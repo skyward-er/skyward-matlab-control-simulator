@@ -74,13 +74,34 @@ legend('Altitude','Ground-truth','location','northeast');
 title('Barometer altitude reads');
 
 %% FIGURE: Accelerometer reads
-faccel = 100; 
-g  = 9.81;
+faccel = 100;
 ta = 0:1/faccel:1/faccel*(length(c.accel_tot)-1);
+for i = 1:length(ta)
+    q(1) = c.x_est_tot(i,7);
+    q(2) = c.x_est_tot(i,8);
+    q(3) = c.x_est_tot(i,9);
+    q(4) = c.x_est_tot(i,10);
+    A              =   [q(1)^2 - q(2)^2 - q(3)^2 + q(4)^2,                   2*(q(1)*q(2) + q(3)*q(4)),               2*(q(1)*q(3) - q(2)*q(4));
+                            2*(q(1)*q(2) - q(3)*q(4)),          -q(1)^2 + q(2)^2 - q(3)^2 + q(4)^2,               2*(q(2)*q(3) + q(1)*q(4));
+                            2*(q(1)*q(3) + q(2)*q(4)),                   2*(q(2)*q(3) - q(1)*q(4)),     -q(1)^2 - q(2)^2 + q(3)^2 + q(4)^2;];
+
+    c.accel_tot(i,:) = A'*c.accel_tot(i,:)';
+    eul(i,:) = quat2eul([q(4) q(1) q(2) q(3)],'ZYX')*180/pi; 
+end
+
+    eulsim = quat2eul(c.Yf_tot(1:c.i_apo,10:13),'ZYX')*180/pi; 
+
+
+figure
+subplot(3,1,1);plot(ta',eul(:,1),c.Tf_tot(1:c.i_apo),eulsim(:,1));xlabel('time[s]');ylabel('|roll| [°]'); title('Roll');
+subplot(3,1,2);plot(ta',eul(:,2),c.Tf_tot(1:c.i_apo),eulsim(:,2));xlabel('time[s]');ylabel('|pitch| [°]'); title('Pitch');
+subplot(3,1,3);plot(ta',eul(:,3),c.Tf_tot(1:c.i_apo),eulsim(:,3));xlabel('time[s]');ylabel('|yaw| [°]'); title('Jaw');
+
+
 figure('Name','Accelerometer reads')
-subplot(3,1,1);plot(ta,c.accel_tot(:,1)/g');grid on;xlabel('time[s]');ylabel('|ax| [g]'); title('Accelerometer reads along x');
-subplot(3,1,2);plot(ta,c.accel_tot(:,2)/g');grid on;xlabel('time[s]');ylabel('|ay| [g]'); title('Accelerometer reads along y');
-subplot(3,1,3);plot(ta,c.accel_tot(:,3)/g');grid on;xlabel('time[s]');ylabel('|az| [g]'); title('Accelerometer reads along z');
+subplot(3,1,1);plot(ta,c.accel_tot(:,1)');grid on;xlabel('time[s]');ylabel('|ax| [g]'); title('Accelerometer reads along x');
+subplot(3,1,2);plot(ta,c.accel_tot(:,2)');grid on;xlabel('time[s]');ylabel('|ay| [g]'); title('Accelerometer reads along y');
+subplot(3,1,3);plot(ta,c.accel_tot(:,3)');grid on;xlabel('time[s]');ylabel('|az| [g]'); title('Accelerometer reads along z');
 
 %% FIGURE: Gyroscope reads 
 figure('Name','Gyroscope reads')
@@ -138,6 +159,9 @@ subplot(4,1,3);plot(c.t_est_tot(1:c.i_apo_est),c.x_est_tot(1:c.i_apo_est,8),c.Tf
 legend('Estimatedq2','Ground-truth','location','northeast'); title('Estimated q2 vsground-truth');
 subplot(4,1,4);plot(c.t_est_tot(1:c.i_apo_est),c.x_est_tot(1:c.i_apo_est,9),c.Tf_tot(1:c.i_apo),c.Yf_tot(1:c.i_apo,13));grid on;ylabel('|q3| [-]'); 
 legend('Estimatedq3','Ground-truth','location','northeast'); title('Estimated q3 vsground-truth');
+
+
+
 end
 
 
