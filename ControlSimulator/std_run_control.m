@@ -142,6 +142,9 @@ end
 fprintf('START:\n\n\n');
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+% Salvo input/output per testare algoritmo cpp
+indice_test = 1;
+
 while flagStopIntegration || n_old < nmax
     tic 
     iTimes = iTimes + 1;
@@ -296,7 +299,11 @@ while flagStopIntegration || n_old < nmax
              case 3
              [alpha_degree, vz_setpoint, z_setpoint, csett]                             =   control_Servo   (z, vz(end),  csett);
         end
-    
+        
+        % Salvo input/output per testare algoritmo cpp
+        input_output_test(indice_test) = struct('alpha_degree', alpha_degree, 'vz_setpoint', vz_setpoint, 'z_setpoint', z_setpoint, 'z', z, 'vz', vz, 'Vmod', sqrt(vxxx^2 + vyyy^2 + vz^2));
+        indice_test = indice_test +1;
+         
          x = extension_From_Angle(alpha_degree);
          i = i + 1; 
     else 
@@ -384,6 +391,9 @@ while flagStopIntegration || n_old < nmax
      flagMatr(n_old:n_old+n-1, :) = repmat([flagFligth, flagAscent, flagBurning, flagAeroBrakes, flagPara1, flagPara2], n, 1);
 end
 
+% Salvo input/output per testare algoritmo cpp
+% save('input_output_test_PID_linearized.mat','input_output_test');
+
 if settings.launchWindow
     fclose('all');
     delete('launchFlag.txt');
@@ -439,11 +449,11 @@ end
 if ~settings.electronics 
     plot_all(c, csett)
 end
-if true
-save('../simulationData/Ground_truth.mat','sensorData');
-if settings.dataNoise 
-save('../simulationData/Sensors.mat','c');
-end
+% if true
+% save('../simulationData/Ground_truth.mat','sensorData');
+% if settings.dataNoise 
+% save('../simulationData/Sensors.mat','c');
+% end
 end
 
 end
