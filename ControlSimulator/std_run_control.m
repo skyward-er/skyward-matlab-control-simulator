@@ -269,6 +269,7 @@ while flagStopIntegration || n_old < nmax
      
     end
 %% Control algorithm
+
     if flagAeroBrakes && settings.Kalman && settings.control
          zc    =    exp_mean(-x_c(:,3),0.8);
          vzc   =    exp_mean(-x_c(:,6),0.8);
@@ -392,7 +393,7 @@ while flagStopIntegration || n_old < nmax
 end
 
 % Salvo input/output per testare algoritmo cpp
-% save('input_output_test_PID_linearized.mat','input_output_test');
+save('input_output_test_PID.mat','input_output_test');
 
 if settings.launchWindow
     fclose('all');
@@ -437,8 +438,8 @@ if settings.control
 end
 
 c.plot_ada     =  settings.Ada && false; 
-c.plot_sensors =  settings.dataNoise && true; 
-c.plot_kalman  =  settings.Kalman && true;
+c.plot_sensors =  settings.dataNoise && false; 
+c.plot_kalman  =  settings.Kalman && false;
 c.plot_control =  settings.control && true;
 
 %% RETRIVE PARAMETERS FROM THE ODE
@@ -456,6 +457,6 @@ end
 % end
 end
 
-end
+%end
 
 
