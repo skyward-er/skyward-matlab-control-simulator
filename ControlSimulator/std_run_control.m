@@ -271,8 +271,8 @@ while flagStopIntegration || n_old < nmax
 %% Control algorithm
 
     if flagAeroBrakes && settings.Kalman && settings.control
-         zc    =    exp_mean(-x_c(:,3),0.8);
-         vzc   =    exp_mean(-x_c(:,6),0.8);
+         z    =    exp_mean(-x_c(:,3),0.8);
+         vz   =    exp_mean(-x_c(:,6),0.8);
          vc    =    exp_mean(sqrt(x_c(:,4).^2+x_c(:,5).^2+x_c(:,6).^2),0.8);
          if c.ctr_start == -1
             c.ctr_start = 0.1*(n - 1);
@@ -280,12 +280,15 @@ while flagStopIntegration || n_old < nmax
          %% selection of controler type
          switch csett.flagPID 
              case 1
-             [alpha_degree, vz_setpoint, z_setpoint, pid, U_linear, Cdd, delta_S, csett] = control_PID    (zc, vzc, vc, csett);
+             [alpha_degree, vz_setpoint, z_setpoint, pid, U_linear, Cdd, delta_S, csett] = control_PID    (z, vz, vc, csett);
              case 2
-             [alpha_degree, vz_setpoint, z_setpoint, pid, U_linear, Cdd, delta_S, csett] = control_Lin    (zc, vzc, vc, csett);
+             [alpha_degree, vz_setpoint, z_setpoint, pid, U_linear, Cdd, delta_S, csett] = control_Lin    (z, vz, vc, csett);
              case 3
-             [alpha_degree, vz_setpoint, z_setpoint, csett]                              = control_Servo  (zc, vzc,  csett);
+             [alpha_degree, vz_setpoint, z_setpoint, csett]                              = control_Servo  (z, vz,  csett);
          end
+         input_output_test(indice_test) = struct('alpha_degree', alpha_degree, 'vz_setpoint', vz_setpoint, 'z_setpoint', z_setpoint, 'z', z, 'vz', vz, 'Vmod', sqrt(vxxx^2 + vyyy^2 + vz^2));
+         indice_test = indice_test +1;
+         
          x = extension_From_Angle(alpha_degree);
          i = i + 1; 
     elseif flagAeroBrakes && ~settings.Kalman && settings.control
@@ -313,8 +316,8 @@ while flagStopIntegration || n_old < nmax
     
     if settings.control == true  && flagAeroBrakes == 1    
          % Save the values to plot them
-         c.vz_tot(i)    =  vzc;
-         c.z_tot(i)     =  zc;
+         c.vz_tot(i)    =  vz;
+         c.z_tot(i)     =  z;
          c.vz_setpoint_tot(i)  =  vz_setpoint;
          c.z_setpoint_tot(i)   =  z_setpoint;
          c.alpha_degree_tot(i) =  alpha_degree;
