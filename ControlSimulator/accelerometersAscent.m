@@ -183,9 +183,8 @@ else
     X = qdyn*S*CA;              %[N] x-body component of the aerodynamics force
     Y = qdyn*S*CY;            %[N] y-body component of the aerodynamics force
     Z = qdyn*S*CN;           %[N] z-body component of the aerodynamics force
-    Fg = quatrotate(Q,[0 0 m*g])';  %[N] force due to the gravity in body frame
     
-    F = Fg +[-X+T,+Y,-Z]';          %[N] total forces vector
+    F = [-X+T,+Y,-Z]';          %[N] total forces vector
     
     %% STATE DERIVATIVES
     % velocity
