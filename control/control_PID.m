@@ -90,9 +90,9 @@ alpha_degree   = (alpha_rad*180)/pi;
 
 %% LIMIT THE RATE OF THE CONTROL VARIABLE 
 
-% alpha_degree = rate_Limiter(alpha_degree, csett.alpha_degree_prec, csett.rate_limiter, csett.sample_time);
+alpha_degree = rate_Limiter(alpha_degree, csett.alpha_degree_prec, csett.rate_limiter, csett.sample_time);
 
-% alpha_degree = smooth_Control(alpha_degree, csett.alpha_degree_prec, csett.filter_coeff);
-% csett.alpha_degree_prec = alpha_degree;
+alpha_degree = smooth_Control(alpha_degree, csett.alpha_degree_prec, csett.filter_coeff);
+csett.alpha_degree_prec = alpha_degree;
 
 end

@@ -443,7 +443,7 @@ end
 
 c.plot_ada     =  settings.Ada && false; 
 c.plot_sensors =  settings.dataNoise && false; 
-c.plot_kalman  =  settings.Kalman && true;
+c.plot_kalman  =  settings.Kalman && false;
 c.plot_control =  settings.control && true;
 
 %% RETRIVE PARAMETERS FROM THE ODE

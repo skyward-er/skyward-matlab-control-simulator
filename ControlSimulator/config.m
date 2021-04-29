@@ -14,7 +14,7 @@ Release date: 16/04/2016
 settings.electronics        =   false;                                     % Switch on when testing with Hardware in the loop HIL
 settings.ascentOnly         =   true;                                      % Switch on to simulate only the ascent phase untill the apogee
 settings.ballisticFligth    =   true;                                      % Switch on to simulate the balistic fligth without any parachute
-settings.control            =   false;                                      % Switch on to simulate the control
+settings.control            =   true;                                      % Switch on to simulate the control
 settings.dataNoise          =   true;                                      % Switch on to simulate the data acquisiton from sensors
 settings.launchWindow       =   false;                                     % Switch off this to avoid pausing the launch till you press the launch button
 settings.Kalman             =   true;                                     % Switch on to run the kalman algorithm
@@ -51,7 +51,7 @@ name = 'M2020';
 
 n_name = [Motors.MotorName] == name;
 settings.motor.exp_time     =    Motors(n_name).t;
-settings.motor.exp_thrust   =    Motors(n_name).T;
+settings.motor.exp_thrust   =    0.97*Motors(n_name).T;
 settings.motor.exp_m        =    Motors(n_name).m;
 settings.mp                 =    Motors(n_name).mp;                        % [kg]   Propellant Mass                                                
 settings.tb                 =    Motors(n_name).t(end) ;                   % [s]    Burning time
@@ -146,12 +146,12 @@ settings.kalman.flag_apo      =   false;                                   % Tru
 
 % Process noise covariance matrix for the linear dynamics
 settings.kalman.QLinear       =   1*...
-                                 [1       0       0        0        0       0;
-                                  0       1       0        0        0       0;
-                                  0       0       1        0        0       0;
+                                 [0       0       0        0        0       0;
+                                  0       0       0        0        0       0;
+                                  0       0       0        0        0       0;
                                   0       0       0        0.1      0       0;
                                   0       0       0        0        0.1     0;
-                                  0       0       0        0        0       0.1];
+                                  0       0       0        0        0       0.01];
 
 % Process noise covariance matrix for the quaternion dynamics
 settings.kalman.Qq              =   [(settings.kalman.sigma_w^2*settings.kalman.dt_k+(1/3)*settings.kalman.sigma_beta^2*settings.kalman.dt_k^3)*eye(3)          0.5*settings.kalman.sigma_beta^2*settings.kalman.dt_k^2*eye(3);
