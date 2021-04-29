@@ -43,7 +43,7 @@ A       = [q(1)^2 - q(2)^2 - q(3)^2 + q(4)^2,               2*(q(1)*q(2) + q(3)*
                                                 %from body axis to inertial frame 
                                                 %to use the inertial equations of motion                                                
 
-a       =   (A'*ab')' ;
+a       =   (A'*ab')' + [0 0 9.81];
 x_dot   =   [x_prev(4:6)   a];                 %The derivatives 
                          
 x       =    x_prev + x_dot*dt;
