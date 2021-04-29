@@ -48,14 +48,14 @@ if freq.accelerometerFrequency > freq.controlFrequency
                 Yinterp = Y(iTimeAcc == T, :);
                 
             end
-            sensorData.accelerometer.measures(i, :) = accelerationOnlyAscent...
+            sensorData.accelerometer.measures(i, :) = accelerometerAscent...
                 (iTimeAcc, Yinterp, settings, x, uw, vw, ww, uncert);
         end
     else
         sensorData.accelerometer.measures(1:N, 1:3) = repmat(zeros(1, 3), N, 1);
     end
 else
-    sensorData.accelerometer.measures(1, :) = accelerationOnlyAscent...
+    sensorData.accelerometer.measures(1, :) = accelerometerAscent...
             (T(end), Y(end, :), settings, x, uw, vw, ww, uncert);
     sensorData.accelerometer.time = T(end);
 end

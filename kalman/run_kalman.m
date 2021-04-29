@@ -1,4 +1,4 @@
-function [x_c, P_c, kalman] = run_kalman(x_prev, P_prev, sp, xv_ada, kalman, mag_NED)
+function [x_c, P_c, kalman] = run_kalman(x_prev, P_prev, sp, kalman, mag_NED)
 
 % Author: Alejandro Montero
 % Co-Author: Alessandro Del Duca
@@ -132,37 +132,23 @@ for i=2:length(tv)
     [xq(i,:),P_q(:,:,i)]       = predictorQuat(xq(i-1,:),P_q(:,:,i-1),...
                                                sp.gyro(i-1,:),dt_k,kalman.Qq);            
                                            
-%                                            
-%      if tv(i) > 100
-%     %Corrections
-%      if tv(i) >= t_gpstemp(index_GPS)              %Comparison to see the there's a new measurement
-%        [x_lin(i,:),P_lin(:,:,i),~]     = correctionGPS_ada(x_lin(i,:),P_lin(:,:,i),sp.gps(index_GPS,1:2),...
-%                                                         sp.gpsv(index_GPS,1:2),-xv_ada(end,1),-xv_ada(end,2),kalman.sigma_GPS,kalman.sigma_baro,nsat,1);
-%         index_GPS   =  index_GPS + 1;
-%      end
-%      else 
-%     %Corrections
-%      if tv(i) >= t_gpstemp(index_GPS)              %Comparison to see the there's a new measurement
-%        [x_lin(i,:),P_lin(:,:,i),~]     = correctionGPS2(x_lin(i,:),P_lin(:,:,i),sp.gps(index_GPS,1:2),...
-%                                                         sp.gpsv(index_GPS,1:2),kalman.sigma_GPS,nsat,fix);
-%         index_GPS   =  index_GPS + 1;
-%      end
-%      end
-%     
-%     if tv(i) >= t_barotemp(index_bar)              %Comparison to see the there's a new measurement
-%        [x_lin(i,:),P_lin(:,:,i),~]     = correctionBarometer(x_lin(i,:),P_lin(:,:,i),sp.h_baro(index_bar),kalman.sigma_baro);
-%         index_bar   =  index_bar + 1;     
-%     end
-    
-%    if tv(i) >= t_barotemp(index_bar)              %Comparison to see the there's a new measurement
-%        [x_lin(i,:),P_lin(:,:,i),kalman.pn_prec,~]     = correctionBaro2(x_lin(i,:),P_lin(:,:,i),sp.pn(index_bar),kalman.pn_prec,kalman.sigma_baro);
-%         index_bar   =  index_bar + 1;     
-%    end
-%      
-%     if tv(i) >= t_magtemp(index_mag)               %Comparison to see the there's a new measurement
-%        [xq(i,:),P_q(:,:,i),~,~]    = correctorQuat(xq(i,:),P_q(:,:,i),sp.mag(index_mag,:),kalman.sigma_mag,mag_NED);
-%        index_mag    =  index_mag + 1;  
-%     end
+ 
+%Corrections
+     if tv(i) >= t_gpstemp(index_GPS)              %Comparison to see the there's a new measurement
+       [x_lin(i,:),P_lin(:,:,i),~]     = correctionGPS(x_lin(i,:),P_lin(:,:,i),sp.gps(index_GPS,1:2),...
+                                                        sp.gpsv(index_GPS,1:2),kalman.sigma_GPS,nsat,fix);
+        index_GPS   =  index_GPS + 1;
+     end
+     
+    if tv(i) >= t_barotemp(index_bar)              %Comparison to see the there's a new measurement
+       [x_lin(i,:),P_lin(:,:,i),~]     = correctionBarometer(x_lin(i,:),P_lin(:,:,i),sp.h_baro(index_bar),kalman.sigma_baro);
+        index_bar   =  index_bar + 1;     
+    end
+         
+    if tv(i) >= t_magtemp(index_mag)               %Comparison to see the there's a new measurement
+       [xq(i,:),P_q(:,:,i),~,~]    = correctorQuat(xq(i,:),P_q(:,:,i),sp.mag(index_mag,:),kalman.sigma_mag,mag_NED);
+       index_mag    =  index_mag + 1;  
+    end
     x_c(i,:) = [x_lin(i,:),xq(i,:)];
     P_c(1:6,1:6,i)   = P_lin(:,:,i);
     P_c(7:12,7:12,i) = P_q(:,:,i);

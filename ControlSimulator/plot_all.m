@@ -140,7 +140,7 @@ title('Estimated East position vs ground-truth');
 subplot(3,1,3);plot(c.t_est_tot(1:c.i_apo_est),-c.x_est_tot(1:c.i_apo_est,3),c.Tf_tot(1:c.i_apo), -c.Yf_tot(1:c.i_apo,3));grid on;xlabel('time [s]');ylabel('|Pu| [m]');legend('Upward','Ground-truth','location','best'); 
 title('Estimated Upward position vs ground-truth'); 
 
-%% FIGURE: Estimated velocities vs ground-truth 
+%% FIGURE: Estimated body velocities vs ground-truth 
 figure('Name','Estimated velocities vs ground-truth')
 subplot(3,1,1);plot(c.t_est_tot(1:c.i_apo_est),c.x_est_tot(1:c.i_apo_est,4),c.Tf_tot(1:c.i_apo), c.v_ned_tot(1:c.i_apo,1));grid on;xlabel('time [s]');ylabel('|Vn| [m/s]');
 legend('North','Ground-truth','location','best'); title('Estimated North velocity vs ground-truth'); 

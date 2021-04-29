@@ -261,7 +261,7 @@ while flagStopIntegration || n_old < nmax
 %% Navigation system
     if settings.Kalman && settings.dataNoise
 
-    [x_c,P_c,settings.kalman]   =  run_kalman(x_prev, P_prev, sp, xv_ada, settings.kalman, XYZ0*0.01);
+    [x_c, P_c, settings.kalman]   =  run_kalman(x_prev, P_prev, sp, settings.kalman, XYZ0*0.01);
     
      x_est_tot(c.n_est_old:c.n_est_old + size(x_c(:,1),1)-1,:)  = x_c(1:end,:);
      t_est_tot(c.n_est_old:c.n_est_old + size(x_c(:,1),1)-1)    = sensorData.accelerometer.time;              
@@ -271,8 +271,8 @@ while flagStopIntegration || n_old < nmax
 %% Control algorithm
 
     if flagAeroBrakes && settings.Kalman && settings.control
-         z    =    exp_mean(-x_c(:,3),0.8);
-         vz   =    exp_mean(-x_c(:,6),0.8);
+         zc    =    exp_mean(-x_c(:,3),0.8);
+         vzc   =    exp_mean(-x_c(:,6),0.8);
          vc    =    exp_mean(sqrt(x_c(:,4).^2+x_c(:,5).^2+x_c(:,6).^2),0.8);
          if c.ctr_start == -1
             c.ctr_start = 0.1*(n - 1);
@@ -280,13 +280,13 @@ while flagStopIntegration || n_old < nmax
          %% selection of controler type
          switch csett.flagPID 
              case 1
-             [alpha_degree, vz_setpoint, z_setpoint, pid, U_linear, Cdd, delta_S, csett] = control_PID    (z, vz, vc, csett);
+             [alpha_degree, vz_setpoint, z_setpoint, pid, U_linear, Cdd, delta_S, csett] = control_PID    (zc, vzc, vc, csett);
              case 2
-             [alpha_degree, vz_setpoint, z_setpoint, pid, U_linear, Cdd, delta_S, csett] = control_Lin    (z, vz, vc, csett);
+             [alpha_degree, vz_setpoint, z_setpoint, pid, U_linear, Cdd, delta_S, csett] = control_Lin    (zc, vzc, vc, csett);
              case 3
-             [alpha_degree, vz_setpoint, z_setpoint, csett]                              = control_Servo  (z, vz,  csett);
+             [alpha_degree, vz_setpoint, z_setpoint, csett]                              = control_Servo  (zc, vzc,  csett);
          end
-         input_output_test(indice_test) = struct('alpha_degree', alpha_degree, 'vz_setpoint', vz_setpoint, 'z_setpoint', z_setpoint, 'z', z, 'vz', vz, 'Vmod', sqrt(vxxx^2 + vyyy^2 + vz^2));
+         input_output_test(indice_test) = struct('alpha_degree', alpha_degree, 'vz_setpoint', vz_setpoint, 'z_setpoint', z_setpoint, 'z', zc, 'vz', vzc, 'Vmod', sqrt(vxxx^2 + vyyy^2 + vz^2));
          indice_test = indice_test +1;
          
          x = extension_From_Angle(alpha_degree);
@@ -394,9 +394,10 @@ while flagStopIntegration || n_old < nmax
     
      flagMatr(n_old:n_old+n-1, :) = repmat([flagFligth, flagAscent, flagBurning, flagAeroBrakes, flagPara1, flagPara2], n, 1);
 end
-
+if settings.control == true
 % Salvo input/output per testare algoritmo cpp
 save('input_output_test_PID.mat','input_output_test');
+end 
 
 if settings.launchWindow
     fclose('all');
@@ -442,7 +443,7 @@ end
 
 c.plot_ada     =  settings.Ada && false; 
 c.plot_sensors =  settings.dataNoise && false; 
-c.plot_kalman  =  settings.Kalman && false;
+c.plot_kalman  =  settings.Kalman && true;
 c.plot_control =  settings.control && true;
 
 %% RETRIVE PARAMETERS FROM THE ODE
