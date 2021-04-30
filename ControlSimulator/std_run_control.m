@@ -241,9 +241,11 @@ while flagStopIntegration || n_old < nmax
    
     if iTimes==1 && settings.Kalman
         x_prev    =  [X0; V0; Q0(2:4); Q0(1);0;0;0];
+        vels_prev =  [0;0;0];
         P_prev    =   0.01*eye(12);
     elseif iTimes ~= 1 && settings.Kalman
         x_prev    =   x_est_tot(end,:);
+        vels_prev =   vels_tot(end,:);
         P_prev    =   P_c(:,:,end);
     end
 %% ADA 
@@ -261,9 +263,10 @@ while flagStopIntegration || n_old < nmax
 %% Navigation system
     if settings.Kalman && settings.dataNoise
 
-    [x_c, P_c, settings.kalman]   =  run_kalman(x_prev, P_prev, sp, settings.kalman, XYZ0*0.01);
+    [x_c, vels, P_c, settings.kalman]   =  run_kalman(x_prev, vels_prev, P_prev, sp, settings.kalman, XYZ0*0.01);
     
      x_est_tot(c.n_est_old:c.n_est_old + size(x_c(:,1),1)-1,:)  = x_c(1:end,:);
+     vels_tot(c.n_est_old:c.n_est_old + size(vels(:,1),1)-1,:)  = vels(1:end,:);
      t_est_tot(c.n_est_old:c.n_est_old + size(x_c(:,1),1)-1)    = sensorData.accelerometer.time;              
      c.n_est_old = c.n_est_old + size(x_c,1); 
      
@@ -424,6 +427,7 @@ flagMatr = flagMatr(1:n_old, :);
 % kalman state plot
 if settings.Kalman
     c.x_est_tot    =  x_est_tot;
+    c.vels_tot     =  vels_tot;
     c.t_est_tot    =  t_est_tot;
     c.i_apo        =  i_apo;
     c.i_apo_est    =  i_apo_est; 

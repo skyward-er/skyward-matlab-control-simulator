@@ -1,4 +1,4 @@
-function [x, vels, P] = predictorLinear(x_prev, vels_prev, P_prev, dt, ab, q, Q)
+function [x, vels, P] = predictorLinear2(x_prev, P_prev, dt, ab, q, Q)
 
 % Author: Alejandro Montero
 % Co-Author: Alessandro Del Duca
@@ -43,12 +43,11 @@ A       = [q(1)^2 - q(2)^2 - q(3)^2 + q(4)^2,               2*(q(1)*q(2) + q(3)*
                                                 %from body axis to inertial frame 
                                                 %to use the inertial equations of motion                                                
 
-a       =   ab' + A*[0;0;9.81] ;
-vels    =   vels_prev + a'*dt;
+a       =   A'*ab' + [0;0;9.81] ;
 
-x(4:6)  =  (A'*vels')';
+x(4:6)  =  x_prev(4:6) + dt*a';
 x(1:3)  =  x_prev(1:3) + dt*x_prev(4:6);
-
+vels    =  ( A*x(4:6)')';
 %-------------------- Jacobianv -----------------------------------------------
 F              =   sparse(6,6);                %Pre-allocation of gradient 
                                                 %of the derivative of the state

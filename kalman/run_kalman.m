@@ -1,4 +1,4 @@
-function [x_c, P_c, kalman] = run_kalman(x_prev, P_prev, sp, kalman, mag_NED)
+function [x_c, v, P_c, kalman] = run_kalman(x_prev, vels_prev, P_prev, sp, kalman, mag_NED)
 
 % Author: Alejandro Montero
 % Co-Author: Alessandro Del Duca
@@ -103,6 +103,7 @@ dt_k        =   tv(2)-tv(1);                 % Time step of the kalman
 x_lin       =   zeros(length(tv),6);         % Pre-allocation of corrected estimation
 xq          =   zeros(length(tv),7);         % Pre-allocation of quaternions and biases
 x_c         =   zeros(length(tv),13);
+v           =   zeros(length(tv),3);
 
 P_c         =   zeros(12,12,length(tv));
 P_lin       =   zeros(6,6,length(tv));       %Pre-allocation of the covariance matrix
@@ -110,6 +111,7 @@ P_q         =   zeros(6,6,length(tv));
 
 x_lin(1,:)  =   x_prev(1:6);                 % Allocation of the initial value
 xq(1,:)     =   x_prev(7:13);
+v(1,:)      =   vels_prev;
 x_c(1,:)    =   [x_lin(1,:),xq(1,:)];
 
 P_lin(:,:,1)=   P_prev(1:6,1:6);
@@ -126,8 +128,10 @@ t_barotemp = [sp.t_baro tv(end) + dt_k];
 t_magtemp  = [sp.t_mag   tv(end) + dt_k];
 for i=2:length(tv)
     %Prediction part
-    [x_lin(i,:),P_lin(:,:,i)] = predictorLinear(x_lin(i-1,:),dt_k,...
-                                                P_lin(:,:,i-1),sp.accel(i-1,:),xq(i-1,1:4),kalman.QLinear);
+    [x_lin(i,:),v(i,:),P_lin(:,:,i)] = predictorLinear(x_lin(i-1,:),v(i-1,:),P_lin(:,:,i-1),...
+                                                dt_k,sp.accel(i-1,:),xq(i-1,1:4),kalman.QLinear);
+%     [x_lin(i,:),v(i,:),P_lin(:,:,i)] = predictorLinear2(x_lin(i-1,:),P_lin(:,:,i-1),...
+%                                                 dt_k,sp.accel(i-1,:),xq(i-1,1:4),kalman.QLinear);
     
     [xq(i,:),P_q(:,:,i)]       = predictorQuat(xq(i-1,:),P_q(:,:,i-1),...
                                                sp.gyro(i-1,:),dt_k,kalman.Qq);            
@@ -149,6 +153,7 @@ for i=2:length(tv)
        [xq(i,:),P_q(:,:,i),~,~]    = correctorQuat(xq(i,:),P_q(:,:,i),sp.mag(index_mag,:),kalman.sigma_mag,mag_NED);
        index_mag    =  index_mag + 1;  
     end
+    
     x_c(i,:) = [x_lin(i,:),xq(i,:)];
     P_c(1:6,1:6,i)   = P_lin(:,:,i);
     P_c(7:12,7:12,i) = P_q(:,:,i);
