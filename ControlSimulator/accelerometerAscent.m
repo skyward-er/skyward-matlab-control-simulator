@@ -189,13 +189,13 @@ else
     
     %% STATE DERIVATIVES
     % velocity
-    du = F(1)/m-q*w+r*v;
-    dv = F(2)/m-r*u+p*w;
-    dw = F(3)/m-p*v+q*u;
-    
-%     du = F(1)/m;
-%     dv = F(2)/m;
-%     dw = F(3)/m;
+%     du = F(1)/m-q*w+r*v;
+%     dv = F(2)/m-r*u+p*w;
+%     dw = F(3)/m-p*v+q*u;
+%     
+    du = F(1)/m;
+    dv = F(2)/m;
+    dw = F(3)/m;
 end
 
 acc = [du, dv, dw];
