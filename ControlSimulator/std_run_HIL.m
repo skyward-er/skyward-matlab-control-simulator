@@ -141,11 +141,13 @@ flagPara2 = false;
 if settings.launchWindow
     launchWindow;
     pause(0.1);
-    launchFlag = false;
-    lastLaunchflag = true;
-else
-    launchFlag = true;
 end
+
+launchFlag = false;
+lastLaunchflag = false;
+% else
+%     launchFlag = true;
+% end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -154,13 +156,8 @@ while flagStopIntegration || n_old < nmax
     iTimes = iTimes + 1;
     
     lastFlagAscent = flagAscent;
-
-    if settings.launchWindow
-        if not(lastLaunchflag) && launchFlag
-            tLaunch = t0;
-        end
-    else 
-        tLaunch = 0;
+    if not(lastLaunchflag) && launchFlag
+        tLaunch = t0;
     end
     
     if launchFlag && (t0 - tLaunch) <= settings.tb
@@ -267,7 +264,15 @@ while flagStopIntegration || n_old < nmax
     end
     
     alpha_degree = readControlOutputFromSerial();
-
+    
+    % if the obsw sends an opening of -1 while the flag isLaunch is still
+    % false, triggers the liftoff and the opening of aerobrake is set to 0
+    if(alpha_degree < 0 && not(isLaunch))
+        alpha_degree = 0;
+        isLaunch = true;
+        disp("Liftoff (obsw signal)!");
+    end
+    
     x = get_extension_from_angle(alpha_degree);
     
     if flagAeroBrakes
@@ -319,12 +324,11 @@ while flagStopIntegration || n_old < nmax
     
     n_old = n_old + n -1;
    
-    if settings.launchWindow
-        lastLaunchflag = launchFlag;
-        pause(1e-6);
-        if isLaunch
-            launchFlag = true;
-        end
+    lastLaunchflag = launchFlag;
+    pause(1e-6);
+    if isLaunch && not(lastLaunchflag)
+        launchFlag = true;
+        disp("Liftoff (matlab signal)!");
     end
     
     if settings.ascentOnly
