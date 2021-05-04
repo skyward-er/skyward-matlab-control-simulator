@@ -104,7 +104,6 @@ magneticFieldApprox = @(zSlm) XYZ0 + (XYZh-XYZ0)./hmax.*zSlm;
 
 %% INTEGRATION
 % setting initial condition before control phase
-otherData.z_aerobrakeOn = 0;
 dt = 1/settings.frequencies.controlFrequency;
 t0 = 0;
 t1 = t0 + dt;
@@ -158,6 +157,7 @@ while flagStopIntegration || n_old < nmax
     lastFlagAscent = flagAscent;
     if not(lastLaunchflag) && launchFlag
         tLaunch = t0;
+        otherData.tLaunch = t0;
     end
     
     if launchFlag && (t0 - tLaunch) <= settings.tb
@@ -167,6 +167,11 @@ while flagStopIntegration || n_old < nmax
     end
     
     if flagAscent && not(flagBurning) && mach <=0.7
+        if not(flagAeroBrakes)
+            otherData.t_aerobrakes = t0;
+            otherData.z_aerobrakes = z;
+            otherData.vz_aerobrakes = vz;
+        end
         flagAeroBrakes = true;
     else
         flagAeroBrakes = false;
@@ -186,9 +191,19 @@ while flagStopIntegration || n_old < nmax
     
     if not(flagAscent) && launchFlag
         if z >= settings.para(1).z_cut
+            if not(flagPara1)
+                otherData.t_para1 = t0;
+                otherData.z_para1 = z;
+                otherData.vz_para1 = vz;
+            end
             flagPara1 = true;
             flagPara2 = false;
         else
+            if not(flagPara2)
+                otherData.t_para2 = t0;
+                otherData.z_para2 = z;
+                otherData.vz_para2 = vz;
+            end
             flagPara1 = false;
             flagPara2 = true;
         end
@@ -267,7 +282,7 @@ while flagStopIntegration || n_old < nmax
     
     % if the obsw sends an opening of -1 while the flag isLaunch is still
     % false, triggers the liftoff and the opening of aerobrake is set to 0
-    if(alpha_degree < 0 && not(isLaunch))
+    if(alpha_degree == -1 && not(isLaunch))
         alpha_degree = 0;
         isLaunch = true;
         disp("Liftoff (obsw signal)!");
@@ -276,10 +291,6 @@ while flagStopIntegration || n_old < nmax
     x = get_extension_from_angle(alpha_degree);
     
     if flagAeroBrakes
-        if otherData.z_aerobrakeOn == 0
-            otherData.z_aerobrakeOn = z;
-            otherData.vz_aerobrakeOn = vz;
-        end
         plot_control_variable(index_plot) = alpha_degree;
         index_plot = index_plot + 1;
     end

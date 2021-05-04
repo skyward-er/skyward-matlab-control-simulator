@@ -60,23 +60,43 @@ abs_V = vecnorm(Va');
 [max_dist, imax_dist] = max(abs_X);
 [max_v, imax_v] = max(abs_V);
 
+% closing the serial connection
+if settings.electronics
+    serialbridge("Close")
+end
+
 % DATA RECORD (display)
-fprintf('OUTCOMES:\n\n')
+fprintf('OUTCOMES: (times dt from liftoff)\n\n')
 
 fprintf('total computational Time: %.3f [s]: \n', sum(cpuTimes))
 fprintf('mean step computational Time: %.3f [s]: \n', mean(cpuTimes))
-fprintf('max step omputational Time: %.3f [s]: \n\n', max(cpuTimes))
+fprintf('max step computational Time: %.3f [s]: \n\n', max(cpuTimes))
 
-fprintf('apogee: %.1f [m] \n', max_z);
-fprintf('@time: %g [sec] \n\n', T_apo)
-
-fprintf('max speed reached: %g [m/s] \n', max_v)
+fprintf('max speed reached: \n')
+fprintf('@time: %g [sec] \n', Tf(imax_v) - otherData.tLaunch)
 fprintf('@altitude: %g [m] \n', za(imax_v))
-fprintf('@time: %g [sec] \n\n', Tf(imax_v))
+fprintf("@velocity: %g [m/s] \n\n", max_v);
 
 fprintf('activation airbrakes (end burning phase):\n');
-fprintf("@altitude: %g [m] \n", otherData.z_aerobrakeOn);
-fprintf("@velocity: %g [m/s] \n", otherData.vz_aerobrakeOn);
+fprintf('@time: %g [sec] \n', otherData.t_aerobrakes - otherData.tLaunch)
+fprintf("@altitude: %g [m] \n", otherData.z_aerobrakes);
+fprintf("@velocity: %g [m/s] \n\n", otherData.vz_aerobrakes);
+
+fprintf('apogee:\n');
+fprintf('@time: %g [sec] \n', T_apo - otherData.tLaunch)
+fprintf('@altitude: %.1f [m] \n\n', max_z)
+
+if(not(settings.ballisticFligth))
+    fprintf('parachute 1:\n');
+    fprintf('@time: %g [sec] \n', otherData.t_para1 - otherData.tLaunch)
+    fprintf("@altitude: %g [m] \n", otherData.z_para1);
+    fprintf("@velocity: %g [m/s] \n\n", otherData.vz_para1);
+
+    fprintf('parachute 2:\n');
+    fprintf('@time: %g [sec] \n', otherData.t_para2 - otherData.tLaunch)
+    fprintf("@altitude: %g [m] \n", otherData.z_para2);
+    fprintf("@velocity: %g [m/s] \n\n", otherData.vz_para2);
+end
 
 if not(settings.electronics)
     M = data_flight.interp.M;
@@ -139,10 +159,6 @@ if settings.plots && not(settings.electronics)
     plot(Tf(flagMatr(:, 2)), Yf(flagMatr(:, 2), 9)*180/pi), grid on;
     xlabel('time [s]'), ylabel('p [deg/s]');
        
-end
-
-if settings.electronics
-    serialbridge("Close")
 end
 
 clearvars -except Yf data_flight settings
