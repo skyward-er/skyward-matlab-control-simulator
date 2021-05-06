@@ -349,6 +349,8 @@ while flagStopIntegration || n_old < nmax
         ngps_old = ngps_old + size(gps,1);
 
     end
+    
+  [fix,nsat] = gpsFix(accel(end,:));
   
     if iTimes==1
         x_prev    =  [X0; V0; Q0(2:4); Q0(1);0;0;0];

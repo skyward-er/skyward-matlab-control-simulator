@@ -100,6 +100,8 @@ P_c(:,:,1)  = P_prev;
 index_GPS=1;
 index_bar=1;
 index_mag=1;
+
+
 for i=2:length(t_v)
     %Prediction part
     [x_lin(i,:),P_lin(:,:,i)] = predictorLinear(x_lin(i-1,:),dt_k,...
