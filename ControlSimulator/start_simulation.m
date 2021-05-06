@@ -70,7 +70,7 @@ fprintf('OUTCOMES: (times dt from liftoff)\n\n')
 
 fprintf('total computational Time: %.3f [s]: \n', sum(cpuTimes))
 fprintf('mean step computational Time: %.3f [s]: \n', mean(cpuTimes))
-fprintf('max step computational Time: %.3f [s]: \n\n', max(cpuTimes))
+fprintf('max step computational Time: %.3f [s]: \n\n', max(cpuTimes(1:end-1)))
 
 fprintf('max speed reached: \n')
 fprintf('@time: %g [sec] \n', Tf(imax_v) - otherData.tLaunch)

@@ -27,6 +27,8 @@ dataToBeSent.magnetometer = data.magnetometer;
 
 dataToBeSent.gps.positionMeasures = data.gps.positionMeasures;
 dataToBeSent.gps.velocityMeasures = data.gps.velocityMeasures;
+dataToBeSent.gps.fix = data.gps.fix;
+dataToBeSent.gps.nsat = data.gps.nsat;
 
 dataToBeSent.barometer = data.barometer;
 

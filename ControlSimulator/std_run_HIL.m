@@ -272,6 +272,18 @@ while flagStopIntegration || n_old < nmax
     
     flagsArray = [flagFligth, flagAscent, flagBurning, flagAeroBrakes, flagPara1, flagPara2];
     
+    % getting the fix and nSatellites
+
+    if settings.dataNoise
+        [fix,nsat] = gpsFix(sp.accelerometer.measures(end,:));
+        sp.gps.fix = fix;
+        sp.gps.nsat = nsat;
+    else
+        [fix,nsat] = gpsFix(sensorData.accelerometer.measures(end,:));
+        sensorData.gps.fix = fix;
+        sensorData.gps.nsat = nsat;
+    end
+    
     if settings.dataNoise == true
         sendDataOverSerial(sp, flagsArray);   
     else
