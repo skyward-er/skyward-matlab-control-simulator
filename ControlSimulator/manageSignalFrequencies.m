@@ -52,7 +52,10 @@ if freq.accelerometerFrequency > freq.controlFrequency
                 (iTimeAcc, Yinterp, settings, x, uw, vw, ww, uncert);
         end
     else
-        sensorData.accelerometer.measures(1:N, 1:3) = repmat(zeros(1, 3), N, 1);
+        
+        gbody = quatrotate(Y(10:13,1),[0 0 9.81])';  
+    
+        sensorData.accelerometer.measures(1:N, 1:3) = repmat(gbody, N, 1);
     end
 else
     sensorData.accelerometer.measures(1, :) = accelerometersAscent...
