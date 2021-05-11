@@ -1,4 +1,4 @@
-function [x_pred,P_pred]=predictorQuat(x,P,w,dt,Q)
+function [x_pred,P_pred]=predictorQuat(x, P, dt, w, Q)
 
 % Author: Alejandro Montero
 % Co-Author: Alessandro Del Duca

@@ -1,4 +1,4 @@
-function acc = accelerometersAscent(t, Y, settings, c, uw, vw, ww, uncert,tLaunch)
+function acc = accelerometersAscent(t, Y, settings, c, uw, vw, ww, uncert, tLaunch)
 %{ 
 
 Author: Adriano Filippo Inno

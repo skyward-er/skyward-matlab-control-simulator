@@ -88,10 +88,10 @@ sensorTot.ngps_old      =   1;
 sensorTot.n_est_old     =   1;
 sensorTot.n_ada_old     =   1;
 
-sensorTot.pn_tot      =   0;
-sensorTot.hb_tot      =   0;
-sensorTot.accel_tot   =   [0, 0, 0];
-sensorTot.gyro_tot    =   [0, 0, 0];
-sensorTot.mag_tot     =   [0, 0, 0];
-sensorTot.gps_tot     =   [0, 0, 0];
-sensorTot.gpsv_tot    =   [0, 0, 0];
+% sensorTot.pn_tot      =   0;
+% sensorTot.hb_tot      =   0;
+% sensorTot.accel_tot   =   [0, 0, 0];
+% sensorTot.gyro_tot    =   [0, 0, 0];
+% sensorTot.mag_tot     =   [0, 0, 0];
+% sensorTot.gps_tot     =   [0, 0, 0];
+% sensorTot.gpsv_tot    =   [0, 0, 0];

@@ -1,4 +1,4 @@
-function [x_c, v, P_c, kalman] = run_kalman(x_prev, vels_prev, P_prev, sp, kalman, mag_NED)
+function [x_c, v, P_c, kalman] = run_kalman(x_prev, vels_prev, P_prev, sensorData, kalman, mag_NED)
 
 % Author: Alejandro Montero
 % Co-Author: Alessandro Del Duca
@@ -96,8 +96,15 @@ For more information check the navigation system report
                  INSTANTS. [12x12x10]
 -----------------------------------------------------------------------
 %}
-tv          =   sp.t_acc;
-[fix, nsat] =   gpsFix(sp.accel);
+tv          =   sensorData.accelerometer.time;
+accel       =   sensorData.accelerometer.measures;
+gyro        =   sensorData.gyro.measures;
+mag         =   sensorData.magnetometer.measures;
+gps         =   sensorData.gps.positionMeasures;
+gpsv        =   sensorData.gps.velocityMeasures;
+baro        =   sensorData.barometer.measures;
+h_baro      =   sensorData.h_baro;
+
 
 dt_k        =   tv(2)-tv(1);                 % Time step of the kalman
 x_lin       =   zeros(length(tv),6);         % Pre-allocation of corrected estimation
@@ -123,36 +130,35 @@ index_bar=1;
 index_mag=1;
 
 % Time vectors agumentation
-t_gpstemp  = [sp.t_gps  tv(end) + dt_k];
-t_barotemp = [sp.t_baro tv(end) + dt_k];
-t_magtemp  = [sp.t_mag   tv(end) + dt_k];
+t_gpstemp  = [sensorData.gps.time  tv(end) + dt_k];
+t_barotemp = [sensorData.barometer.time tv(end) + dt_k];
+t_magtemp  = [sensorData.magnetometer.time  tv(end) + dt_k];
 for i=2:length(tv)
     %Prediction part
-%     [x_lin(i,:),v(i,:),P_lin(:,:,i)] = predictorLinear(x_lin(i-1,:),v(i-1,:),P_lin(:,:,i-1),...
-%                                                 dt_k,sp.accel(i-1,:),xq(i-1,1:4),kalman.QLinear);
-    [x_lin(i,:),v(i,:),P_lin(:,:,i)] = predictorLinear2(x_lin(i-1,:),P_lin(:,:,i-1),...
-                                                dt_k,sp.accel(i-1,:),xq(i-1,1:4),kalman.QLinear);
+
+    [x_lin(i,:),v(i,:),P_lin(:,:,i)] = predictorLinear2(x_lin(i-1,:), P_lin(:,:,i-1), dt_k, ...
+                                                        accel(i-1,:), xq(i-1,1:4), kalman.QLinear);
     
-    [xq(i,:),P_q(:,:,i)]       = predictorQuat(xq(i-1,:),P_q(:,:,i-1),...
-                                               sp.gyro(i-1,:),dt_k,kalman.Qq);            
+    [xq(i,:),P_q(:,:,i)]             = predictorQuat(xq(i-1,:), P_q(:,:,i-1), dt_k, ...
+                                                     gyro(i-1,:), kalman.Qq);            
                                            
  
 %Corrections
-%      if tv(i) >= t_gpstemp(index_GPS)              %Comparison to see the there's a new measurement
-%        [x_lin(i,:),P_lin(:,:,i),~]     = correctionGPS(x_lin(i,:),P_lin(:,:,i),sp.gps(index_GPS,1:2),...
-%                                                         sp.gpsv(index_GPS,1:2),kalman.sigma_GPS,nsat,fix);
-%         index_GPS   =  index_GPS + 1;
-%      end
-%      
-%     if tv(i) >= t_barotemp(index_bar)              %Comparison to see the there's a new measurement
-%        [x_lin(i,:),P_lin(:,:,i),~]     = correctionBarometer(x_lin(i,:),P_lin(:,:,i),sp.h_baro(index_bar),kalman.sigma_baro);
-%         index_bar   =  index_bar + 1;     
-%     end
-%          
-%     if tv(i) >= t_magtemp(index_mag)               %Comparison to see the there's a new measurement
-%        [xq(i,:),P_q(:,:,i),~,~]    = correctorQuat(xq(i,:),P_q(:,:,i),sp.mag(index_mag,:),kalman.sigma_mag,mag_NED);
-%        index_mag    =  index_mag + 1;  
-%     end
+     if tv(i) >= t_gpstemp(index_GPS)              %Comparison to see the there's a new measurement
+       [x_lin(i,:),P_lin(:,:,i),~]     = correctionGPS(x_lin(i,:), P_lin(:,:,i), ...
+                                                       gps(index_GPS,1:2), gpsv(index_GPS,1:2), kalman.sigma_GPS, 5, 1);
+        index_GPS   =  index_GPS + 1;
+     end
+     
+    if tv(i) >= t_barotemp(index_bar)              %Comparison to see the there's a new measurement
+       [x_lin(i,:),P_lin(:,:,i),~]     = correctionBarometer(x_lin(i,:) ,P_lin(:,:,i), h_baro(index_bar), kalman.sigma_baro);
+        index_bar   =  index_bar + 1;     
+    end
+         
+    if tv(i) >= t_magtemp(index_mag)               %Comparison to see the there's a new measurement
+       [xq(i,:),P_q(:,:,i),~,~]        = correctorQuat(xq(i,:), P_q(:,:,i), mag(index_mag,:), kalman.sigma_mag, mag_NED);
+       index_mag    =  index_mag + 1;  
+    end
     
     x_c(i,:) = [x_lin(i,:),xq(i,:)];
     P_c(1:6,1:6,i)   = P_lin(:,:,i);

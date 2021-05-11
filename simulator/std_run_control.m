@@ -86,7 +86,7 @@ addpath('../kalman');
 addpath('../sensors');
 addpath('../sensors/data/MS580301BA01');
 addpath('../simulationData');
-[s, c] = initSensors;
+[s, tot] = initSensors;
 
 %% CONTROL INIT
 addpath('../control');
@@ -122,8 +122,9 @@ Tf_tot      =       zeros(nmax, 1);
 C           =       zeros(nmax, 1);
 cpuTimes    =       zeros(nmax,1);
 iTimes      =       0;
-c.ctr_start =      -1;
+tot.ctr_start =      -1;
 i           =       1;
+
 settings.kalman.pn_prec  =       settings.ada.p_ref;
 %% Flag initializations
 flagStopIntegration     =   true;
@@ -137,6 +138,7 @@ if settings.launchWindow
     lastLaunchflag = true;
 else
     launchFlag = true;
+    tLaunch    =    0;
 end
 
 if settings.launchWindow
@@ -232,16 +234,15 @@ while flagStopIntegration || n_old < nmax
         Yf = [initialCond'; initialCond'];
     end
      
-    [sensorData] = manageSignalFrequencies(magneticFieldApprox, flagAscent, settings, Yf, Tf, x, uw, vw, ww, uncert);
+    [sensorData] = manageSignalFrequencies(magneticFieldApprox, flagAscent, settings, Yf, Tf, x, uw, vw, ww, uncert, tLaunch);
     [~, ~, p, ~] = atmosisa(-Yf(:,3)) ; 
  
- 
+    sensorData.accelerometer.measures
     if settings.dataNoise
-        [sp, c] = acquisition_Sys(sensorData, s, c);
+        [sensorData, tot] = acquisition_Sys(sensorData, s, tot);
     end
-    
-  [fix,nsat] = gpsFix(accel(end,:));
   
+    
     if iTimes==1 && settings.Ada
         ada_prev  =   settings.ada.x0;
         Pada_prev =   settings.ada.P0;
@@ -261,25 +262,23 @@ while flagStopIntegration || n_old < nmax
     end
 %% ADA 
     if settings.Ada && settings.dataNoise
-    [xp_ada, xv_ada, P_ada, settings.ada]   =  run_ADA(ada_prev, Pada_prev,                ...
-                                                       sp.pn, sensorData.barometer.time,   ...
-                                                       settings.ada);
+    [xp_ada, xv_ada, P_ada, settings.ada]   =  run_ADA(ada_prev, Pada_prev, sensorData, settings.ada);
                                                    
-     xp_ada_tot(c.n_ada_old:c.n_ada_old + size(xp_ada(:,1),1) -1,:)  = xp_ada(1:end,:);
-     xv_ada_tot(c.n_ada_old:c.n_ada_old + size(xv_ada(:,1),1)-1,:)  = xv_ada(1:end,:);
-     t_ada_tot(c.n_ada_old:c.n_ada_old + size(xp_ada(:,1),1)-1)     = sensorData.barometer.time;              
-     c.n_ada_old = c.n_ada_old + size(xp_ada,1); 
+     xp_ada_tot(tot.n_ada_old:tot.n_ada_old + size(xp_ada(:,1),1) -1,:)  = xp_ada(1:end,:);
+     xv_ada_tot(tot.n_ada_old:tot.n_ada_old + size(xv_ada(:,1),1)-1,:)  = xv_ada(1:end,:);
+     t_ada_tot(tot.n_ada_old:tot.n_ada_old + size(xp_ada(:,1),1)-1)     = sensorData.barometer.time;              
+     tot.n_ada_old = tot.n_ada_old + size(xp_ada,1); 
      
      end
 %% Navigation system
     if settings.Kalman && settings.dataNoise
 
-    [x_c, vels, P_c, settings.kalman]   =  run_kalman(x_prev, vels_prev, P_prev, sp, settings.kalman, XYZ0*0.01);
+    [x_c, vels, P_c, settings.kalman]   =  run_kalman(x_prev, vels_prev, P_prev, sensorData, settings.kalman, XYZ0*0.01);
     
-     x_est_tot(c.n_est_old:c.n_est_old + size(x_c(:,1),1)-1,:)  = x_c(1:end,:);
-     vels_tot(c.n_est_old:c.n_est_old + size(vels(:,1),1)-1,:)  = vels(1:end,:);
-     t_est_tot(c.n_est_old:c.n_est_old + size(x_c(:,1),1)-1)    = sensorData.accelerometer.time;              
-     c.n_est_old = c.n_est_old + size(x_c,1); 
+     x_est_tot(tot.n_est_old:tot.n_est_old + size(x_c(:,1),1)-1,:)  = x_c(1:end,:);
+     vels_tot(tot.n_est_old:tot.n_est_old + size(vels(:,1),1)-1,:)  = vels(1:end,:);
+     t_est_tot(tot.n_est_old:tot.n_est_old + size(x_c(:,1),1)-1)    = sensorData.accelerometer.time;              
+     tot.n_est_old = tot.n_est_old + size(x_c,1); 
      
     end
 %% Control algorithm
@@ -288,8 +287,8 @@ while flagStopIntegration || n_old < nmax
          zc    =    exp_mean(-x_c(:,3),0.8);
          vzc   =    exp_mean(-x_c(:,6),0.8);
          vc    =    exp_mean(sqrt(x_c(:,4).^2+x_c(:,5).^2+x_c(:,6).^2),0.8);
-         if c.ctr_start == -1
-            c.ctr_start = 0.1*(n - 1);
+         if tot.ctr_start == -1
+            tot.ctr_start = 0.1*(n - 1);
          end
          %% selection of controler type
          switch csett.flagPID 
@@ -306,8 +305,8 @@ while flagStopIntegration || n_old < nmax
          x = extension_From_Angle(alpha_degree);
          i = i + 1; 
     elseif flagAeroBrakes && ~settings.Kalman && settings.control
-         if c.ctr_start == -1
-            c.ctr_start = 0.1*(n - 1);
+         if tot.ctr_start == -1
+            tot.ctr_start = 0.1*(n - 1);
          end
         switch csett.flagPID 
              case 1
@@ -330,16 +329,16 @@ while flagStopIntegration || n_old < nmax
     
     if settings.control == true  && flagAeroBrakes == 1    
          % Save the values to plot them
-         c.vz_tot(i)    =  vz;
-         c.z_tot(i)     =  z;
-         c.vz_setpoint_tot(i)  =  vz_setpoint;
-         c.z_setpoint_tot(i)   =  z_setpoint;
-         c.alpha_degree_tot(i) =  alpha_degree;
+         tot.vz_tot(i)    =  vz;
+         tot.z_tot(i)     =  z;
+         tot.vz_setpoint_tot(i)  =  vz_setpoint;
+         tot.z_setpoint_tot(i)   =  z_setpoint;
+         tot.alpha_degree_tot(i) =  alpha_degree;
          if csett.flagPID ~= 3
-             c.Cd_tot(i)    =  Cdd;
-             c.pid_tot(i)   =  pid;
-             c.U_lin_tot(i) =  U_linear;
-             c.dS_tot(i)    =  delta_S;
+             tot.Cd_tot(i)    =  Cdd;
+             tot.pid_tot(i)   =  pid;
+             tot.U_lin_tot(i) =  U_linear;
+             tot.dS_tot(i)    =  delta_S;
          end
     end
 
@@ -382,11 +381,11 @@ while flagStopIntegration || n_old < nmax
     [n, ~] = size(Yf);
     Yf_tot(n_old:n_old+n-1, :)   =  Yf(1:end, :);
     Tf_tot(n_old:n_old+n-1, 1)   =  Tf(1:end, 1);
-    c.Yf_tot(n_old:n_old+n-1, :) =  Yf(1:end, :);
-    c.Tf_tot(n_old:n_old+n-1, 1) =  Tf(1:end, 1);
-    c.p_tot(n_old:n_old+n-1, 1)  =  p(1:end, 1);
+    tot.Yf_tot(n_old:n_old+n-1, :) =  Yf(1:end, :);
+    tot.Tf_tot(n_old:n_old+n-1, 1) =  Tf(1:end, 1);
+    tot.p_tot(n_old:n_old+n-1, 1)  =  p(1:end, 1);
     C(n_old:n_old+n-1) = x;
-    c.v_ned_tot(n_old:n_old+n-1,:) = v_ned;  
+    tot.v_ned_tot(n_old:n_old+n-1,:) = v_ned;  
     
     n_old = n_old + n -1;
    
@@ -438,43 +437,37 @@ flagMatr = flagMatr(1:n_old, :);
 %% SAVE THE VARIABLES FOR PLOT PURPOSE
 % kalman state plot
 if settings.Kalman
-    c.x_est_tot    =  x_est_tot;
-    c.vels_tot     =  vels_tot;
-    c.t_est_tot    =  t_est_tot;
-    c.i_apo        =  i_apo;
-    c.i_apo_est    =  i_apo_est; 
+    tot.x_est_tot    =  x_est_tot;
+    tot.vels_tot     =  vels_tot;
+    tot.t_est_tot    =  t_est_tot;
+    tot.i_apo        =  i_apo;
+    tot.i_apo_est    =  i_apo_est; 
 end
 
 % ada state for plot
 if settings.Ada
-    c.xp_ada_tot   =  xp_ada_tot;
-    c.xv_ada_tot   =  xv_ada_tot;  
-    c.t_ada_tot    =  t_ada_tot;
+    tot.xp_ada_tot   =  xp_ada_tot;
+    tot.xv_ada_tot   =  xv_ada_tot;  
+    tot.t_ada_tot    =  t_ada_tot;
 end
 
 % control
 if settings.control
-    c.flagPID      =  csett.flagPID;
+    tot.flagPID      =  csett.flagPID;
 end
 
-c.plot_ada     =  settings.Ada && false; 
-c.plot_sensors =  settings.dataNoise && false; 
-c.plot_kalman  =  settings.Kalman && true;
-c.plot_control =  settings.control && true;
+tot.plot_ada     =  settings.Ada && true; 
+tot.plot_sensors =  settings.dataNoise && true; 
+tot.plot_kalman  =  settings.Kalman && true;
+tot.plot_control =  settings.control && false;
 
 %% RETRIVE PARAMETERS FROM THE ODE
 
 dataBallisticFlight = RecallOdeFcn(@ascent, Tf(flagMatr(:, 2)), Yf(flagMatr(:, 2), :), settings, C, uw, vw, ww, uncert, tLaunch);
 
-plot_all(c, csett)
+plot_all(tot, csett)
 
-% if true
-% save('../simulationData/Ground_truth.mat','sensorData');
-% if settings.dataNoise 
-% save('../simulationData/Sensors.mat','c');
-% end
-% end
 
-%end
+end
 
 

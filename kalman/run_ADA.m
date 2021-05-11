@@ -1,4 +1,4 @@
-function [xp, xv, Pout, ada]   =  run_ADA(xin, Pin, p_baro, t_baro, ada)
+function [xp, xv, Pout, ada]   =  run_ADA(xin, Pin, sensorData, ada)
 
 % Author: Alessandro Del Duca
 % Skyward Experimental Rocketry | ELC-SCS Dept | electronics@skywarder.eu
@@ -62,7 +62,7 @@ INPUTS:
 -----------------------------------------------------------------------
 %}
 
-    dt = t_baro(2) - t_baro(1);
+    dt = sensorData.barometer.time(2) - sensorData.barometer.time(1);
     
     x  = xin';
     
@@ -72,10 +72,10 @@ INPUTS:
 
     Ct = [ 1     0     0 ];
     
-    xp = zeros(length(t_baro),3);
-    xv = zeros(length(t_baro),2);
+    xp = zeros(length(sensorData.barometer.time),3);
+    xv = zeros(length(sensorData.barometer.time),2);
     
-    for ii = 1:length(t_baro)
+    for ii = 1:length(sensorData.barometer.time)
     
         % Prediction step:
         x      =   At * x;
@@ -86,7 +86,7 @@ INPUTS:
         % Correction step:
         S      =   Ct * P * Ct' + ada.R;
         K      =   P * Ct' /S;
-        x      =   x + K*(p_baro(ii) - Ct*x);
+        x      =   x + K*(sensorData.barometer.measures(ii) - Ct*x);
         Pout   =  (eye(3) - K*Ct) * P;
 
         xp(ii,:)  =   x';
@@ -101,7 +101,7 @@ INPUTS:
                 ada.counter = 0;
             end
             if ada.counter >= ada.count_thr
-            	ada.t_ada = t_baro(ii);
+            	ada.t_ada = sensorData.barometer.time(ii);
                 ada.flag_apo = true;
             end
         end

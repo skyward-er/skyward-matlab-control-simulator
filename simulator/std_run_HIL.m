@@ -81,6 +81,9 @@ end
 %% KALMAN PATH 
 addpath('../kalman');
 
+%% CONTROL PATH 
+addpath('../control');
+
 %% SENSORS DEFINITION
 addpath('../sensors');
 addpath('../sensors/data/MS580301BA01');
@@ -90,7 +93,7 @@ addpath('../sensors/data/MS580301BA01');
 hmax = 6000;
 % %Use this lines if your MATLAB version is up to 2020
 dy = decyear(settings.launchDate);
-[XYZ0,H0,D0,I0,F0] = wrldmagm(0, settings.lat0, settings.lon0, dy, '2020');
+[XYZ0,~,~,~,~] = wrldmagm(0, settings.lat0, settings.lon0, dy, '2020');
 [XYZh] = wrldmagm(hmax, settings.lat0, settings.lon0, dy, '2020');
 % fprintf('Horizontal intensity in nT: %g [nT] \n', H0)
 % fprintf('Declination in degrees: %g [°]  \n', D0)
@@ -118,7 +121,6 @@ C = zeros(nmax, 1);
 n_old = 1;
 cpuTimes = zeros(nmax,1);
 iTimes = 0;
-g = 9.81;
 
 index_plot = 1;
 plot_control_variable = zeros(nmax,1);
@@ -306,7 +308,7 @@ while flagStopIntegration || n_old < nmax
         disp("Liftoff (obsw signal)!");
     end
     
-    x = get_extension_from_angle(alpha_degree);
+    x = extension_From_Angle(alpha_degree);
     
     if flagAeroBrakes
         plot_control_variable(index_plot) = alpha_degree;
