@@ -1,4 +1,4 @@
-function [x,P,y_res] = correctionGPS(x_pred,P_pred,x_sam,y_sam,z_sam,sigma_GPS,sats,fix)
+function [x,P,y_res] = correctionGPS(x_pred,P_pred,pGPS,vGPS,sigma_GPS,sats,fix)
 
 % Author: Alejandro Montero
 % Co-Author: Alessandro Del Duca
@@ -26,6 +26,7 @@ function [x,P,y_res] = correctionGPS(x_pred,P_pred,x_sam,y_sam,z_sam,sigma_GPS,s
 %           -x_sam:     MEASUREMENT OF X FROM GPS AT TIME T --> 1x1
 %           -y_sam:     MEASUREMENT OF Y FROM GPS AT TIME T --> 1x1
 %           -z_sam:     MEASUREMENT OF Z FROM GPS AT TIME T --> 1x1
+%           -vGPS:      MEASUREMENT OF VELOCITY FROM GPS AT TIME T --> 1x3
 %           -sigma_GPS: VARIANCE OF THE GPS
 %           -sats:      NUMBER OF AVAILABLE SATELITES FOR THE GPS
 %           -fix:       BINARY VARIABLE WHICH DESCRIBES THE LEVEL OF TRUST
@@ -39,23 +40,22 @@ function [x,P,y_res] = correctionGPS(x_pred,P_pred,x_sam,y_sam,z_sam,sigma_GPS,s
 %                       OF THE OUTPUT AND THE MEASSURE; ONLY FOR CHECKING
 %                       --> 1x3
 %---------------------------------------------------------------------------
-threshold      =   10e-3;
-H              =   sparse(3,6);                 %Pre-allocation of gradient 
-                                                 %of the output function 
-H(1,1)         =   1;
-H(2,2)         =   1;
-H(3,3)         =   1; 
+threshold      =   10e-11;
+H              =   [ 1 0 0 0 0 0;                                          %Pre-allocation of gradient 
+                     0 1 0 0 0 0;
+                     0 0 0 1 0 0;
+                     0 0 0 0 1 0;];                                        %of the output function  
 
-R              =   diag(sigma_GPS^2*ones(3,1)/sats); %VARIANCE MATRIX SCALED 
-                                                     %TAKING INTO ACCOUNT
-                                                     %NUMBER OF SATELITES
-                                                     %AVAILABLE
+R              =   diag(sigma_GPS^2*ones(4,1)/sats);                       %VARIANCE MATRIX SCALED 
+                                                                           %TAKING INTO ACCOUNT
+                                                                           %NUMBER OF SATELITES
+                                                                           %AVAILABLE
 
 if fix==1
 
-z              =   [x_pred(1);x_pred(2);x_pred(3);];
+z              =   H*x_pred';
 
-e              =   [x_sam;y_sam;z_sam] - z;
+e              =   [pGPS';vGPS'] - z;
 
 S              =   H*P_pred*H'+R;                    %Matrix necessary for the correction factor
 
@@ -76,7 +76,7 @@ x              =   x_pred;
 P              =   P_pred;
 end
 
-z_corr         =   [x(1);x(2);x(3);];                %Corrected output expectation
+z_corr         =   [x(1);x(2);x(4);x(5)];                %Corrected output expectation
 
-y_res          =    [x_sam;y_sam;z_sam] - z_corr;
+y_res          =    [pGPS';vGPS'] - z_corr;
 end

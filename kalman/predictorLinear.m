@@ -1,4 +1,4 @@
-function [x,P] = predictorLinear(x_prev,dt,P_prev,ab,q,Q)
+function [x, vels, P] = predictorLinear(x_prev, vels_prev, P_prev, dt, ab, q, Q)
 
 % Author: Alejandro Montero
 % Co-Author: Alessandro Del Duca
@@ -34,31 +34,20 @@ function [x,P] = predictorLinear(x_prev,dt,P_prev,ab,q,Q)
 %                       6 x 6 matrix
 %---------------------------------------------------------------------------
 
-    
-               
-A              =   [q(1)^2 - q(2)^2 - q(3)^2 + q(4)^2,                   2*(q(1)*q(2) + q(3)*q(4)),               2*(q(1)*q(3) - q(2)*q(4));
-                            2*(q(1)*q(2) - q(3)*q(4)),          -q(1)^2 + q(2)^2 - q(3)^2 + q(4)^2,               2*(q(2)*q(3) + q(1)*q(4));
-                            2*(q(1)*q(3) + q(2)*q(4)),                   2*(q(2)*q(3) - q(1)*q(4)),     -q(1)^2 - q(2)^2 + q(3)^2 + q(4)^2;];
 
+A       = [q(1)^2 - q(2)^2 - q(3)^2 + q(4)^2,               2*(q(1)*q(2) + q(3)*q(4)),                 2*(q(1)*q(3) - q(2)*q(4));
+                 2*(q(1)*q(2) - q(3)*q(4)),      -q(1)^2 + q(2)^2 - q(3)^2 + q(4)^2,                2*(q(2)*q(3) + q(1)*q(4)) ;
+                 2*(q(1)*q(3) + q(2)*q(4)),               2*(q(2)*q(3) - q(1)*q(4)),       -q(1)^2 - q(2)^2 + q(3)^2 + q(4)^2];
 
-
-
-a             =   (A'*ab')';                    %Rotation of the acceleration 
+                                                %Rotation of the acceleration 
                                                 %from body axis to inertial frame 
                                                 %to use the inertial equations of motion                                                
 
-               
-x_dot(1:6)    =   [x_prev(4)  x_prev(5)  x_prev(6)   a];            %The derivatives 
-                                                                    %of the position are the velocities of the previous 
-                                                                    %instant and the derivatives of the
-                                                                    %velocities are the acceleration
-                                                                    %measured in the previous instant
+a       =   ab' + A*[0;0;9.81] ;
+vels    =   vels_prev + a'*dt;
 
-
-x             =   x_prev + dt*x_dot; %The following estimated state is 
-                                        %the previous one plus the derivative 
-                                        %multiplied by the time step ---> 
-                                        %FORWARD EULER SIMPLE PROPAGATION
+x(4:6)  =  (A'*vels')';
+x(1:3)  =  x_prev(1:3) + dt*x_prev(4:6);
 
 %-------------------- Jacobianv -----------------------------------------------
 F              =   sparse(6,6);                %Pre-allocation of gradient 

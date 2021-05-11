@@ -18,4 +18,3 @@ else
         n_sat = 0;
     end
 end
-end

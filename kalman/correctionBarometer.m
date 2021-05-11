@@ -34,7 +34,7 @@ function [x,P,y_res] = correctionBarometer(x_pred,P_pred,h_sam,sigma_h)
 %                       OF THE OUTPUT AND THE MEASSURE; ONLY FOR CHECKING
 %                       --> 1x1
 %---------------------------------------------------------------------------
-threshold      =   10e-3;
+threshold      =   10e-11;
 H              =   sparse(1,6);                %Pre-allocation of gradient 
                                                 %of the output function
                                                 
