@@ -1,4 +1,4 @@
-function acc = accelerometersAscent(t, Y, settings, c, uw, vw, ww, uncert)
+function acc = accelerometersAscent(t, Y, settings, c, uw, vw, ww, uncert,tLaunch)
 %{ 
 
 Author: Adriano Filippo Inno
@@ -23,6 +23,7 @@ q1 = Y(11);
 q2 = Y(12);
 q3 = Y(13);
 
+t = t - tLaunch;
 %% QUATERION ATTITUDE
 Q = [q0 q1 q2 q3];
 normQ = norm(Q);

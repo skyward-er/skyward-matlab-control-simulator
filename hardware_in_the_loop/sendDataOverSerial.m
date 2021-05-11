@@ -22,7 +22,6 @@ end
 dataToBeSent.accelerometer = data.accelerometer;
 
 dataToBeSent.gyro = data.gyro;
-
 dataToBeSent.magnetometer = data.magnetometer;
 
 dataToBeSent.gps.positionMeasures = data.gps.positionMeasures;

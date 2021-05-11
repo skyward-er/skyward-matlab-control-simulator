@@ -239,9 +239,14 @@ while flagStopIntegration || n_old < nmax
         Yf = [initialCond'; initialCond'];
     end
    
-    [sensorData] = manageSignalFrequencies(magneticFieldApprox, flagAscent, settings, Yf, Tf, x, uw, vw, ww, uncert);
-    %[~, ~, p, ~]  = atmosisa(-Yf(:,3)) ; 
- 
+    if flagFligth
+        [sensorData] = manageSignalFrequencies(magneticFieldApprox, flagAscent, settings, Yf, Tf, x, uw, vw, ww, uncert, tLaunch);
+    
+        %[~, ~, p, ~]  = atmosisa(-Yf(:,3)) ; 
+    else
+        [sensorData] = manageCalibration(XYZ0, settings);
+    end
+    
     if settings.dataNoise
         [sp, c] = acquisition_Sys(sensorData, s, c);
     end
@@ -291,6 +296,7 @@ while flagStopIntegration || n_old < nmax
     end
     
     alpha_degree = readControlOutputFromSerial();
+
     
     % if the obsw sends an opening of -1 while the flag isLaunch is still
     % false, triggers the liftoff and the opening of aerobrake is set to 0
