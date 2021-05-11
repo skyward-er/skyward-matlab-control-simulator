@@ -318,10 +318,11 @@ plot(time, plot_control_variable), grid on;
 axis([0,20, 0,60])
 xlabel('time [s]'), ylabel('Angle [deg]');
 
-% % delta_S
-% figure('Name','Delta_S','NumberTitle','off');
-% plot(time, plot_delta_S), grid on;
-% xlabel('time [s]'), ylabel('A [m^2]');
+% delta_S
+figure('Name','Delta_S','NumberTitle','off');
+plot(time, plot_delta_S, 'LineWidth',1.3), grid on;
+xlabel('time [s]'), ylabel('A [m^2]');
+title('Control action')
 
 % % Cd
 % figure('Name','Cd','NumberTitle','off');

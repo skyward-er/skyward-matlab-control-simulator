@@ -80,54 +80,49 @@ S0       = (pi*diameter^2)/4;
 S        = S0 + delta_S_prec;
 Cd_fake  = getDrag(V_mod,z,delta_S_prec, coeff_Cd); % Però questo non è Cd, perchè tiene conto anche di delta_S
 Cd       = (S0*Cd_fake)/S;
-    
+
+U_ref = chosen_trajectory*0.001; % In c++ dovrebbe essere: (chosen_trajectory+1)*0.001;
+
 %% LQR ALGORITHM
 
-% States: z,Vz,Vx, integrator
+Q = [0.2,      0,         0,        0;
+       0,    0.3,         0,        0;
+       0,      0,    0.0001,        0;
+       0,      0,         0,   0.0001];
 
-Q = [0.2,      0,         0,       0,     0;
-       0,    0.3,         0,       0,     0;
-       0,      0,    0.0001,       0,     0;
-       0,      0,         0,  0.0001,     0;
-       0,      0,         0,       0,     7];
    
 R = 30000; 
 % S_max_squared = 0.01^2;
 % R = 0.05/S_max_squared;
 
-% Linearize the system around the current state: z, Vz, Vy, Vx, integrator
+% Linearize the system around the current state: z, Vz, Vy, Vx
 
- A = [ 1,                                                                                                      T,                                                                                                      0,                                                                                                      0, 0;
-       0, 1 - T*((Cd*S*rho*(Vx^2 + Vy^2 + Vz^2)^(1/2))/(2*m) + (Cd*S*Vz^2*rho)/(2*m*(Vx^2 + Vy^2 + Vz^2)^(1/2))),                                                   -(Cd*S*T*Vy*Vz*rho)/(2*m*(Vx^2 + Vy^2 + Vz^2)^(1/2)),                                                   -(Cd*S*T*Vx*Vz*rho)/(2*m*(Vx^2 + Vy^2 + Vz^2)^(1/2)), 0;
-       0,                                                   -(Cd*S*T*Vy*Vz*rho)/(2*m*(Vx^2 + Vy^2 + Vz^2)^(1/2)), 1 - T*((Cd*S*rho*(Vx^2 + Vy^2 + Vz^2)^(1/2))/(2*m) + (Cd*S*Vy^2*rho)/(2*m*(Vx^2 + Vy^2 + Vz^2)^(1/2))),                                                   -(Cd*S*T*Vx*Vy*rho)/(2*m*(Vx^2 + Vy^2 + Vz^2)^(1/2)), 0;
-       0,                                                   -(Cd*S*T*Vx*Vz*rho)/(2*m*(Vx^2 + Vy^2 + Vz^2)^(1/2)),                                                   -(Cd*S*T*Vx*Vy*rho)/(2*m*(Vx^2 + Vy^2 + Vz^2)^(1/2)), 1 - T*((Cd*S*rho*(Vx^2 + Vy^2 + Vz^2)^(1/2))/(2*m) + (Cd*S*Vx^2*rho)/(2*m*(Vx^2 + Vy^2 + Vz^2)^(1/2))), 0;
-      -T,                                                                                                      0,                                                                                                      0,                                                                                                      0, 1];
+ A = [ 1,                                                                                                      T,                                                                                                      0,                                                                                                      0;
+       0, 1 - T*((Cd*S*rho*(Vx^2 + Vy^2 + Vz^2)^(1/2))/(2*m) + (Cd*S*Vz^2*rho)/(2*m*(Vx^2 + Vy^2 + Vz^2)^(1/2))),                                                   -(Cd*S*T*Vy*Vz*rho)/(2*m*(Vx^2 + Vy^2 + Vz^2)^(1/2)),                                                   -(Cd*S*T*Vx*Vz*rho)/(2*m*(Vx^2 + Vy^2 + Vz^2)^(1/2));
+       0,                                                   -(Cd*S*T*Vy*Vz*rho)/(2*m*(Vx^2 + Vy^2 + Vz^2)^(1/2)), 1 - T*((Cd*S*rho*(Vx^2 + Vy^2 + Vz^2)^(1/2))/(2*m) + (Cd*S*Vy^2*rho)/(2*m*(Vx^2 + Vy^2 + Vz^2)^(1/2))),                                                   -(Cd*S*T*Vx*Vy*rho)/(2*m*(Vx^2 + Vy^2 + Vz^2)^(1/2));
+       0,                                                   -(Cd*S*T*Vx*Vz*rho)/(2*m*(Vx^2 + Vy^2 + Vz^2)^(1/2)),                                                   -(Cd*S*T*Vx*Vy*rho)/(2*m*(Vx^2 + Vy^2 + Vz^2)^(1/2)), 1 - T*((Cd*S*rho*(Vx^2 + Vy^2 + Vz^2)^(1/2))/(2*m) + (Cd*S*Vx^2*rho)/(2*m*(Vx^2 + Vy^2 + Vz^2)^(1/2)))];
+      
  
  B = [                                              0;
       -(Cd*T*Vz*rho*(Vx^2 + Vy^2 + Vz^2)^(1/2))/(2*m);
       -(Cd*T*Vy*rho*(Vx^2 + Vy^2 + Vz^2)^(1/2))/(2*m);
-      -(Cd*T*Vx*rho*(Vx^2 + Vy^2 + Vz^2)^(1/2))/(2*m);
-                                                    0];
+      -(Cd*T*Vx*rho*(Vx^2 + Vy^2 + Vz^2)^(1/2))/(2*m)];
                                              
-x_measured  = [z, Vz, Vy, Vx]'; % 4x1
+x_measured  = [z, Vz, Vy, Vx]'; 
 x_reference = [z_setpoint, Vz_setpoint, Vy_setpoint, Vx_setpoint]';
 x_error     =  x_measured - x_reference;
 
 % Solve Riccati equation
 P       = Q;   % Initial guess for P    
 maxiter = 30;
-eps     = 0.01;
 
 for i=1:maxiter
     Pn = A' * P * A - A' * P * B * inv(R + B' * P * B) * B' * P * A + Q;
-%     if (max(max((abs(Pn - P))))) < eps % Continue to compute P until the actual and previous solution are almost equal
-%         break
-%     end
     P = Pn;
 end
 
-K = inv(B' * P * B + R) * B' * P * A; %5x1
-U = -K(1:4)*x_error; % U negativa: dire che se indice(i) < indice(i-1) --> indice(i)=indice(i-1) 
+K = inv(B' * P * B + R) * B' * P * A; 
+U = U_ref - K*x_error; 
 
 %%%%%% Debug %%%%%%
 % J_z  = Q(1,1)*x_error(1)^2
