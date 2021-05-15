@@ -12,9 +12,9 @@ controler to follow the trejectory and then transfere it with a to a force
 
 
   INPUTS:
-  z               acutal hight of the rocket
+  z               actual hight of the rocket
   Vz              actual vertical velocity of the rocket
-  V_mod           actual roket velocity in the direction of the main axis
+  V_mod           modulus of the rocket velocity
   sample_time     sample time of the control system
 
   OUTPUTS:
@@ -39,9 +39,19 @@ controler to follow the trejectory and then transfere it with a to a force
 % Parameters
 ro = getRho(z);
 
+cdbar = getDrag(Vz, z, csett.Sbar, csett.coeff_Cd);
+Ubar = 0.5*ro*cdbar*Vz*V_mod;
+
 % Control variable limits
-Umin = 0;     
-Umax = 0.5*ro*csett.S0*Vz*V_mod; % Cd limit check
+camin = getDrag(Vz, z, csett.delta_S_available(1), csett.coeff_Cd);
+Umin  = 0.5*ro*camin*Vz*V_mod;     
+dUmin = Umin - Ubar;
+
+camax = getDrag(Vz, z, csett.delta_S_available(end), csett.coeff_Cd);
+Umax  = 0.5*ro*camax*Vz*V_mod; % Cd limit check
+dUmax = Umax - Ubar;
+
+
 
 % Input for PI controler
 error = (Vz - Vz_setpoint); % > 0 (in teoria)
@@ -55,29 +65,30 @@ if csett.saturation == false
 end
 
 % Combining PI controler
-U = P + csett.I;
+dU = P + csett.I;
 
 % Anti-windup
-[U, csett.saturation] = Saturation(U, Umin, Umax);
+[dU, csett.saturation] = Saturation(dU, dUmin, dUmax);
 
 %% TRANSFORMATION FROM U to delta_S 
 
 % Get the Cd for each possible aerobrake surface
-Cd_available = 1:length(csett.delta_S_available);
+ca_available = zeros(1,length(csett.delta_S_available));
+dU_available  = zeros(1,length(csett.delta_S_available));
 for ind = 1:length(csett.delta_S_available)
-    Cd_available(ind) = getDrag(V_mod,z,csett.delta_S_available(ind), csett.coeff_Cd);
+    ca_available(ind) = getDrag(V_mod, z, csett.delta_S_available(ind), csett.coeff_Cd)';
+    dU_available(ind)  = 0.5*ro*ca_available(ind)*Vz*V_mod - Ubar;
 end
-Cd_available = Cd_available';
 
 % For all possible delta_S compute Fdrag
 % Then choose the delta_S which gives an Fdrag which has the minimum error if compared with F_drag_pid
-[~, index_minimum] = min( abs(U - 0.5*ro*csett.S0*Cd_available*Vz*V_mod) );
+[~, index_minimum] = min( abs(dU - dU_available ));
 delta_S = csett.delta_S_available(index_minimum); 
 
 % Just for plotting
-pid = U;
-U_linear = 0.5*ro*csett.S0*Cd_available(index_minimum)*Vz*V_mod;
-Cd = Cd_available(index_minimum);
+pid = dU + Ubar;
+U_linear = 0.5*ro*ca_available(index_minimum)*Vz*V_mod;
+Cd = ca_available(index_minimum);
 
 %% TRANSFORMATION FROM delta_S to SERVOMOTOR ANGLE DEGREES 
 

@@ -18,7 +18,7 @@ settings.dataNoise          =   true;                                      % Swi
 settings.launchWindow       =   false;                                      % Switch off this to avoid pausing the launch till you press the launch button
 settings.Kalman             =   true;                                     % Switch on to run the kalman algorithm
 settings.Ada                =   true;                                     % Switch on to run the apogee detection algorithm
-settings.control            =   false;                                     % Switch on to simulate the control
+settings.control            =   true;                                     % Switch on to simulate the control
 
 %% LAUNCH SETUP
 % launchpad for Pont De Sor

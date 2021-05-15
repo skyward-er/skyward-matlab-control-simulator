@@ -66,6 +66,7 @@ if settings.electronics
 end
 
 % DATA RECORD (display)
+if settings.electronics
 fprintf('OUTCOMES: (times dt from liftoff)\n\n')
 
 fprintf('total computational Time: %.3f [s]: \n', sum(cpuTimes))
@@ -97,6 +98,7 @@ if(not(settings.ballisticFligth))
     fprintf("@altitude: %g [m] \n", otherData.z_para2);
     fprintf("@velocity: %g [m/s] \n\n", otherData.vz_para2);
 end
+end
 
 if not(settings.electronics)
     M = data_flight.interp.M;
@@ -113,6 +115,10 @@ if not(settings.electronics)
     fprintf('max acceleration reached: %g [m/s2] = %g [g] \n', max_a, max_a/9.81)
     fprintf('@velocity: %g [m/s] \n', abs_V(imax_a))
     fprintf('@time: %g [sec] \n\n', Tf(imax_a))
+    
+    fprintf('apogee:\n');
+    fprintf('@time: %g [sec] \n', T_apo)
+    fprintf('@altitude: %.1f [m] \n\n', max_z)
 
 %% Apogee detection time
     fprintf('ADA apogee detection time: %g [sec] \n', t_ada)

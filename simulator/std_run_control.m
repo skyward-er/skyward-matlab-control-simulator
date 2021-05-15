@@ -237,7 +237,6 @@ while flagStopIntegration || n_old < nmax
     [sensorData] = manageSignalFrequencies(magneticFieldApprox, flagAscent, settings, Yf, Tf, x, uw, vw, ww, uncert, tLaunch);
     [~, ~, p, ~] = atmosisa(-Yf(:,3)) ; 
  
-    sensorData.accelerometer.measures
     if settings.dataNoise
         [sensorData, tot] = acquisition_Sys(sensorData, s, tot);
     end
@@ -456,17 +455,16 @@ if settings.control
     tot.flagPID      =  csett.flagPID;
 end
 
-tot.plot_ada     =  settings.Ada && true; 
-tot.plot_sensors =  settings.dataNoise && true; 
-tot.plot_kalman  =  settings.Kalman && true;
-tot.plot_control =  settings.control && false;
+tot.plot_ada     =  settings.Ada && false; 
+tot.plot_sensors =  settings.dataNoise && false; 
+tot.plot_kalman  =  settings.Kalman && false;
+tot.plot_control =  settings.control && true;
 
 %% RETRIVE PARAMETERS FROM THE ODE
 
 dataBallisticFlight = RecallOdeFcn(@ascent, Tf(flagMatr(:, 2)), Yf(flagMatr(:, 2), :), settings, C, uw, vw, ww, uncert, tLaunch);
 
 plot_all(tot, csett)
-
 
 end
 

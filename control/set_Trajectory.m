@@ -25,6 +25,7 @@ if csett.iteration_flag == 1
              best_min = min_value;
              best_index = index_min_value;
              csett.chosen_trajectory = ind;  
+             csett.Sbar = csett.data_trajectories(ind).Sbar*0.01/100;
         end
 
     end
@@ -40,7 +41,7 @@ if csett.iteration_flag == 1
     csett.starting_index = best_index;
     disp('trajectory chosen:')
     disp(csett.chosen_trajectory)
-    
+
 %% For the following iterations keep tracking the chosen trajectory
 else
 
