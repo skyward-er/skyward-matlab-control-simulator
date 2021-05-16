@@ -40,8 +40,15 @@ controler to follow the trejectory and then transfere it with a to a force
 ro = getRho(z);
 
 % Control variable limits
-Umin = 0;     
-Umax = 0.5*ro*csett.S0*Vz*V_mod; % Cd limit check
+% Umin = 0;     
+% Umax = 0.5*ro*csett.S0*Vz*V_mod; % Cd limit check
+
+% New limits
+delta_S_max = 0.01;
+Cd_min = getDrag(V_mod,z,csett.S0, csett.coeff_Cd);
+Cd_max = getDrag(V_mod,z,csett.S0+delta_S_max, csett.coeff_Cd);
+Umin = 0.5*ro*Cd_min*csett.S0*Vz*V_mod;    
+Umax = 0.5*ro*Cd_max*(csett.S0+delta_S_max)*Vz*V_mod; 
 
 % Input for PI controler
 error = (Vz - Vz_setpoint); % > 0 (in teoria)
