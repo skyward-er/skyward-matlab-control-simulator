@@ -25,7 +25,7 @@ OUTPUT:
 
         for ii=1:length(sensorData.barometer.time)
                 sensorData.barometer.measures(ii,:)        =      s.MS580301BA01.sens(sensorData.barometer.measures(ii)/100,...
-                                                            sensorData.barometer.temperature(ii) - 273.15);  
+                                                                  sensorData.barometer.temperature(ii) - 273.15);  
                 sensorData.barometer.measures(ii,:)        =      sensorData.barometer.measures(ii)*100;   
                 sensorData.h_baro(ii,:)                    =     -atmospalt(sensorData.barometer.measures(ii),'None');
         end 
