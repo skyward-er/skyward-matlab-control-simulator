@@ -87,7 +87,7 @@ addpath('../control');
 %% SENSORS DEFINITION
 addpath('../sensors');
 addpath('../sensors/data/MS580301BA01');
-[s, c] = initSensors;
+[s, tot] = initSensors;
 
 %% MAGNETIC FIELD MODEL
 hmax = 6000;
@@ -250,7 +250,7 @@ while flagStopIntegration || n_old < nmax
     end
     
     if settings.dataNoise
-        [sp, c] = acquisition_Sys(sensorData, s, c);
+        [sp, tot] = acquisition_Sys(sensorData, s, tot);
     end
     
     %%%%%%%%%%%
@@ -297,8 +297,8 @@ while flagStopIntegration || n_old < nmax
         sendDataOverSerial(sensorData, flagsArray);
     end
     
-    alpha_degree = readControlOutputFromSerial();
-
+     alpha_degree = readControlOutputFromSerial();
+%    alpha_degree = 0;
     
     % if the obsw sends an opening of -1 while the flag isLaunch is still
     % false, triggers the liftoff and the opening of aerobrake is set to 0

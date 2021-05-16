@@ -85,7 +85,6 @@ addpath('../kalman');
 %% SENSORS INIT
 addpath('../sensors');
 addpath('../sensors/data/MS580301BA01');
-addpath('../simulationData');
 [s, tot] = initSensors;
 
 %% CONTROL INIT
@@ -108,22 +107,22 @@ magneticFieldApprox = @(zSlm) XYZ0 + (XYZh-XYZ0)./hmax.*zSlm;              % Mag
 
 %% INTEGRATION
 % setting initial condition before control phase
-dt          =       1/settings.frequencies.controlFrequency;               % Time step of the controller
-t0          =       0;
-t1          =       t0 + dt;
-vz          =       1;
-z           =       1;
-nmax        =       10000;
-mach        =       0;
-x           =       0;
-n_old       =       1;
-Yf_tot      =       zeros(nmax, 16);
-Tf_tot      =       zeros(nmax, 1);
-C           =       zeros(nmax, 1);
-cpuTimes    =       zeros(nmax,1);
-iTimes      =       0;
+dt            =       1/settings.frequencies.controlFrequency;               % Time step of the controller
+t0            =       0;
+t1            =       t0 + dt;
+vz            =       1;
+z             =       1;
+nmax          =       10000;
+mach          =       0;
+x             =       0;
+n_old         =       1;
+Yf_tot        =       zeros(nmax, 16);
+Tf_tot        =       zeros(nmax, 1);
+C             =       zeros(nmax, 1);
+cpuTimes      =       zeros(nmax,1);
+iTimes        =       0;
 tot.ctr_start =      -1;
-i           =       1;
+i             =       1;
 
 settings.kalman.pn_prec  =       settings.ada.p_ref;
 %% Flag initializations
@@ -407,10 +406,10 @@ while flagStopIntegration || n_old < nmax
      flagMatr(n_old:n_old+n-1, :) = repmat([flagFligth, flagAscent, flagBurning, flagAeroBrakes, flagPara1, flagPara2], n, 1);
     toc
 end
-if settings.control == true
-% Salvo input/output per testare algoritmo cpp
-save('input_output_test_PID.mat','input_output_test');
-end 
+% if settings.control == true
+% % Salvo input/output per testare algoritmo cpp
+% save('input_output_test_PID.mat','input_output_test');
+% end 
 
 if settings.launchWindow
     fclose('all');

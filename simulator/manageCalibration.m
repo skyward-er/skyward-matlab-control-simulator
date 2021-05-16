@@ -30,8 +30,8 @@ end
     
     [T,~,P,~] = atmosisa(settings.z0);
 for i = 1:Nbar
-    SensorData.barometer.measures(i) = P;
-    SensorData.barometer.temperature(i) = T;
+    SensorData.barometer.measures(i,1) = P;
+    SensorData.barometer.temperature(i,1) = T;
 end
     SensorData.barometer.time = zeros(Nbar,1);
     
