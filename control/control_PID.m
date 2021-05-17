@@ -40,15 +40,11 @@ controler to follow the trejectory and then transfere it with a to a force
 ro = getRho(z);
 
 % Control variable limits
-% Umin = 0;     
-% Umax = 0.5*ro*csett.S0*Vz*V_mod; % Cd limit check
-
-% New limits
 delta_S_max = 0.01;
-Cd_min = getDrag(V_mod,z,csett.S0, csett.coeff_Cd);
-Cd_max = getDrag(V_mod,z,csett.S0+delta_S_max, csett.coeff_Cd);
+Cd_min = getDrag(V_mod,z,0, csett.coeff_Cd);
+Cd_max = getDrag(V_mod,z,delta_S_max, csett.coeff_Cd);
 Umin = 0.5*ro*Cd_min*csett.S0*Vz*V_mod;    
-Umax = 0.5*ro*Cd_max*(csett.S0+delta_S_max)*Vz*V_mod; 
+Umax = 0.5*ro*Cd_max*csett.S0*Vz*V_mod;
 
 % Input for PI controler
 error = (Vz - Vz_setpoint); % > 0 (in teoria)
@@ -61,8 +57,13 @@ if csett.saturation == false
     csett.I = csett.I + csett.Ki_1*error;
 end
 
-% Combining PI controler
-U = P + csett.I;
+% Compute U_ref 
+Cd_ref = getDrag(V_mod,z,csett.chosen_trajectory*0.001, csett.coeff_Cd);
+U_ref = 0.5*ro*Cd_ref*csett.S0*Vz*V_mod; 
+% U_ref = 0; % TESTING
+
+% Final control action: U = U_ref + delta_U_pid
+U = U_ref + P + csett.I;
 
 % Anti-windup
 [U, csett.saturation] = Saturation(U, Umin, Umax);

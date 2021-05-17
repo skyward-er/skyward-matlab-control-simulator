@@ -40,8 +40,11 @@ PI controler to follow the trejectory but uses linearization to calculate delta_
 ro = getRho(z);
 
 % Control variable limits
-Umin = -csett.m*csett.g - 0.5*ro*csett.S0*1*Vz*V_mod;
-Umax = -csett.m*csett.g; 
+delta_S_max = 0.01;
+Cd_min = getDrag(V_mod,z,0, csett.coeff_Cd);
+Cd_max = getDrag(V_mod,z,delta_S_max, csett.coeff_Cd);
+Umax = -csett.m*csett.g - 0.5*ro*Cd_min*csett.S0*Vz*V_mod   
+Umin = -csett.m*csett.g - 0.5*ro*Cd_max*csett.S0*Vz*V_mod
 
 % PID
 error = (Vz_setpoint - Vz); % Changed the signum
