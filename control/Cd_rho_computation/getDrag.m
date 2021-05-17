@@ -7,9 +7,10 @@ function cd = getDrag(v, h, S, coeffs)
 %       x       Aerobrakes extension [m]
 %       S       Aerobrake surface
 %       coeffs  struct that contains the coefficients 
-
-% coeffs
-% coeffs.n000
+% The area of the airbrake is transformed into the extension, and then the
+% extension is used with the mach number to get a polynomial interpolation 
+% Then the drag force is computed as Fdrag = 0.5*ro*S0*cd*V^2 with S0 that
+% is the cross section of the rocket without airbrakes.
 
 x = getEstension(S);
 

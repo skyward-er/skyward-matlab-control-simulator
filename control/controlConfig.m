@@ -31,8 +31,8 @@ contSettings.Kp_1    =   100; % 20                                          % us
 contSettings.Ki_1    =   20;  % 1                                           % using Fdrag nel pid
 contSettings.Kp_2    =   50;                                               % using u nel pid --> da migliorare (magari si può ottenere variabile controllo più smooth)
 contSettings.Ki_2    =   40;                                               % using u nel pid
-contSettings.Kp_3    =   20;                                               % using alfa_degree nel pid --> ancora da tunare
-contSettings.Ki_3    =   20;                                               % using alfa_degree nel pid
+contSettings.Kp_3    =   5;                                               % using alfa_degree nel pid --> ancora da tunare
+contSettings.Ki_3    =   1;                                               % using alfa_degree nel pid
 
 % Select the PID algorithm
 contSettings.flagPID           =    1;                                     % 1: control_PID (Fdrag);  2: control_LIN (u);  3: control_Servo (alfa_degree);

@@ -32,7 +32,7 @@ CONTROL_ALGORITHM_SERVO_DEGREE  Finds trejectory (z-Vz) to follow and uses a PI 
 
 % Control variable limits
 Umin = 0;  % degrees   
-Umax = 48; % degrees
+Umax = 52; % degrees
 
 % PID
 error = (Vz - Vz_setpoint); % > 0 (in teoria)
@@ -42,8 +42,12 @@ if csett.saturation == false
     csett.I = csett.I + csett.Ki_3*error;
 end
 
-U = P + csett.I;
+dU = P + csett.I;
     
+alpha_bar = getAngle(csett.Sbar)*180/pi;
+
+U  = dU + alpha_bar;
+
 % Anti-windup
 [U, csett.saturation] = Saturation(U, Umin, Umax);
 

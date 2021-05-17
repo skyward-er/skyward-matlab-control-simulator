@@ -42,6 +42,13 @@ ro = getRho(z);
 % Control variable limits
 Umin = -csett.m*csett.g - 0.5*ro*csett.S0*1*Vz*V_mod;
 Umax = -csett.m*csett.g; 
+camin = getDrag(V_mod, z, csett.delta_S_available(1), csett.coeff_Cd);
+Umin  = 0.5*ro*camin*S0*Vz*V_mod;     
+dUmin = Umin - Ubar;
+
+camax = getDrag(V_mod, z, csett.delta_S_available(end), csett.coeff_Cd);
+Umax  = 0.5*ro*camax*S0*Vz*V_mod; % Cd limit check
+dUmax = Umax - Ubar;
 
 % PID
 error = (Vz_setpoint - Vz); % Changed the signum

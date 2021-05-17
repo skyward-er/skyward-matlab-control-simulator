@@ -38,17 +38,18 @@ controler to follow the trejectory and then transfere it with a to a force
 
 % Parameters
 ro = getRho(z);
+S0 = csett.S0;
 
 cdbar = getDrag(V_mod, z, csett.Sbar, csett.coeff_Cd);
-Ubar = 0.5*ro*cdbar*Vz*V_mod;
+Ubar = 0.5*ro*cdbar*S0*Vz*V_mod;
 
 % Control variable limits
 camin = getDrag(V_mod, z, csett.delta_S_available(1), csett.coeff_Cd);
-Umin  = 0.5*ro*camin*Vz*V_mod;     
+Umin  = 0.5*ro*camin*S0*Vz*V_mod;     
 dUmin = Umin - Ubar;
 
 camax = getDrag(V_mod, z, csett.delta_S_available(end), csett.coeff_Cd);
-Umax  = 0.5*ro*camax*Vz*V_mod; % Cd limit check
+Umax  = 0.5*ro*camax*S0*Vz*V_mod; % Cd limit check
 dUmax = Umax - Ubar;
 
 
@@ -77,7 +78,7 @@ ca_available = zeros(1,length(csett.delta_S_available));
 dU_available  = zeros(1,length(csett.delta_S_available));
 for ind = 1:length(csett.delta_S_available)
     ca_available(ind) = getDrag(V_mod, z, csett.delta_S_available(ind), csett.coeff_Cd)';
-    dU_available(ind)  = 0.5*ro*ca_available(ind)*Vz*V_mod - Ubar;
+    dU_available(ind)  = 0.5*ro*ca_available(ind)*S0*Vz*V_mod - Ubar;
 end
 
 % For all possible delta_S compute Fdrag
@@ -87,7 +88,7 @@ delta_S = csett.delta_S_available(index_minimum);
 
 % Just for plotting
 pid = dU + Ubar;
-U_linear = 0.5*ro*ca_available(index_minimum)*Vz*V_mod;
+U_linear = 0.5*ro*ca_available(index_minimum)*S0*Vz*V_mod;
 Cd = ca_available(index_minimum);
 
 %% TRANSFORMATION FROM delta_S to SERVOMOTOR ANGLE DEGREES 
