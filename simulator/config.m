@@ -12,9 +12,9 @@ Release date: 16/04/2016
 
 %% SIMULATION SETTINGS
 settings.electronics        =   true;                                      % Switch on when testing with Hardware in the loop HIL
-settings.ascentOnly         =   true;                                      % Switch on to simulate only the ascent phase untill the apogee
-settings.ballisticFligth    =   true;                                      % Switch on to simulate the balistic fligth without any parachute
-settings.dataNoise          =   true;                                      % Switch on to simulate the data acquisiton from sensors
+settings.ascentOnly         =   false;                                      % Switch on to simulate only the ascent phase untill the apogee
+settings.ballisticFligth    =   false;                                      % Switch on to simulate the balistic fligth without any parachute
+settings.dataNoise          =   false;                                      % Switch on to simulate the data acquisiton from sensors
 settings.launchWindow       =   true;                                      % Switch off this to avoid pausing the launch till you press the launch button
 settings.Kalman             =   false;                                     % Switch on to run the kalman algorithm
 settings.Ada                =   false;                                     % Switch on to run the apogee detection algorithm

@@ -39,15 +39,15 @@ controler to follow the trejectory and then transfere it with a to a force
 % Parameters
 ro = getRho(z);
 
-cdbar = getDrag(Vz, z, csett.Sbar, csett.coeff_Cd);
+cdbar = getDrag(V_mod, z, csett.Sbar, csett.coeff_Cd);
 Ubar = 0.5*ro*cdbar*Vz*V_mod;
 
 % Control variable limits
-camin = getDrag(Vz, z, csett.delta_S_available(1), csett.coeff_Cd);
+camin = getDrag(V_mod, z, csett.delta_S_available(1), csett.coeff_Cd);
 Umin  = 0.5*ro*camin*Vz*V_mod;     
 dUmin = Umin - Ubar;
 
-camax = getDrag(Vz, z, csett.delta_S_available(end), csett.coeff_Cd);
+camax = getDrag(V_mod, z, csett.delta_S_available(end), csett.coeff_Cd);
 Umax  = 0.5*ro*camax*Vz*V_mod; % Cd limit check
 dUmax = Umax - Ubar;
 

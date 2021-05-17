@@ -290,15 +290,11 @@ while flagStopIntegration || n_old < nmax
         sensorData.gps.fix = fix;
         sensorData.gps.nsat = nsat;
     end
+
+      sendDataOverSerial(sensorData, flagsArray);   
     
-    if settings.dataNoise == true
-        sendDataOverSerial(sp, flagsArray);   
-    else
-        sendDataOverSerial(sensorData, flagsArray);
-    end
-    
-     alpha_degree = readControlOutputFromSerial();
-%    alpha_degree = 0;
+      alpha_degree = readControlOutputFromSerial();
+%     alpha_degree = 0;
     
     % if the obsw sends an opening of -1 while the flag isLaunch is still
     % false, triggers the liftoff and the opening of aerobrake is set to 0
