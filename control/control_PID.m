@@ -45,7 +45,7 @@ Ubar = 0.5*ro*cdbar*S0*Vz*V_mod;
 
 % Control variable limits
 camin = getDrag(V_mod, z, csett.delta_S_available(1), csett.coeff_Cd);
-Umin  = 0.5*ro*camin*S0*Vz*V_mod;     
+Umin  = 0.5*ro*camin*S0*Vz*V_mod;   
 dUmin = Umin - Ubar;
 
 camax = getDrag(V_mod, z, csett.delta_S_available(end), csett.coeff_Cd);
@@ -66,7 +66,7 @@ if csett.saturation == false
 end
 
 % Combining PI controler
-dU = P + csett.I;
+dU = (P + csett.I)*(dUmax-dUmin);
 
 % Anti-windup
 [dU, csett.saturation] = Saturation(dU, dUmin, dUmax);
@@ -84,7 +84,7 @@ end
 % For all possible delta_S compute Fdrag
 % Then choose the delta_S which gives an Fdrag which has the minimum error if compared with F_drag_pid
 [~, index_minimum] = min( abs(dU - dU_available ));
-delta_S = csett.delta_S_available(index_minimum); 
+delta_S = csett.delta_S_available(index_minimum);
 
 % Just for plotting
 pid = dU + Ubar;

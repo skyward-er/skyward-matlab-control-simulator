@@ -123,7 +123,7 @@ cpuTimes      =       zeros(nmax,1);
 iTimes        =       0;
 tot.ctr_start =      -1;
 i             =       1;
-
+tLaunch       =       0;
 settings.kalman.pn_prec  =       settings.ada.p_ref;
 %% Flag initializations
 flagStopIntegration     =   true;
@@ -233,7 +233,7 @@ while flagStopIntegration || n_old < nmax
         Yf = [initialCond'; initialCond'];
     end
      
-    [sensorData] = manageSignalFrequencies(magneticFieldApprox, flagAscent, settings, Yf, Tf, x, uw, vw, ww, uncert, tLaunch);
+    [sensorData] = manageSignalFrequencies(magneticFieldApprox, flagAscent, settings, Yf, Tf, x, uw, vw, ww, uncert, 0);
     [~, ~, p, ~] = atmosisa(-Yf(:,3)) ; 
  
     if settings.dataNoise
@@ -282,9 +282,9 @@ while flagStopIntegration || n_old < nmax
 %% Control algorithm
 
     if flagAeroBrakes && settings.Kalman && settings.control
-         zc    =    exp_mean(-x_c(:,3),0.8);
-         vzc   =    exp_mean(-x_c(:,6),0.8);
-         vc    =    exp_mean(sqrt(x_c(:,4).^2+x_c(:,5).^2+x_c(:,6).^2),0.8);
+         zc    =   -x_c(end,3);
+         vzc   =   -x_c(end,6);
+         vc    =    sqrt(x_c(end,4).^2+x_c(end,5).^2+x_c(end,6).^2);
          if tot.ctr_start == -1
             tot.ctr_start = 0.1*(n - 1);
          end

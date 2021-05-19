@@ -250,7 +250,7 @@ while flagStopIntegration || n_old < nmax
     end
     
     if settings.dataNoise
-        [sp, tot] = acquisition_Sys(sensorData, s, tot);
+        [sensorData, tot] = acquisition_Sys(sensorData, s, tot);
     end
     
     %%%%%%%%%%%
@@ -260,20 +260,10 @@ while flagStopIntegration || n_old < nmax
         sensorData.kalman.z    = z;
         sensorData.kalman.vz   = vz;
         sensorData.kalman.vMod = normV;
-        if settings.dataNoise
-            sp.kalman.z    = z;
-            sp.kalman.vz   = vz;
-            sp.kalman.vMod = normV;
-        end
     else
         sensorData.kalman.z    = 0;
         sensorData.kalman.vz   = 0;
         sensorData.kalman.vMod = 0;
-        if settings.dataNoise
-            sp.kalman.z    = 0;
-            sp.kalman.vz   = 0;
-            sp.kalman.vMod = 0;
-        end
     end
     %%%%%%%%%%
     
@@ -281,19 +271,13 @@ while flagStopIntegration || n_old < nmax
     
     % getting the fix and nSatellites
 
-    if settings.dataNoise
-        [fix,nsat] = gpsFix(sp.accelerometer.measures(end,:));
-        sp.gps.fix = fix;
-        sp.gps.nsat = nsat;
-    else
-        [fix,nsat] = gpsFix(sensorData.accelerometer.measures(end,:));
-        sensorData.gps.fix = fix;
-        sensorData.gps.nsat = nsat;
-    end
+    [fix,nsat] = gpsFix(sensorData.accelerometer.measures(end,:));
+    sensorData.gps.fix = fix;
+    sensorData.gps.nsat = nsat;
 
-      sendDataOverSerial(sensorData, flagsArray);   
+    sendDataOverSerial(sensorData, flagsArray);   
     
-      alpha_degree = readControlOutputFromSerial();
+    alpha_degree = readControlOutputFromSerial();
 %     alpha_degree = 0;
     
     % if the obsw sends an opening of -1 while the flag isLaunch is still

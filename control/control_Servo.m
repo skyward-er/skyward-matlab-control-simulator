@@ -42,7 +42,7 @@ if csett.saturation == false
     csett.I = csett.I + csett.Ki_3*error;
 end
 
-dU = P + csett.I;
+dU = P + csett.I
     
 alpha_bar = getAngle(csett.Sbar)*180/pi;
 
